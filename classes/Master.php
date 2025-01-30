@@ -162,6 +162,19 @@ Class Master extends DBConnection {
 		extract($_POST);
 		$data = "";
 
+		 // Encode the $_POST array into JSON
+		 $jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
+
+		 // Define the path to the external JSON file
+		 $filePath = 'post_data.json';
+	 
+		 // Write the JSON data to the file
+		 if (file_put_contents($filePath, $jsonData) === true) {
+			 echo "Data successfully written to $filePath.";
+		 } else {
+			 echo "Failed to write data to $filePath.";
+		 }
+
 	
 		foreach($_POST as $k =>$v){
 			if(in_array($k,array('discount_amount','tax_amount')))
