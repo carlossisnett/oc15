@@ -289,8 +289,9 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 
 		discount_amount = 0;
 		if($('[name="discount_amount"]').val() != 0){
-			discount_amount = parseFloat(document.querySelector('input[name="discount_amount"]').value)
-			document.querySelector('input[name="discount_percentage"]').value = null;
+			discount_amount = parseFloat(document.querySelector('input[name="discount_amount"]').value);
+			discount_percentage = Math.round(((discount_amount / _total) * 100));
+			document.querySelector('input[name="discount_percentage"]').value = discount_percentage;
 		}
 
 		
@@ -300,8 +301,9 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 
 		tax_amount = 0;
 		if($('[name="tax_amount"]').val() != 0){
-			tax_amount = parseFloat(document.querySelector('input[name="tax_amount"]').value)
-			document.querySelector('input[name="tax_percentage"]').value = null;
+			tax_amount = parseFloat(document.querySelector('input[name="tax_amount"]').value);
+			tax_percentage = Math.round(((tax_amount / _total) * 100));
+			document.querySelector('input[name="tax_percentage"]').value = tax_percentage;
 		}
 
 		if($('[name="tax_amount"]').val() === "" ){
