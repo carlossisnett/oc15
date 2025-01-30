@@ -135,17 +135,17 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 								</tr>
 								<tr>
 									<th class="p-1 text-right" colspan="6">Descuento (%)
-									<input type="number" step="any" name="discount_percentage" class="border-light text-right" value="<?php echo isset($discount_percentage) ? $discount_percentage : 0 ?>">
+									<input type="number" step="any" name="discount_percentage" class="border-light text-right" value="<?php echo isset($discount_percentage) ? $discount_percentage : null ?>">
 									</th>
-									<th class="p-1"><input type="text" class="w-100 border-0 text-right" readonly value="<?php echo isset($discount_amount) ? $discount_amount : 0 ?>" name="discount_amount"></th>
+									<th class="p-1"><input type="text" class="w-100 border-0 text-right" value="<?php echo isset($discount_amount) ? $discount_amount : null ?>" name="discount_amount"></th>
 								</tr>
 								<tr>
 									<th class="p-1 text-right" colspan="6">Impuestos (%)
-									<!--<input type="number" step="any" name="tax_percentage" class="border-light text-right" value="<?php echo isset($tax_percentage) ? $tax_percentage : 0 ?>">-->
+									<!--<input type="number" step="any" name="tax_percentage" class="border-light text-right" value="<?php echo isset($tax_percentage) ? $tax_percentage : null ?>">-->
 									<input type="number" step="any" name="tax_percentage" class="border-light text-right" 
-        							value="<?php echo isset($tax_percentage) && $tax_percentage != 0 ? $tax_percentage : '' ?>" placeholder="0">
+        							value="<?php echo isset($tax_percentage) && $tax_percentage != 0 ? $tax_percentage : '' ?>">
 									</th>
-									<th class="p-1"><input type="text" class="w-100 border-0 text-right" readonly value="<?php echo isset($tax_amount) ? $tax_amount : 0 ?>" name="tax_amount"></th>
+									<th class="p-1"><input type="text" class="w-100 border-0 text-right" value="<?php echo isset($tax_amount) ? $tax_amount : null ?>" name="tax_amount"></th>
 								</tr>
 								<tr>
 									<th class="p-1 text-right" colspan="6">Total</th>
@@ -270,6 +270,49 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 		$('#total').text(parseFloat(_total - discount_amount + tax_amount).toLocaleString("en-US"))
 	}
 
+	function calculate_amount(){
+		var _total = 0
+		$('.po-item').each(function(){
+			var qty = $(this).find("[name='qty[]']").val()
+			var unit_price = $(this).find("[name='unit_price[]']").val()
+			var row_total = 0;
+			if(qty > 0 && unit_price > 0){
+				row_total = parseFloat(qty) * parseFloat(unit_price)
+			}
+			$(this).find('.total-price').text(parseFloat(row_total).toLocaleString('en-US'))
+		})
+		$('.total-price').each(function(){
+			var _price = $(this).text()
+				_price = _price.replace(/\,/gi,'')
+				_total += parseFloat(_price)
+		})
+
+		discount_amount = 0;
+		if($('[name="discount_amount"]').val() != 0){
+			discount_amount = parseFloat(document.querySelector('input[name="discount_amount"]').value)
+			document.querySelector('input[name="discount_percentage"]').value = null;
+		}
+
+		
+		if($('[name="discount_amount"]').val() === "" ){
+			document.querySelector('input[name="discount_percentage"]').value = null;
+		}
+
+		tax_amount = 0;
+		if($('[name="tax_amount"]').val() != 0){
+			tax_amount = parseFloat(document.querySelector('input[name="tax_amount"]').value)
+			document.querySelector('input[name="tax_percentage"]').value = null;
+		}
+
+		if($('[name="tax_amount"]').val() === "" ){
+			document.querySelector('input[name="tax_percentage"]').value = null;
+		}
+
+		$('#sub_total').text(parseFloat(_total).toLocaleString("en-US"))
+		total_amount = _total - discount_amount + tax_amount;
+		$('#total').text(parseFloat(total_amount).toLocaleString("en-US"))
+	}
+
 	function _autocomplete(_item){
 		_item.find('.item_id').autocomplete({
 			source:function(request, response){
@@ -368,6 +411,10 @@ _item.find('.departamento-description').text(ui.item.description)
 			})
 			$('#item-list tfoot').find('[name="discount_percentage"],[name="tax_percentage"]').on('input keypress',function(e){
 				calculate()
+			})
+
+			$('#item-list tfoot').find('[name="discount_amount"],[name="tax_amount"]').on('input keyup change blur paste keypress',function(e){
+				calculate_amount()
 			})
 		})
 		if($('#item-list .po-item').length > 0){
