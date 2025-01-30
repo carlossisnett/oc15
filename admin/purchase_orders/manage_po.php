@@ -264,7 +264,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 		if($('[name="tax_percentage"]').val() > 0){
 			tax_perc = $('[name="tax_percentage"]').val()
 		}
-		var tax_amount = Math.round(_total * (tax_perc))/100;
+		var tax_amount = Math.round((_total - discount_amount) * (tax_perc))/100;
 		$('[name="tax_amount"]').val(parseFloat(tax_amount).toLocaleString("en-US"))
 		$('#sub_total').text(parseFloat(_total).toLocaleString("en-US"))
 		$('#total').text(parseFloat(_total - discount_amount + tax_amount).toLocaleString("en-US"))
@@ -302,7 +302,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 		tax_amount = 0;
 		if($('[name="tax_amount"]').val() != 0){
 			tax_amount = parseFloat(document.querySelector('input[name="tax_amount"]').value);
-			tax_percentage = Math.round(((tax_amount / _total) * 100));
+			tax_percentage = Math.round((tax_amount / (_total - discount_amount)) * 100);
 			document.querySelector('input[name="tax_percentage"]').value = tax_percentage;
 		}
 
