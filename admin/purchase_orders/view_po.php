@@ -167,20 +167,20 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                         <tr class="bg-lightblue">
                             <tr>
                                 <th class="p-1 text-right" colspan="5">Sub Total</th>
-                                <th class="p-1 text-right" id="sub_total"><?php echo number_format($sub_total, 2) ?></th>
+                                <th class="p-1 text-right" id="sub_total"><?php echo $sub_total ?></th>
                             </tr>
                             <tr>
                                 <th class="p-1 text-right" colspan="5">Descuento (<?php echo isset($discount_percentage) ? $discount_percentage : 0 ?>%)
                                 </th>
-                                <th class="p-1 text-right"><?php echo isset($discount_amount) ? number_format($discount_amount) : 0 ?></th>
+                                <th class="p-1 text-right"><?php echo isset($discount_amount) ? $discount_amount : 0 ?></th>
                             </tr>
                             <tr>
                                 <th class="p-1 text-right" colspan="5">Impuestos Incluidos (<?php echo isset($tax_percentage) ? $tax_percentage : 0 ?>%)</th>
-                                <th class="p-1 text-right"><?php echo isset($tax_amount) ? number_format($tax_amount, 2) : 0 ?></th>
+                                <th class="p-1 text-right"><?php echo isset($tax_amount) ? $tax_amount : 0 ?></th>
                             </tr>
                             <tr>
                                 <th class="p-1 text-right" colspan="5">Total</th>
-                                <th class="p-1 text-right" id="total"><?php echo isset($tax_amount) ? number_format($sub_total - $discount_amount + $tax_amount, 2) : 0 ?></th>
+                                <th class="p-1 text-right" id="total"><?php echo isset($tax_amount) ? $sub_total - $discount_amount + $tax_amount : 0 ?></th>
                             </tr>
                         </tr>
                     </tfoot>
