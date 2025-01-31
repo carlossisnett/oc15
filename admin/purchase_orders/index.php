@@ -48,7 +48,11 @@
 					
 						while($row = $qry->fetch_assoc()):
 							$row['item_count'] = $conn->query("SELECT * FROM order_items where po_id = '{$row['id']}'")->num_rows;
-							$row['total_amount'] = $conn->query("SELECT sum(quantity * unit_price) as total FROM order_items where po_id = '{$row['id']}'")->fetch_array()['total'];
+							if($row['total'] != null) {
+								$row['total_amount'] = $row['total'];
+							} else{
+							$row['total_amount'] = $conn->query("SELECT sum(quantity * unit_price) as total FROM order_items where po_id = '{$row['id']}'")->fetch_array()['total'] + $row['tax_amount'] - $row['discount_amount'];
+							}
 					?>
 						<tr>
 							<td class="text-center"><?php echo $i++; ?></td>
