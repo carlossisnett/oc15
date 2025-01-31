@@ -149,7 +149,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 								</tr>
 								<tr>
 									<th class="p-1 text-right" colspan="6">Total</th>
-									<th class="p-1 text-right" id="total">0</th>
+									<th class="p-1 text-right"><input type="text" class="w-100 border-0 text-right" name="total" id="total" readonly></th>
 								</tr>
 							</tr>
 						</tfoot>
@@ -267,7 +267,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 		var tax_amount = Math.round((_total - discount_amount) * (tax_perc))/100;
 		$('[name="tax_amount"]').val(parseFloat(tax_amount).toLocaleString("en-US"))
 		$('#sub_total').text(parseFloat(_total).toLocaleString("en-US"))
-		$('#total').text(parseFloat(_total - discount_amount + tax_amount).toLocaleString("en-US"))
+		$('[name="total"]').val(parseFloat(_total - discount_amount + tax_amount).toLocaleString("en-US"))
 	}
 
 	function calculate_amount(){
@@ -312,7 +312,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 
 		$('#sub_total').text(parseFloat(_total).toLocaleString("en-US"))
 		total_amount = _total - discount_amount + tax_amount;
-		$('#total').text(parseFloat(total_amount).toLocaleString("en-US"))
+		$('[name="total"]').val(parseFloat(total_amount).toLocaleString("en-US"))
 	}
 
 	function _autocomplete(_item){
