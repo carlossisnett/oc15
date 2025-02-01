@@ -35,6 +35,15 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 			width:5vw;
 		}*/
 </style>
+
+<?php
+$id_usuario = $_settings->userdata('id');
+$qry = $conn->query("SELECT * from `users` where id = '$id_usuario' ");
+$qry = $qry->fetch_array();
+if($qry['codSAP'] == null){
+  echo "<script> alert('ADVERTENCIA: Su usuario no tiene código de SAP, por favor contactar a desarrollo@prensa.com para que le asignen uno antes de realizar órdenes de compra') </script>";
+}
+?>
 <div class="card card-outline card-info">
 	<div class="card-header">
 		<h3 class="card-title"><?php echo isset($id) ? "Actualizar los detalles de la solicitud orden de compra": "Nueva solicitud de compra" ?> </h3>
@@ -177,7 +186,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 		</form>
 	</div>
 	<div class="card-footer">
-		<button class="btn btn-flat btn-primary" form="po-form">Guardar</button>
+		<button class="btn btn-flat btn-primary" form="po-form" id="guardar_boton">Guardar</button>
 		<a class="btn btn-flat btn-default" href="?page=purchase_orders">Cancelar</a>
 	</div>
 </div>
@@ -445,6 +454,8 @@ _item.find('.departamento-description').text(ui.item.description)
 				return false;
 			}
 			start_loader();
+			const guardarBoton = document.getElementById('guardar_boton');
+			guardarBoton.disabled = true;
 			$.ajax({
 				url:_base_url_+"classes/Master.php?f=save_po",
 				data: new FormData($(this)[0]),
