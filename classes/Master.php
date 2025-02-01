@@ -162,6 +162,7 @@ Class Master extends DBConnection {
 		extract($_POST);
 		$data = "";
 
+		/*
 		 // Encode the $_POST array into JSON
 		 $jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
 
@@ -169,11 +170,9 @@ Class Master extends DBConnection {
 		 $filePath = 'post_data.json';
 	 
 		 // Write the JSON data to the file
-		 if (file_put_contents($filePath, $jsonData) === true) {
-			 echo "Data successfully written to $filePath.";
-		 } else {
-			 echo "Failed to write data to $filePath.";
-		 }
+		 file_put_contents($filePath, $jsonData);
+
+		 */
 
 	
 		foreach($_POST as $k =>$v){
