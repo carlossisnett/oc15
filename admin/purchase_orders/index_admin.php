@@ -5,7 +5,7 @@
 <?php endif;?>
 <div class="card card-outline card-info">
 	<div class="card-header">
-		<h3 class="card-title">Solicitudes de Compra</h3>
+		<h3 class="card-title">Todas las Solicitudes de Compra</h3>
 		<div class="card-tools">
 			<a href="?page=purchase_orders/manage_po" class="btn btn-flat btn-primary"><span class="fas fa-plus"></span>  Crear Nuevo</a>
 		</div>
@@ -60,7 +60,7 @@
 							<td class=""><?php echo $row['po_no'] ?></td>
 							<td class="text-center"><?php echo $row['SAPDocEntry'] ?></td>
 							<td class=""><?php echo $row['sname'] ?></td>
-							<td class="text-right"><?php echo number_format($row['total_amount'], 2) ?></td>
+							<td class="text-right"><?php echo $row['total_amount'] ?></td>
 							<td>
 								<?php 
 									switch ($row['status']) {
@@ -69,6 +69,9 @@
 											break;
 										case '2':
 											echo '<span class="badge badge-danger">Rechazado</span>';
+											break;
+										case '3':
+											echo '<span class="badge badge-success">Cerrado</span>';
 											break;
 										default:
 											echo '<span class="badge badge-secondary">Pendiente</span>';

@@ -40,17 +40,16 @@
                         </p>
                       </a>
                     </li>
-                      <script>
-                        console.log('Si funciona...');
-                      </script>
+                      <?php if($_settings->userdata('type') < 3): ?>
                     <li class="nav-item dropdown">
-                      <a href="<?php echo base_url ?>admin/?page=purchase_orders/index_admin" class="nav-link nav-all-purchase_orders">
+                      <a href="<?php echo base_url ?>admin/?page=all_purchase_orders" class="nav-link nav-all_purchase_orders">
                         <i class="nav-icon fas fa-file-invoice"></i>
                         <p>
-                          Todas las solicitudes de Compra
+                          Todas las Solicitudes de Compra
                         </p>
                       </a>
                     </li>
+                    <?php endif; ?>
                     <?php if($_settings->userdata('type') == 1): ?>
                     <li class="nav-header">Sistema</li>
                     <li class="nav-item dropdown">
