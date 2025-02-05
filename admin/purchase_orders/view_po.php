@@ -139,25 +139,25 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                             <!--<td class="align-middle p-1 text-right total-price"><?php echo number_format($row['quantity'] * $row['unit_price']) ?></td>-->
                             <!--Campo Cantidad-->
 								<td class="align-middle p-0 text-center">
-									<input type="number" class="text-center w-100 border-0" step="any" name="qty[]" value="<?php echo $row['quantity'] ?>"/>
+									<input type="number" class="text-center w-100 border-0" step="any" name="qty[]" readonly="readonly" value="<?php echo $row['quantity'] ?>"/>
 								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
 									<input type="hidden" name="item_id[]" value="<?php echo $row['item_id'] ?>">
-									<input type="text" class="text-center w-100 border-0 item_id" value="<?php echo $row['nombre_item'] ?>" required/>
+									<input type="text" class="text-center w-100 border-0 item_id" readonly="readonly"  value="<?php echo $row['nombre_item'] ?>" required/>
 								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
 									<input type="hidden" name="marca_id[]" value="<?php echo $row['codigo_marca'] ?>">
-									<input type="text" class="text-center w-100 border-0 marca_id" value="<?php echo $row['nombre_marca'] ?>" required/>
+									<input type="text" class="text-center w-100 border-0 marca_id" readonly="readonly"  value="<?php echo $row['nombre_marca'] ?>" required/>
 								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
 									<input type="hidden" name="departamento_id[]" value="<?php echo $row['codigo_departamento'] ?>">
-									<input type="text" class="text-center w-100 border-0 departamento_id" value="<?php echo $row['nombre_departamento'] ?>" required/>
+									<input type="text" class="text-center w-100 border-0 departamento_id" readonly="readonly" value="<?php echo $row['nombre_departamento'] ?>" required/>
 								</td>
 								<td class="align-middle p-1">
-									<input type="number" step="any" class="text-right w-100 border-0" name="unit_price[]"  value="<?php echo ($row['unit_price']) ?>"/>
+									<input type="number" step="any" class="text-right w-100 border-0" name="unit_price[]" readonly="readonly" value="<?php echo ($row['unit_price']) ?>"/>
 								</td>
 								<td class="align-middle p-1 text-right total-price"><?php echo number_format($row['quantity'] * $row['unit_price'], 2) ?></td>
                         </tr>
@@ -200,6 +200,10 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                                 break;
                             case 2:
                                 echo "<span class='py-2 px-4 btn-flat btn-danger'>Negada</span>";
+                                break;
+
+                            case 3:
+                                echo "<span class='py-2 px-4 btn-flat btn-success'>Cerrada</span>";
                                 break;
                             default:
                                 echo "<span class='py-2 px-4 btn-flat btn-secondary'>Pendiente</span>";
