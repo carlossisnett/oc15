@@ -262,6 +262,111 @@ Class Master extends DBConnection {
 		return json_encode($resp);
 	}
 
+	function save_inventory_request(){
+		extract($_POST);
+		$data = "";
+
+		
+		 // Encode the $_POST array into JSON
+		 $jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
+
+		 // Define the path to the external JSON file
+		 $filePath = 'post_data.json';
+	 
+		 // Write the JSON data to the file
+		 file_put_contents($filePath, $jsonData);
+
+		 
+		
+	
+		foreach($_POST as $k =>$v){
+			if(!in_array($k,array('id','numero_solicitud')) && !is_array($_POST[$k])){
+				$v = addslashes(trim($v));
+				if(!empty($data)) $data .=",";
+				$data .= " `{$k}`='{$v}' ";
+			}
+		}
+		if(!empty($numero_solicitud)){
+			$check = $this->conn->query("SELECT * FROM `solicitud_de_inventario` where `numero_solicitud` = '{$numero_solicitud}' ".($id > 0 ? " and id != '{$id}' ":""))->num_rows;
+			if($this->capture_err())
+				return $this->capture_err();
+			if($check > 0){
+				$resp['status'] = 'po_failed';
+				$resp['msg'] = "El número de Solicitud de inventario existe actualmente";
+				return json_encode($resp);
+				exit;
+			}
+		}else{
+			$numero_solicitud ="";
+			while(true){
+				$numero_solicitud = "PO-".(sprintf("%'.011d", mt_rand(1,99999999999)));
+				$check = $this->conn->query("SELECT * FROM `solicitud_de_inventario` where `numero_solicitud` = '{$numero_solicitud}'")->num_rows;
+				if($check <= 0)
+				break;
+			}
+		}
+
+		$username_ins = $_SESSION['userdata']['username'];
+
+		$data .= ", numero_solicitud = '{$numero_solicitud}' ";
+		$data .= ", username = '{$username_ins}' ";
+		
+
+		//echo $data;
+
+		if(empty($id)){
+			$sql = "INSERT INTO `solicitud_de_inventario` set {$data} ";
+		}else{
+			$sql = "UPDATE `solicitud_de_inventario` set {$data} where id = '{$id}' ";
+		}
+		$save = $this->conn->query($sql);
+		if($save){
+			$resp['status'] = 'success';
+			$solicitud_id = empty($id) ? $this->conn->insert_id : $id ;
+			$resp['id'] = $solicitud_id;
+			$data = "";
+			foreach($item_id as $k =>$v){
+				if(!empty($data)) $data .=",";
+				$data .= "('{$solicitud_id}','{$v}','{$qty[$k]}','{$marca_id[$k]}','{$departamento_id[$k]}')";
+			}
+			if(!empty($data)){
+				$this->conn->query("DELETE FROM `inventory_items` where solicitud_id = '{$solicitud_id}'");
+				$save = $this->conn->query("INSERT INTO `inventory_items` (`solicitud_id`,`item_id`,`quantity`,codigo_marca,codigo_departamento) VALUES {$data} ");
+				//echo "INSERT INTO `inventory_items` (`solicitud_id`,`item_id`,`unit`,`unit_price`,`quantity`) VALUES {$data} ";
+			}
+			if(empty($id))
+			{
+				$ResultRequestSAP = enviar_solicitud_inventario($solicitud_id);
+				$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
+				$pos0Msj = $ArrayResultRequestSAP[0];
+				$pos1DocEntry = $ArrayResultRequestSAP[1];
+				$pos2DocNum = $ArrayResultRequestSAP[2];
+				$this->settings->set_flashdata('success',"Solicitud de inventario guardada correctamente $pos0Msj");
+				$this->conn->query("update `solicitud_de_inventario` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$solicitud_id}'");
+				#echo $Master->guardar_adjunto($pos2DocNum);
+				//enviar_correo();
+				$this->guardar_adjunto($pos1DocEntry);
+				try {
+					$resultado = enviar_email2($solicitud_id, $pos1DocEntry);
+					//$resultado = enviar_email(['nelvir.mirabal@prensa.com','nelvir.mirabal@prensa.com'], '2','3');
+					
+					//echo $resultado; // Salida: Correo enviado para PO ID: 123 con SAP: SAP456789
+				} catch (Exception $e) {
+					echo "Error al enviar el correo: " . $e->getMessage();
+				}
+			}
+			else
+				$this->settings->set_flashdata('success',"Orden de compra actualizada correctamente.");
+		}else{
+			$resp['status'] = 'failed';
+			$resp['err'] = $this->conn->error."[{$sql}]";
+		}
+		return json_encode($resp);
+
+		
+	}
+
+
 
 	function guardar_adjunto($pos1DocEntry){
 		//echo 'entre guardar_adjunto';
@@ -391,6 +496,9 @@ switch ($action) {
 	break;
 	case 'save_po':
 		echo $Master->save_po();
+	break;
+	case 'save_inventory_request':
+		echo $Master->save_inventory_request();
 	break;
 	case 'delete_po':
 		echo $Master->delete_po();
