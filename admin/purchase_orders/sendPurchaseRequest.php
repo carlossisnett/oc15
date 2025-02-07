@@ -153,13 +153,16 @@ function enviar_solicitud_inventario($solicitud_id){
         $hostSAP = 'sap-bo-srvl-mtdtech.skyinone.net';
         $puertoSAP = '50000';
     
-        $companyDBSAP = 'SBO_C184_DB2_TST2';
-        //$companyDBSAP = 'SBO_C184_DB2_PRD';
+        //$companyDBSAP = 'SBO_C184_DB2_TST2';
+        $companyDBSAP = 'SBO_C184_DB2_PRD';
     
+        /*
         if ($_SESSION['userdata']['codSAP'] == '1833')
         {
             $companyDBSAP = 'SBO_C184_DB2_TST2';
         }
+
+        */
 
     
         $userNameSAP = 'SAPABO\\ef82f11a-65d9-44a3';
@@ -170,7 +173,7 @@ function enviar_solicitud_inventario($solicitud_id){
     $servername = "localhost";
     $username = "root";
     $password = "";
-    $dbname = "ordenes_compra_pruebas";
+    $dbname = "ordenes_compra";
 
     $conn = new mysqli($servername, $username, $password, $dbname);
 
