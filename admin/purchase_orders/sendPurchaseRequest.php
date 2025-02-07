@@ -236,7 +236,7 @@ function enviar_solicitud_inventario($solicitud_id){
                         $codigo_departamento = $item['codigo_departamento'];
         
                         // Determinar el grupo de IVA
-                        $vatGroup = ($taxPercentage == 0) ? 'C0' : 'C1';
+                        //$vatGroup = ($taxPercentage == 0) ? 'C0' : 'C1';
         
                         // Construir la línea del documento
                         $line = [
@@ -244,7 +244,7 @@ function enviar_solicitud_inventario($solicitud_id){
                             //'UnitPrice' => $unitPrice,
                             //'Dscription' => $description,
                             'Quantity' => $quantity,
-                            'TaxCode' => $vatGroup,
+                            //'TaxCode' => $vatGroup,
                             'RequiredDate' => $requiredDateYMD,
                             'CostingCode' => $codigo_marca,
                             'CostingCode2' => $codigo_departamento
