@@ -40,6 +40,15 @@
                         </p>
                       </a>
                     </li>
+
+                    <li class="nav-item dropdown">
+                      <a href="<?php echo base_url ?>admin/?page=inventario" class="nav-link nav-inventario">
+                        <i class="nav-icon fas fa-boxes"></i>
+                        <p>
+                          Salida de Inventario
+                        </p>
+                      </a>
+                    </li>
                       <?php if($_settings->userdata('type') == 1 or $_settings->userdata('type') == 2): ?>
                     <li class="nav-item dropdown">
                       <a href="<?php echo base_url ?>admin/?page=all_purchase_orders" class="nav-link nav-all_purchase_orders">

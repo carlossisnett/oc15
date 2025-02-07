@@ -299,7 +299,7 @@ Class Master extends DBConnection {
 		}else{
 			$numero_solicitud ="";
 			while(true){
-				$numero_solicitud = "PO-".(sprintf("%'.011d", mt_rand(1,99999999999)));
+				$numero_solicitud = "SI-".(sprintf("%'.011d", mt_rand(1,99999999999)));
 				$check = $this->conn->query("SELECT * FROM `solicitud_de_inventario` where `numero_solicitud` = '{$numero_solicitud}'")->num_rows;
 				if($check <= 0)
 				break;
@@ -345,9 +345,9 @@ Class Master extends DBConnection {
 				$this->conn->query("update `solicitud_de_inventario` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$solicitud_id}'");
 				#echo $Master->guardar_adjunto($pos2DocNum);
 				//enviar_correo();
-				$this->guardar_adjunto($pos1DocEntry);
+				//$this->guardar_adjunto($pos1DocEntry);
 				try {
-					$resultado = enviar_email2($solicitud_id, $pos1DocEntry);
+					$resultado = enviar_email_solicitud_inventario($solicitud_id, $pos1DocEntry);
 					//$resultado = enviar_email(['nelvir.mirabal@prensa.com','nelvir.mirabal@prensa.com'], '2','3');
 					
 					//echo $resultado; // Salida: Correo enviado para PO ID: 123 con SAP: SAP456789
