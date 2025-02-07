@@ -46,7 +46,7 @@
                         <i class="nav-icon fas fa-boxes"></i>
                         <p>
                           Salida de Inventario
-                        </p>
+                      </p>
                       </a>
                     </li>
                       <?php if($_settings->userdata('type') == 1 or $_settings->userdata('type') == 2): ?>

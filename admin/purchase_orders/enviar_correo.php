@@ -61,7 +61,7 @@
     
     }
 
-    function enviar_email2($id, $numero_sap) 
+function enviar_email2($id, $numero_sap) 
     {
 
         /*if (!is_null($numero_sap) && $numero_sap > 0) 
@@ -446,7 +446,7 @@
             $mail->addCC('desarrollo@prensa.com');
             }
             */
-            //$mail->addAddress('almacen@prensa.com');
+            $mail->addAddress('almacen@prensa.com');
             $mail->addCC($destinatario);
             $mail->addCC('desarrollo@prensa.com');
             // Asunto y cuerpo del correo
