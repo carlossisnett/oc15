@@ -246,6 +246,11 @@ Class Master extends DBConnection {
 				$this->guardar_adjunto($pos1DocEntry);
 				try {
 					$resultado = enviar_email2($po_id, $pos1DocEntry);
+
+					/*
+					if ($po_id != 233)
+					{$resultado = enviar_email2($po_id, $pos1DocEntry);}
+					*/
 					//$resultado = enviar_email(['nelvir.mirabal@prensa.com','nelvir.mirabal@prensa.com'], '2','3');
 					
 					//echo $resultado; // Salida: Correo enviado para PO ID: 123 con SAP: SAP456789
@@ -341,7 +346,7 @@ Class Master extends DBConnection {
 				$pos0Msj = $ArrayResultRequestSAP[0];
 				$pos1DocEntry = $ArrayResultRequestSAP[1];
 				$pos2DocNum = $ArrayResultRequestSAP[2];
-				$this->settings->set_flashdata('success',"Solicitud de inventario guardada correctamente $pos0Msj");
+				$this->settings->set_flashdata('success',"Salida de inventario guardada correctamente $pos0Msj");
 				$this->conn->query("update `solicitud_de_inventario` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$solicitud_id}'");
 				#echo $Master->guardar_adjunto($pos2DocNum);
 				//enviar_correo();
@@ -356,7 +361,7 @@ Class Master extends DBConnection {
 				}
 			}
 			else
-				$this->settings->set_flashdata('success',"Orden de compra actualizada correctamente.");
+				$this->settings->set_flashdata('success',"Salida de inventario actualizada correctamente.");
 		}else{
 			$resp['status'] = 'failed';
 			$resp['err'] = $this->conn->error."[{$sql}]";
