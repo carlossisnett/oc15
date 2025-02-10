@@ -453,6 +453,8 @@ _item.find('.departamento-description').text(ui.item.description)
 				alert_toast(" Agregue al menos 1 elemento en la lista.",'warning')
 				return false;
 			}
+			let rawPrice = $('#total').val().replace(/,/g, ''); // Remove commas
+			$('#total').val(rawPrice); // Set the value without commas before submitting
 			start_loader();
 			const guardarBoton = document.getElementById('guardar_boton');
 			guardarBoton.disabled = true;
