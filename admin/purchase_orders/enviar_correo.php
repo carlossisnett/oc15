@@ -61,8 +61,7 @@
     
     }
 
-function enviar_email2($id, $numero_sap) 
-    {
+function enviar_email2($id, $numero_sap) {
 
         /*if (!is_null($numero_sap) && $numero_sap > 0) 
         {
@@ -275,7 +274,7 @@ function enviar_email2($id, $numero_sap)
         }
     }
 
-    function enviar_email_solicitud_inventario($id, $numero_sap){
+function enviar_email_solicitud_inventario($id, $numero_sap){
 
         /*if (!is_null($numero_sap) && $numero_sap > 0) 
         {
