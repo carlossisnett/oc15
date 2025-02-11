@@ -178,8 +178,89 @@ if($qry['codSAP'] == null){
 							</select>
 						</div>
 						<div class="col-md-6 form-group">
-    						<label for="ruta_adjunto" class="control-label">Adjuntar archivo:</label>
-    						<input type="file" id="ruta_adjunto" name="ruta_adjunto[]" class="form-control form-control-file" multiple> 
+    						<label for="ruta_adjunto" class="control-label">
+								Adjuntar archivos:
+							</label>
+							<div id="contenedor_adjunto_1" style="display: flex; align-items: center; gap: 10px;">
+								<input type="file" id="ruta_adjunto_1" name="ruta_adjunto_1" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								
+								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(1)">
+									Borrar 🗑️
+								</button>
+								</div>
+
+							<div id="contenedor_adjunto_2" style="display: flex; align-items: center; gap: 10px;" hidden="true">
+								<input type="file" id="ruta_adjunto_2" name="ruta_adjunto_2" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								
+								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(2)">
+									Borrar 🗑️
+								</button>
+								</div>
+
+								<div id="contenedor_adjunto_3" style="display: flex; align-items: center; gap: 10px;" hidden="true">
+								<input type="file" id="ruta_adjunto_3" name="ruta_adjunto_3" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								
+								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(3)">
+									Borrar 🗑️
+								</button>
+								</div>
+
+								<div id="contenedor_adjunto_4" style="display: flex; align-items: center; gap: 10px;" hidden="true">
+								<input type="file" id="ruta_adjunto_4" name="ruta_adjunto_4" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								
+								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(4)">
+									Borrar 🗑️
+								</button>
+								</div>
+
+								<div id="contenedor_adjunto_5" style="display: flex; align-items: center; gap: 10px;" hidden="true">
+								<input type="file" id="ruta_adjunto_5" name="ruta_adjunto_5" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								
+								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(5)">
+									Borrar 🗑️
+								</button>
+								</div>
+
+								<div id="contenedor_adjunto_6" style="display: flex; align-items: center; gap: 10px;" hidden="true">
+								<input type="file" id="ruta_adjunto_6" name="ruta_adjunto_6" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								
+								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(6)">
+									Borrar 🗑️
+								</button>
+								</div>
+
+								<div id="contenedor_adjunto_7" style="display: flex; align-items: center; gap: 10px;" hidden="true">
+								<input type="file" id="ruta_adjunto_7" name="ruta_adjunto_7" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								
+								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(7)">
+									Borrar 🗑️
+								</button>
+								</div>
+
+								<div id="contenedor_adjunto_8" style="display: flex; align-items: center; gap: 10px;" hidden="true">
+								<input type="file" id="ruta_adjunto_8" name="ruta_adjunto_8" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								
+								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(8)">
+									Borrar 🗑️
+								</button>
+								</div>
+
+								<div id="contenedor_adjunto_9" style="display: flex; align-items: center; gap: 10px;" hidden="true">
+								<input type="file" id="ruta_adjunto_9" name="ruta_adjunto_9" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								
+								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(9)">
+									Borrar 🗑️
+								</button>
+								</div>
+
+								<div id="contenedor_adjunto_10" style="display: flex; align-items: center; gap: 10px;" hidden="true">
+								<input type="file" id="ruta_adjunto_10" name="ruta_adjunto_10" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								
+								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(10)">
+									Borrar 🗑️
+								</button>
+								</div>
+							<div> <button id="otro_adjunto"> Agregar otro adjunto </button> </div>
 						</div>
 					</div>
 				</div>
@@ -409,6 +490,36 @@ _item.find('.departamento-description').text(ui.item.description)
 }
 });
 
+}
+
+let adjunto = 2;
+
+document.getElementById("otro_adjunto").addEventListener("click", function(event){
+  event.preventDefault()
+  let adjunto_element = document.getElementById('contenedor_adjunto_' + adjunto.toString());
+	adjunto_element.hidden = false;
+	adjunto = adjunto + 1;
+});
+
+/*
+
+document.getElementById("boton_borrar_adjunto").addEventListener("click", function(event){
+  event.preventDefault()
+});
+*/
+
+const deleteButtons = document.querySelectorAll('.boton-borrar');
+
+deleteButtons.forEach(button => {
+  button.addEventListener('click', function(event) {
+    event.preventDefault() 
+  });
+});
+
+
+function erase_adjunto(id){
+	let adjunto_element = document.getElementById('ruta_adjunto_' + id.toString());
+	adjunto_element.value = "";
 }
 
 	$(document).ready(function(){
