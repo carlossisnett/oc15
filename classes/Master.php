@@ -243,7 +243,7 @@ Class Master extends DBConnection {
 				$this->conn->query("update `po_list` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$po_id}'");
 				#echo $Master->guardar_adjunto($pos2DocNum);
 				//enviar_correo();
-				$this->guardar_adjunto($pos1DocEntry);
+				$this->guardar_adjunto($po_no);
 				try {
 					$resultado = enviar_email2($po_id, $pos1DocEntry);
 
@@ -373,10 +373,27 @@ Class Master extends DBConnection {
 
 
 
-	function guardar_adjunto($pos1DocEntry){
+function guardar_adjunto($po_no){
+
+	$order = $this->conn->query("SELECT * FROM `po_list` where po_no = '{$po_no}'");
+	$row = $order->fetch_array();
+	$id = $row['id'];
+
+	/*
+
+	$jsonData = json_encode($row, JSON_PRETTY_PRINT);
+
+	// Define the path to the external JSON file
+	$filePath = 'order_data.json';
+
+	// Write the JSON data to the file
+	file_put_contents($filePath, $jsonData);
+
+	*/
+
 		//echo 'entre guardar_adjunto';
 	/* prueba adjuntos */
-// Manejar archivo adjunto
+	// Manejar archivo adjunto
    // Ruta local donde deseas guardar el archivo (NO usar una URL HTTP)
    $upload_dir = "../uploads/";
    //echo  $upload_dir;
@@ -389,7 +406,7 @@ Class Master extends DBConnection {
    // Generamos la fecha actual en formato ISO (YYYY-MM-DD)
    $fechaISO = date('Y-m-d');
 
-   $file_dir = $upload_dir . $fechaISO . '_OC_' . $pos1DocEntry;
+   $file_dir = $upload_dir . $fechaISO . '_OCID_' . $id;
    //echo 'file_dir' . $file_dir;
    if(!is_dir($file_dir)){
 	   mkdir($file_dir, 0755, true); // Crea la carpeta con permisos 0755
@@ -397,35 +414,35 @@ Class Master extends DBConnection {
    
 //if(isset($_FILES['ruta_adjunto']) && $_FILES['ruta_adjunto']['error'] == 0){
 
-	foreach($_FILES['ruta_adjunto']['tmp_name'] as $key => $tmp_name){
-    // Nombre original del archivo
-    $file_name = $_FILES['ruta_adjunto']['name'][$key];
-	//echo  $file_name;
 
-    // Ruta temporal del archivo en el servidor
-    $file_tmp = $_FILES['ruta_adjunto']['tmp_name'][$key];
+		$i = 1;
+	while($i < 11){
+		if($_FILES['ruta_adjunto_' . strval($i)]['name'] != ""){
+			// Nombre original del archivo
+			$file_name = $_FILES['ruta_adjunto_' . strval($i)]['name'];
+			//echo  $file_name;
 
- 
+			// Ruta temporal del archivo en el servidor
+			$file_tmp = $_FILES['ruta_adjunto_' . strval($i)]['tmp_name'];
 
-	// Construimos la ruta completa concatenando: carpeta + fechaISO + _OC_ + DocNumSAP + nombre original
-	$file_path = rtrim($file_dir, '/\\') . '/' . basename($file_name);
-	//echo 'file_path' . $file_path;
-    // Define la ruta completa donde se guardará el archivo
-    //$file_path = $upload_dir . basename($file_name);
+	
 
-    // Mueve el archivo desde la ruta temporal a la carpeta local
-    if(move_uploaded_file($file_tmp, $file_path)){
-        //echo "Archivo subido exitosamente. Ruta: " . realpath($file_path);
-    } else {
-        //echo "Error al subir el archivo.";
-    }
+			// Construimos la ruta completa concatenando: carpeta + fechaISO + _OCID_ + id + nombre original
+			$file_path = rtrim($file_dir, '/\\') . '/' . basename($file_name);
+			//echo 'file_path' . $file_path;
+			// Define la ruta completa donde se guardará el archivo
+			//$file_path = $upload_dir . basename($file_name);
 
-}
-//}
-
-		/* fin prueba adjuntos */
-
+			// Mueve el archivo desde la ruta temporal a la carpeta local
+			if(move_uploaded_file($file_tmp, $file_path)){
+				//echo "Archivo subido exitosamente. Ruta: " . realpath($file_path);
+			} else {
+				//echo "Error al subir el archivo.";
+			}
+		}
+		$i++;
 	}
+}
 	function delete_po(){
 		extract($_POST);
 		$del = $this->conn->query("DELETE FROM `po_list` where unit_id = '{$id}'");

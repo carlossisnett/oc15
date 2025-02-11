@@ -260,7 +260,7 @@ if($qry['codSAP'] == null){
 									Borrar 🗑️
 								</button>
 								</div>
-							<div> <button id="otro_adjunto"> Agregar otro adjunto </button> </div>
+							<div> <button id="otro_adjunto" class="btn btn-flat btn-default"> Agregar otro adjunto </button> </div>
 						</div>
 					</div>
 				</div>

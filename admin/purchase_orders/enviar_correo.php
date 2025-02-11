@@ -242,7 +242,7 @@ function enviar_email2($id, $numero_sap) {
             // Construir la ruta de la carpeta uploads
             // Asumiendo que la fecha es la fecha_created, ajusta el formato según tus necesidades
             $fecha = date('Y-m-d', strtotime($date_created)); // Formato: 2023-10-13
-            $carpeta = "../uploads/{$fecha}_OC_{$numero_sap}/"; // Asegúrate de que la ruta sea correcta
+            $carpeta = "../uploads/{$fecha}_OCID_{$id}/"; // Asegúrate de que la ruta sea correcta
     
             //echo 'carpeta ' . $carpeta;
 
