@@ -80,7 +80,8 @@ if($qry['codSAP'] == null){
 							<col width="15%">
 							<col width="15%">
 							<col width="15%">
-							<col width="15%">
+							<col width="7.5%">
+							<col width="7.5%">
 						</colgroup>
 						<thead>
 							<tr class="bg-navy disabled">
@@ -89,6 +90,7 @@ if($qry['codSAP'] == null){
 								<th class="px-1 py-1 text-center">Artículo</th>
 								<th class="px-1 py-1 text-center">Marca</th>
 								<th class="px-1 py-1 text-center">Departamento</th>
+								<th class="px-1 py-1 text-center">URL</th>
 								<th class="px-1 py-1 text-center">Precio</th>
 								<th class="px-1 py-1 text-center">Total</th>
 							</tr>
