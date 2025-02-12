@@ -127,13 +127,6 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                      
                         ?>
                         <tr class="po-item" data-id="">
-                            <!--<td class="align-middle p-0 text-center"><?php echo $row['quantity'] ?></td>-->
-                            <!--<td class="align-middle p-1"><?php echo $row['unit'] ?></td>-->
-                            <!--<td class="align-middle p-1"><?php echo $row['name'] ?></td>-->
-                            <!--<td class="align-middle p-1 item-description"><?php echo $row['description'] ?></td>-->
-                            <!--<td class="align-middle p-1"><?php echo number_format($row['unit_price']) ?></td>-->
-                            <!--<td class="align-middle p-1 text-right total-price"><?php echo number_format($row['quantity'] * $row['unit_price']) ?></td>-->
-                            <!--Campo Cantidad-->
 								<td class="align-middle p-0 text-center">
 									<input type="number" class="text-center w-100 border-0" step="any" name="qty[]" readonly="readonly" value="<?php echo $row['quantity'] ?>"/>
 								</td>
