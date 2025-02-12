@@ -103,14 +103,16 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 							<col width="30%">
 							<col width="15%">
 							<col width="20%">
-							<col width="15%">
-							<col width="15%">
+                            <col width="15%">
+							<col width="7.5%">
+							<col width="7.5%">
                     </colgroup>
                     <thead>
                             <th class="bg-navy disabled text-light px-1 py-1 text-center">Cantidad</th>
                             <th class="px-1 py-1 text-center">Artículo</th>
 								<th class="px-1 py-1 text-center">Marca</th>
 								<th class="px-1 py-1 text-center">Departamento</th>
+                                <th class="px-1 py-1 text-center">Enlace🌐</th>
 								<th class="px-1 py-1 text-center">Precio</th>
 								<th class="px-1 py-1 text-center">Total</th>
                         </tr>
@@ -232,6 +234,9 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 			<input type="text" class="text-center w-100 border-0 item_id" required/>
 		</td>
 		<td class="align-middle p-1 item-description"></td>
+        <td class="align-middle p-1">
+			<input type="text" class="text-center w-100 border-0" name="url[]" value="<?php echo isset($row['url']) ? ($row['url']) : "" ?>" />
+		</td>
 		<td class="align-middle p-1">
 			<input type="number" step="any" class="text-right w-100 border-0" name="unit_price[]" value="0"/>
 		</td>
