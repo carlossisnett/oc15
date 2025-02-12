@@ -90,7 +90,7 @@ if($qry['codSAP'] == null){
 								<th class="px-1 py-1 text-center">Artículo</th>
 								<th class="px-1 py-1 text-center">Marca</th>
 								<th class="px-1 py-1 text-center">Departamento</th>
-								<th class="px-1 py-1 text-center">URL</th>
+								<th class="px-1 py-1 text-center">Enlace🌐 (opcional)</th>
 								<th class="px-1 py-1 text-center">Precio</th>
 								<th class="px-1 py-1 text-center">Total</th>
 							</tr>
@@ -133,6 +133,9 @@ if($qry['codSAP'] == null){
 									<input type="text" class="text-center w-100 border-0 departamento_id" value="<?php echo $row['nombre_departamento'] ?>" required/>
 								</td>
 								<td class="align-middle p-1">
+									<input type="text" class="text-center w-100 border-0" name="url[]" value="<?php echo isset($row['url']) ? ($row['url']) : "" ?>" />
+								</td>
+								<td class="align-middle p-1">
 									<input type="number" step="any" class="text-right w-100 border-0" name="unit_price[]"  value="<?php echo ($row['unit_price']) ?>"/>
 								</td>
 								<td class="align-middle p-1 text-right total-price"><?php echo number_format($row['quantity'] * $row['unit_price']) ?></td>
@@ -142,17 +145,17 @@ if($qry['codSAP'] == null){
 						<tfoot>
 							<tr class="bg-lightblue">
 								<tr>
-									<th class="p-1 text-right" colspan="6"><span><button class="btn btn btn-sm btn-flat btn-primary py-0 mx-1" type="button" id="add_row">Agregar Fila</button></span> Sub Total</th>
+									<th class="p-1 text-right" colspan="7"><span><button class="btn btn btn-sm btn-flat btn-primary py-0 mx-1" type="button" id="add_row">Agregar Fila</button></span> Sub Total</th>
 									<th class="p-1 text-right" id="sub_total">0</th>
 								</tr>
 								<tr>
-									<th class="p-1 text-right" colspan="6">Descuento (%)
+									<th class="p-1 text-right" colspan="7">Descuento (%)
 									<input type="number" step="any" name="discount_percentage" class="border-light text-right" value="<?php echo isset($discount_percentage) ? $discount_percentage : null ?>">
 									</th>
 									<th class="p-1"><input type="text" class="w-100 border-0 text-right" value="<?php echo isset($discount_amount) ? $discount_amount : null ?>" name="discount_amount"></th>
 								</tr>
 								<tr>
-									<th class="p-1 text-right" colspan="6">Impuestos (%)
+									<th class="p-1 text-right" colspan="7">Impuestos (%)
 									<!--<input type="number" step="any" name="tax_percentage" class="border-light text-right" value="<?php echo isset($tax_percentage) ? $tax_percentage : null ?>">-->
 									<input type="number" step="any" name="tax_percentage" class="border-light text-right" 
         							value="<?php echo isset($tax_percentage) && $tax_percentage != 0 ? $tax_percentage : '' ?>">
@@ -160,7 +163,7 @@ if($qry['codSAP'] == null){
 									<th class="p-1"><input type="text" class="w-100 border-0 text-right" value="<?php echo isset($tax_amount) ? $tax_amount : null ?>" name="tax_amount"></th>
 								</tr>
 								<tr>
-									<th class="p-1 text-right" colspan="6">Total</th>
+									<th class="p-1 text-right" colspan="7">Total</th>
 									<th class="p-1 text-right"><input type="text" class="w-100 border-0 text-right" name="total" id="total" readonly></th>
 								</tr>
 							</tr>
@@ -290,6 +293,7 @@ if($qry['codSAP'] == null){
 			<input type="text" class="text-center w-100 border-0 item_id" required/>
 		</td>
 		<td class="align-middle p-1 item-description"></td>
+		<td class="align-middle p-1 item-url"> <input type="text" name="url[]" class="text-center w-100 border-0 item_url"/></td>
 		<td class="align-middle p-1">
 			<input type="number" step="any" class="text-right w-100 border-0" name="unit_price[]" value="0"/>
 		</td>
@@ -320,6 +324,9 @@ if($qry['codSAP'] == null){
 								<td class="align-middle p-1">
 									<input type="hidden" name="departamento_id[]">
 									<input type="text" class="text-left w-100 border-0 departamento_id" required/>
+								</td>
+								<td class="align-middle p-1">
+									<input type="text" name="url[]" class="text-left w-100 border-0" />
 								</td>
 								<td class="align-middle p-1">
 									<input type="number" step="any" class="text-right w-100 border-0" name="unit_price[]">

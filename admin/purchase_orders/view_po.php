@@ -158,6 +158,9 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 									<input type="hidden" name="departamento_id[]" value="<?php echo $row['codigo_departamento'] ?>">
 									<input type="text" class="text-center w-100 border-0 departamento_id" readonly="readonly" value="<?php echo $row['nombre_departamento'] ?>" required/>
 								</td>
+                                <td class="align-middle p-1">
+									<input type="text" class="text-center w-100 border-0" readonly="readonly" name="url[]" value="<?php echo isset($row['url']) ? ($row['url']) : "" ?>" />
+								</td>
 								<td class="align-middle p-1">
 									<input type="number" step="any" class="text-right w-100 border-0" name="unit_price[]" readonly="readonly" value="<?php echo ($row['unit_price']) ?>"/>
 								</td>
@@ -168,20 +171,20 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                     <tfoot>
                         <tr class="bg-lightblue">
                             <tr>
-                                <th class="p-1 text-right" colspan="5">Sub Total</th>
+                                <th class="p-1 text-right" colspan="6">Sub Total</th>
                                 <th class="p-1 text-right" id="sub_total"><?php echo $sub_total ?></th>
                             </tr>
                             <tr>
-                                <th class="p-1 text-right" colspan="5">Descuento (<?php echo isset($discount_percentage) ? $discount_percentage : 0 ?>%)
+                                <th class="p-1 text-right" colspan="6">Descuento (<?php echo isset($discount_percentage) ? $discount_percentage : 0 ?>%)
                                 </th>
                                 <th class="p-1 text-right"><?php echo isset($discount_amount) ? $discount_amount : 0 ?></th>
                             </tr>
                             <tr>
-                                <th class="p-1 text-right" colspan="5">Impuestos Incluidos (<?php echo isset($tax_percentage) ? $tax_percentage : 0 ?>%)</th>
+                                <th class="p-1 text-right" colspan="6">Impuestos Incluidos (<?php echo isset($tax_percentage) ? $tax_percentage : 0 ?>%)</th>
                                 <th class="p-1 text-right"><?php echo isset($tax_amount) ? $tax_amount : 0 ?></th>
                             </tr>
                             <tr>
-                                <th class="p-1 text-right" colspan="5">Total</th>
+                                <th class="p-1 text-right" colspan="6">Total</th>
                                 <th class="p-1 text-right" id="total"><?php echo isset($total) ? $total : $sub_total - $discount_amount + $tax_amount ?></th>
                             </tr>
                         </tr>
