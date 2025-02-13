@@ -141,7 +141,7 @@ Class Master extends DBConnection {
 	}
 	function search_marca(){
 		extract($_POST);
-		$qry = $this->conn->query("SELECT codigo_ccosto, concat(codigo_ccosto, ' ' , `nombre_ccosto`) as `nombre_ccosto` FROM centro_costo where dimension_ccosto = 1 and activo = 'Y' and `nombre_ccosto` LIKE '%{$q}%'");
+		$qry = $this->conn->query("SELECT codigo_ccosto, concat(codigo_ccosto, ' ' , `nombre_ccosto`) as `nombre_ccosto` FROM centro_costo where dimension_ccosto = 1 and activo = 'Y' and `nombre_ccosto` LIKE '%{$q}%' order by `nombre_ccosto`");
 		$data = array();
 		while($row = $qry->fetch_assoc()){
 			$data[] = array("label"=>$row['nombre_ccosto'],"id"=>$row['codigo_ccosto'],"name"=>$row['nombre_ccosto']);
@@ -151,7 +151,7 @@ Class Master extends DBConnection {
 	function search_departamento(){
 		extract($_POST);
 		
-		$qry = $this->conn->query("SELECT codigo_ccosto, concat(codigo_ccosto, ' ' , `nombre_ccosto`) as `nombre_ccosto` FROM centro_costo where dimension_ccosto = 2 and activo = 'Y' and `nombre_ccosto` LIKE '%{$q}%'");
+		$qry = $this->conn->query("SELECT codigo_ccosto, concat(codigo_ccosto, ' ' , `nombre_ccosto`) as `nombre_ccosto` FROM centro_costo where dimension_ccosto = 2 and activo = 'Y' and `nombre_ccosto` LIKE '%{$q}%' order by `nombre_ccosto`");
 		$data = array();
 		while($row = $qry->fetch_assoc()){
 			$data[] = array("label"=>$row['nombre_ccosto'],"id"=>$row['codigo_ccosto'],"name"=>$row['nombre_ccosto']);
