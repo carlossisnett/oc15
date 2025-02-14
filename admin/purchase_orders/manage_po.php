@@ -36,6 +36,41 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 		}*/
 </style>
 
+<style>
+        /* Basic modal styles */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0; 
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .modal input {
+            width: 100%;
+            padding: 10px;
+            font-size: 18px;
+        }
+        .close {
+            cursor: pointer;
+            color: red;
+            font-size: 20px;
+			align-self: flex-end;
+        }
+    </style>
+
 <?php
 $id_usuario = $_settings->userdata('id');
 $qry = $conn->query("SELECT * from `users` where id = '$id_usuario' ");
@@ -76,7 +111,8 @@ if($qry['codSAP'] == null){
 						<colgroup>
 							<col width="5%">
 							<col width="5%">
-							<col width="30%">
+							<col width="15%">
+							<col width="15%">
 							<col width="15%">
 							<col width="15%">
 							<col width="15%">
@@ -88,6 +124,7 @@ if($qry['codSAP'] == null){
 								<th class="px-1 py-1 text-center"></th>
 								<th class="px-1 py-1 text-center">Cantidad</th>
 								<th class="px-1 py-1 text-center">Artículo</th>
+								<th class="px-1 py-1 text-center">Descripción (opcional)</th>
 								<th class="px-1 py-1 text-center">Marca</th>
 								<th class="px-1 py-1 text-center">Departamento</th>
 								<th class="px-1 py-1 text-center">Enlace🌐 (opcional)</th>
@@ -122,6 +159,10 @@ if($qry['codSAP'] == null){
 									<input type="hidden" name="item_id[]" value="<?php echo $row['item_id'] ?>">
 									<input type="text" class="text-center w-100 border-0 item_id" value="<?php echo $row['nombre_item'] ?>" required/>
 								</td>
+
+								<td class="align-middle p-1">
+									<input type="text" class="text-center w-100 border-0" name="descripcion[]" value="<?php echo isset($row['descripcion']) ? ($row['descripcion']) : "" ?>" />
+								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
 									<input type="hidden" name="marca_id[]" value="<?php echo $row['codigo_marca'] ?>">
@@ -145,17 +186,17 @@ if($qry['codSAP'] == null){
 						<tfoot>
 							<tr class="bg-lightblue">
 								<tr>
-									<th class="p-1 text-right" colspan="7"><span><button class="btn btn btn-sm btn-flat btn-primary py-0 mx-1" type="button" id="add_row">Agregar Fila</button></span> Sub Total</th>
+									<th class="p-1 text-right" colspan="8"><span><button class="btn btn btn-sm btn-flat btn-primary py-0 mx-1" type="button" id="add_row">Agregar Fila</button></span> Sub Total</th>
 									<th class="p-1 text-right" id="sub_total">0</th>
 								</tr>
 								<tr>
-									<th class="p-1 text-right" colspan="7">Descuento (%)
+									<th class="p-1 text-right" colspan="8">Descuento (%)
 									<input type="number" step="any" name="discount_percentage" class="border-light text-right" value="<?php echo isset($discount_percentage) ? $discount_percentage : null ?>">
 									</th>
 									<th class="p-1"><input type="text" class="w-100 border-0 text-right" value="<?php echo isset($discount_amount) ? $discount_amount : null ?>" name="discount_amount"></th>
 								</tr>
 								<tr>
-									<th class="p-1 text-right" colspan="7">Impuestos (%)
+									<th class="p-1 text-right" colspan="8">Impuestos (%)
 									<!--<input type="number" step="any" name="tax_percentage" class="border-light text-right" value="<?php echo isset($tax_percentage) ? $tax_percentage : null ?>">-->
 									<input type="number" step="any" name="tax_percentage" class="border-light text-right" 
         							value="<?php echo isset($tax_percentage) && $tax_percentage != 0 ? $tax_percentage : '' ?>">
@@ -163,7 +204,7 @@ if($qry['codSAP'] == null){
 									<th class="p-1"><input type="text" class="w-100 border-0 text-right" value="<?php echo isset($tax_amount) ? $tax_amount : null ?>" name="tax_amount"></th>
 								</tr>
 								<tr>
-									<th class="p-1 text-right" colspan="7">Total</th>
+									<th class="p-1 text-right" colspan="8">Total</th>
 									<th class="p-1 text-right"><input type="text" class="w-100 border-0 text-right" name="total" id="total" readonly></th>
 								</tr>
 							</tr>
@@ -315,6 +356,10 @@ if($qry['codSAP'] == null){
 									<input type="hidden" name="item_id[]">
 									<input type="text" class="text-left w-100 border-0 item_id" required/>
 								</td>
+
+								<td class="align-middle p-1">
+									<input type="text" id="description_input" name="description[]" class="text-left w-100 border-0" />
+								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
 									<input type="hidden" name="marca_id[]">
@@ -334,6 +379,196 @@ if($qry['codSAP'] == null){
 								<td class="align-middle p-1 text-right total-price">0</td>
 							</tr>
 </table>
+
+<!-- Button to trigger modal -->
+<button id="mbtn">Open Modal</button>
+    
+<!-- The Modal -->
+<div id="modalDialog" class="modal">
+    <div class="modal-content animate-top">
+        <div class="modal-header">
+            <h5 class="modal-title">Descripción (opcional)</h5>
+            <button type="button" class="close">
+                <span aria-hidden="true">x</span>
+            </button>
+        </div>
+        <div class="modal-body">
+			<input type="text" id="modal_input" class="form-control" placeholder="Type something...">
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary close">Close</button>
+            <button type="button" class="btn btn-primary">Save changes</button>
+        </div>
+    </div>
+</div>
+
+
+<script>
+// Get the modal
+var modal = $('#modalDialog');
+
+// Get the button that opens the modal
+var btn = $("#mbtn");
+
+// Get the <span> element that closes the modal
+var span = $(".close");
+
+var modal_input = document.getElementById("modal_input");
+var description_input = document.getElementById("description_input");
+
+$(document).ready(function(){
+    // When the user clicks the button, open the modal 
+    btn.on('click', function() {
+		modal_input.value = description_input.value;
+        modal.show();
+    });
+    
+    // When the user clicks on <span> (x), close the modal
+    span.on('click', function() {
+        modal.fadeOut();
+    });
+});
+
+// When the user clicks anywhere outside of the modal, close it
+$('body').bind('click', function(e){
+    if($(e.target).hasClass("modal")){
+        modal.fadeOut();
+    }
+});
+    </script>
+
+<style>
+.animate-top{
+    position:relative;
+    animation:animatetop 0.4s
+}
+@keyframes animatetop{
+    from{top:-300px;opacity:0} 
+    to{top:0;opacity:1}
+}
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.275);
+}
+
+.modal-content {
+  margin: 5% auto;
+  width: 500px;
+  max-width: 90%;
+  background-color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.175);
+  border-radius: .3rem;
+  outline: 0;
+}
+.modal-header {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: start;
+    -ms-flex-align: start;
+    align-items: flex-start;
+    -webkit-box-pack: justify;
+    -ms-flex-pack: justify;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid #e9ecef;
+    border-top-left-radius: .3rem;
+    border-top-right-radius: .3rem;
+}
+.modal-title {
+    margin-bottom: 0;
+    line-height: 1.5;
+    margin-top: 0;
+    font-size: 1.25rem;
+}
+.modal-header .close {
+    float: right;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    text-shadow: 0 1px 0 #fff;
+    opacity: .5;
+    padding: 1rem;
+    margin: -1rem -1rem -1rem auto;
+    background-color: transparent;
+    border: 0;
+}
+.close:not(:disabled):not(.disabled) {
+    cursor: pointer;
+}
+
+.modal-body {
+    flex: 1 1 auto;
+    padding: 1rem;
+}
+.modal-body p {
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+.modal-footer {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-box-pack: end;
+    -ms-flex-pack: end;
+    justify-content: flex-end;
+    padding: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+.modal-footer>*{
+    margin: 5px;
+}
+
+/* buttons */
+.btn {
+    display: inline-block;
+    font-weight: 400;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    border: 1px solid transparent;
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    border-radius: .25rem;
+    cursor: pointer;
+}
+.btn:focus, .btn:hover {
+    text-decoration: none;
+}
+.btn-primary {
+    color: #fff;
+    background-color: #007bff;
+    border-color: #007bff;
+}
+.btn-primary:hover {
+    color: #fff;
+    background-color: #0069d9;
+    border-color: #0062cc;
+}
+.btn-secondary {
+    color: #fff;
+    background-color: #7c8287;
+    border-color: #7c8287;
+}
+.btn-secondary:hover {
+    color: #fff;
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+</style>
 <script>
 	function rem_item(_this){
 		_this.closest('tr').remove()
