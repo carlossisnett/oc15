@@ -100,7 +100,8 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                 <table class="table table-striped table-bordered" id="item-list">
                     <colgroup>
                             <col width="5%">
-							<col width="30%">
+							<col width="15%">
+                            <col width="15%">
 							<col width="15%">
 							<col width="20%">
                             <col width="15%">
@@ -110,6 +111,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                     <thead>
                             <th class="bg-navy disabled text-light px-1 py-1 text-center">Cantidad</th>
                             <th class="px-1 py-1 text-center">Artículo</th>
+                            <th class="px-1 py-1 text-center">Descripción</th>
 								<th class="px-1 py-1 text-center">Marca</th>
 								<th class="px-1 py-1 text-center">Departamento</th>
                                 <th class="px-1 py-1 text-center">Enlace🌐</th>
@@ -148,6 +150,10 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 									<input type="hidden" name="item_id[]" value="<?php echo $row['item_id'] ?>">
 									<input type="text" class="text-center w-100 border-0 item_id" readonly="readonly"  value="<?php echo $row['nombre_item'] ?>" required/>
 								</td>
+
+                                <td class="align-middle p-1">
+									<input type="text" class="text-center w-100 border-0" readonly="readonly" name="description[]" value="<?php echo isset($row['description']) ? ($row['description']) : "" ?>" />
+								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
 									<input type="hidden" name="marca_id[]" value="<?php echo $row['codigo_marca'] ?>">
@@ -171,20 +177,20 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                     <tfoot>
                         <tr class="bg-lightblue">
                             <tr>
-                                <th class="p-1 text-right" colspan="6">Sub Total</th>
+                                <th class="p-1 text-right" colspan="7">Sub Total</th>
                                 <th class="p-1 text-right" id="sub_total"><?php echo $sub_total ?></th>
                             </tr>
                             <tr>
-                                <th class="p-1 text-right" colspan="6">Descuento (<?php echo isset($discount_percentage) ? $discount_percentage : 0 ?>%)
+                                <th class="p-1 text-right" colspan="7">Descuento (<?php echo isset($discount_percentage) ? $discount_percentage : 0 ?>%)
                                 </th>
                                 <th class="p-1 text-right"><?php echo isset($discount_amount) ? $discount_amount : 0 ?></th>
                             </tr>
                             <tr>
-                                <th class="p-1 text-right" colspan="6">Impuestos Incluidos (<?php echo isset($tax_percentage) ? $tax_percentage : 0 ?>%)</th>
+                                <th class="p-1 text-right" colspan="7">Impuestos Incluidos (<?php echo isset($tax_percentage) ? $tax_percentage : 0 ?>%)</th>
                                 <th class="p-1 text-right"><?php echo isset($tax_amount) ? $tax_amount : 0 ?></th>
                             </tr>
                             <tr>
-                                <th class="p-1 text-right" colspan="6">Total</th>
+                                <th class="p-1 text-right" colspan="7">Total</th>
                                 <th class="p-1 text-right" id="total"><?php echo isset($total) ? $total : $sub_total - $discount_amount + $tax_amount ?></th>
                             </tr>
                         </tr>
