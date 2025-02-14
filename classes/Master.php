@@ -139,6 +139,17 @@ Class Master extends DBConnection {
 		}
 		return json_encode($data);
 	}
+
+	function search_inventory_items(){
+		extract($_POST);
+		//$qry = $this->conn->query("SELECT * FROM item_list where `name` LIKE '%{$q}%'");
+		$qry = $this->conn->query("SELECT id,codSAP, concat(codSAP, ' ' , `description`) as `description` FROM item_list where `description` LIKE '%{$q}%' AND `inventory_item` = 1");
+		$data = array();
+		while($row = $qry->fetch_assoc()){
+			$data[] = array("label"=>$row['description'],"id"=>$row['id'],"name"=>$row['codSAP']);
+		}
+		return json_encode($data);
+	}
 	function search_marca(){
 		extract($_POST);
 		$qry = $this->conn->query("SELECT codigo_ccosto, concat(codigo_ccosto, ' ' , `nombre_ccosto`) as `nombre_ccosto` FROM centro_costo where dimension_ccosto = 1 and activo = 'Y' and `nombre_ccosto` LIKE '%{$q}%' order by `nombre_ccosto`");
@@ -163,6 +174,7 @@ Class Master extends DBConnection {
 		$data = "";
 
 		
+		/*
 		 // Encode the $_POST array into JSON
 		 $jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
 
@@ -171,7 +183,7 @@ Class Master extends DBConnection {
 	 
 		 // Write the JSON data to the file
 		 file_put_contents($filePath, $jsonData);
-
+		*/
 		 
 
 	
