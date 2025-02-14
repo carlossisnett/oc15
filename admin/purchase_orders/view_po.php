@@ -123,7 +123,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                         <?php 
                         if(isset($id)):
                         //$order_items_qry = $conn->query("SELECT o.*,i.name, i.description, i.codSAP,concat(i.codSAP,' ',i.description) as nombre_item, concat(ma.codigo_ccosto,' ',ma.nombre_ccosto) as nombre_marca,concat(de.codigo_ccosto,' ',de.nombre_ccosto) as nombre_departamento FROM `order_items` o inner join item_list i on o.item_id = i.id where o.`po_id` = '$id' ");
-                        $order_items_qry = $conn->query("SELECT o.*,i.name, i.description, i.codSAP,concat(i.codSAP,' ',i.description) as nombre_item, concat(ma.codigo_ccosto,' ',ma.nombre_ccosto) as nombre_marca,concat(de.codigo_ccosto,' ',de.nombre_ccosto) as nombre_departamento
+                        $order_items_qry = $conn->query("SELECT o.*,i.name, o.description, i.codSAP,concat(i.codSAP,' ',i.description) as nombre_item, concat(ma.codigo_ccosto,' ',ma.nombre_ccosto) as nombre_marca,concat(de.codigo_ccosto,' ',de.nombre_ccosto) as nombre_departamento
                             FROM `order_items` o 
                             inner join item_list i on o.item_id = i.id 
                             inner join centro_costo ma on o.codigo_marca = ma.codigo_ccosto
