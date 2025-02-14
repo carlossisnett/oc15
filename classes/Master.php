@@ -162,7 +162,7 @@ Class Master extends DBConnection {
 		extract($_POST);
 		$data = "";
 
-		/*
+		
 		 // Encode the $_POST array into JSON
 		 $jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
 
@@ -172,7 +172,7 @@ Class Master extends DBConnection {
 		 // Write the JSON data to the file
 		 file_put_contents($filePath, $jsonData);
 
-		 */
+		 
 
 	
 		foreach($_POST as $k =>$v){
@@ -225,11 +225,11 @@ Class Master extends DBConnection {
 			$data = "";
 			foreach($item_id as $k =>$v){
 				if(!empty($data)) $data .=",";
-				$data .= "('{$po_id}','{$v}','{$unit_price[$k]}','{$qty[$k]}','{$marca_id[$k]}','{$departamento_id[$k]}', '{$url[$k]}')";
+				$data .= "('{$po_id}','{$v}','{$unit_price[$k]}','{$qty[$k]}','{$marca_id[$k]}','{$departamento_id[$k]}', '{$url[$k]}', '{$description[$k]}')";
 			}
 			if(!empty($data)){
 				$this->conn->query("DELETE FROM `order_items` where po_id = '{$po_id}'");
-				$save = $this->conn->query("INSERT INTO `order_items` (`po_id`,`item_id`,`unit_price`,`quantity`,codigo_marca,codigo_departamento,url) VALUES {$data} ");
+				$save = $this->conn->query("INSERT INTO `order_items` (`po_id`,`item_id`,`unit_price`,`quantity`,codigo_marca,codigo_departamento,url,description) VALUES {$data} ");
 				//echo "INSERT INTO `order_items` (`po_id`,`item_id`,`unit`,`unit_price`,`quantity`) VALUES {$data} ";
 			}
 			if(empty($id))
