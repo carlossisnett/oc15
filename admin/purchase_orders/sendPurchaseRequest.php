@@ -82,7 +82,7 @@ if ($conn->connect_error) {
 
                    // print $item['codSAP'];
                     $itemCode =  $item['codSAP']; //'S0000002';  // Código de item fijo según el requerimiento
-                    //$description = 'ALQUILER DE AUTOS';
+                    $description = $item['description'];
                     $quantity = $item['quantity'];
                     $unitPrice = $item['unit_price'];
                     $codigo_marca = $item['codigo_marca'];
@@ -95,7 +95,7 @@ if ($conn->connect_error) {
                     $line = [
                         'ItemCode' => $itemCode,
                         'UnitPrice' => $unitPrice,
-                        //'Dscription' => $description,
+                        'U_Comentario' => $description,
                         'Quantity' => $quantity,
                         'TaxCode' => $vatGroup,
                         'RequiredDate' => $requiredDateYMD,
