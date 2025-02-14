@@ -140,10 +140,14 @@ Class Master extends DBConnection {
 		return json_encode($data);
 	}
 
+	/*
+	Esta funcion existe para solo buscar los items que son de inventario, es decir a diferencia de la funcion anterior no busca items que son servicios
+	*/
+
 	function search_inventory_items(){
 		extract($_POST);
 		//$qry = $this->conn->query("SELECT * FROM item_list where `name` LIKE '%{$q}%'");
-		$qry = $this->conn->query("SELECT id,codSAP, concat(codSAP, ' ' , `description`) as `description` FROM item_list where `description` LIKE '%{$q}%' AND `inventory_item` = 1");
+		$qry = $this->conn->query("SELECT id,codSAP, concat(codSAP, ' ' , `description`) as `description` FROM item_list where `description` LIKE '%$q%' and `inventory_item` = 1");
 		$data = array();
 		while($row = $qry->fetch_assoc()){
 			$data[] = array("label"=>$row['description'],"id"=>$row['id'],"name"=>$row['codSAP']);
@@ -527,6 +531,9 @@ switch ($action) {
 	break;
 	case 'search_items':
 		echo $Master->search_items();
+	break;
+	case 'search_inventory_items':
+		echo $Master->search_inventory_items();
 	break;
 	case 'save_po':
 		echo $Master->save_po();

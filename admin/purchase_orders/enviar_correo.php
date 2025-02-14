@@ -146,7 +146,7 @@ function enviar_email2($id, $numero_sap) {
         </table>';
         //echo $items_table;
         $url_orden = base_url . "admin/?page=purchase_orders/view_po&id=" . $id;
-        $link_element = "<a href='$url_orden'>Ver Orden de Compra $numero_sap</a>";
+        $link_element = "<a href='$url_orden'>Ver Solicitud de Compra $numero_sap</a>";
         
 
         // 4. Construir el cuerpo del correo en HTML
