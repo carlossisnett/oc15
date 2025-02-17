@@ -441,7 +441,7 @@ _item.find('.departamento-description').text(ui.item.description)
 				success:function(resp){
 					if(typeof resp =='object' && resp.status == 'success'){
 						alert_toast("Su solicitud fue guardada exitosamente",'success');
-						sleep(3300).then(() => { location.href = "./"; });
+						sleep(2000).then(() => { location.href = "./?page=inventario/view_si&id="+resp.id; });
 					}else if((resp.status == 'failed' || resp.status == 'po_failed') && !!resp.msg){
                         var el = $('<div>')
                             el.addClass("alert alert-danger err-msg").text(resp.msg)

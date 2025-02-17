@@ -45,7 +45,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
             <button class="btn btn-sm btn-flat btn-success" id="print" type="button"><i class="fa fa-print"></i> Imprimir</button>
             <!-- Botón Editar deshabilitado temporalmente -->
             <!--<a class="btn btn-sm btn-flat btn-primary" href="?page=purchase_orders/manage_po&id=<?php echo $id ?>">Editar</a>-->
-		    <a class="btn btn-sm btn-flat btn-default" href="?page=purchase_orders">Volver</a>
+		    <a class="btn btn-sm btn-flat btn-default" href="?page=inventario">Volver</a>
         </div>
 	</div>
 	<div class="card-body" id="out_print">
@@ -115,15 +115,15 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                         <?php 
                         if(isset($id)):
                         //$order_items_qry = $conn->query("SELECT o.*,i.name, i.description, i.codSAP,concat(i.codSAP,' ',i.description) as nombre_item, concat(ma.codigo_ccosto,' ',ma.nombre_ccosto) as nombre_marca,concat(de.codigo_ccosto,' ',de.nombre_ccosto) as nombre_departamento FROM `order_items` o inner join item_list i on o.item_id = i.id where o.`po_id` = '$id' ");
-                        $order_items_qry = $conn->query("SELECT o.*,i.name, i.description, i.codSAP,concat(i.codSAP,' ',i.description) as nombre_item, concat(ma.codigo_ccosto,' ',ma.nombre_ccosto) as nombre_marca,concat(de.codigo_ccosto,' ',de.nombre_ccosto) as nombre_departamento
-                            FROM `order_items` o 
+                        $inventory_items_qry = $conn->query("SELECT o.*,i.name, i.description, i.codSAP,concat(i.codSAP,' ',i.description) as nombre_item, concat(ma.codigo_ccosto,' ',ma.nombre_ccosto) as nombre_marca,concat(de.codigo_ccosto,' ',de.nombre_ccosto) as nombre_departamento
+                            FROM `inventory_items` o 
                             inner join item_list i on o.item_id = i.id 
                             inner join centro_costo ma on o.codigo_marca = ma.codigo_ccosto
                             inner join centro_costo de on o.codigo_departamento = de.codigo_ccosto
-                            where o.`po_id` = '$id' ");
+                            where o.`solicitud_id` = '$id' ");
                         
                         $sub_total = 0;
-                        while($row = $order_items_qry->fetch_assoc()):
+                        while($row = $inventory_items_qry->fetch_assoc()):
                      
                         ?>
                         <tr class="po-item" data-id="">
