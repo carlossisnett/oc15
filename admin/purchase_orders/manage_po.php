@@ -37,7 +37,9 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 </style>
 
 <style>
+	
         /* Basic modal styles */
+		/*
         .modal {
             display: none; 
             position: fixed; 
@@ -69,6 +71,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
             font-size: 20px;
 			align-self: flex-end;
         }
+		*/
     </style>
 
 <?php
@@ -225,10 +228,10 @@ if($qry['codSAP'] == null){
 						</div>
 						<div class="col-md-6 form-group">
     						<label for="ruta_adjunto" class="control-label">
-								Adjuntar archivos:
+								Adjuntar archivos (Solo PDF):
 							</label>
 							<div id="contenedor_adjunto_1" style="display: flex; align-items: center; gap: 10px;">
-								<input type="file" id="ruta_adjunto_1" name="ruta_adjunto_1" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								<input type="file" id="ruta_adjunto_1" name="ruta_adjunto_1" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
 								
 								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(1)">
 									Borrar 🗑️
@@ -236,7 +239,7 @@ if($qry['codSAP'] == null){
 								</div>
 
 							<div id="contenedor_adjunto_2" style="display: flex; align-items: center; gap: 10px;" hidden="true">
-								<input type="file" id="ruta_adjunto_2" name="ruta_adjunto_2" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								<input type="file" id="ruta_adjunto_2" name="ruta_adjunto_2" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
 								
 								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(2)">
 									Borrar 🗑️
@@ -244,7 +247,7 @@ if($qry['codSAP'] == null){
 								</div>
 
 								<div id="contenedor_adjunto_3" style="display: flex; align-items: center; gap: 10px;" hidden="true">
-								<input type="file" id="ruta_adjunto_3" name="ruta_adjunto_3" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								<input type="file" id="ruta_adjunto_3" name="ruta_adjunto_3" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
 								
 								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(3)">
 									Borrar 🗑️
@@ -252,7 +255,7 @@ if($qry['codSAP'] == null){
 								</div>
 
 								<div id="contenedor_adjunto_4" style="display: flex; align-items: center; gap: 10px;" hidden="true">
-								<input type="file" id="ruta_adjunto_4" name="ruta_adjunto_4" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								<input type="file" id="ruta_adjunto_4" name="ruta_adjunto_4" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
 								
 								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(4)">
 									Borrar 🗑️
@@ -260,7 +263,7 @@ if($qry['codSAP'] == null){
 								</div>
 
 								<div id="contenedor_adjunto_5" style="display: flex; align-items: center; gap: 10px;" hidden="true">
-								<input type="file" id="ruta_adjunto_5" name="ruta_adjunto_5" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								<input type="file" id="ruta_adjunto_5" name="ruta_adjunto_5" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
 								
 								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(5)">
 									Borrar 🗑️
@@ -268,7 +271,7 @@ if($qry['codSAP'] == null){
 								</div>
 
 								<div id="contenedor_adjunto_6" style="display: flex; align-items: center; gap: 10px;" hidden="true">
-								<input type="file" id="ruta_adjunto_6" name="ruta_adjunto_6" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								<input type="file" id="ruta_adjunto_6" name="ruta_adjunto_6" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
 								
 								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(6)">
 									Borrar 🗑️
@@ -276,7 +279,7 @@ if($qry['codSAP'] == null){
 								</div>
 
 								<div id="contenedor_adjunto_7" style="display: flex; align-items: center; gap: 10px;" hidden="true">
-								<input type="file" id="ruta_adjunto_7" name="ruta_adjunto_7" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								<input type="file" id="ruta_adjunto_7" name="ruta_adjunto_7" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
 								
 								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(7)">
 									Borrar 🗑️
@@ -284,7 +287,7 @@ if($qry['codSAP'] == null){
 								</div>
 
 								<div id="contenedor_adjunto_8" style="display: flex; align-items: center; gap: 10px;" hidden="true">
-								<input type="file" id="ruta_adjunto_8" name="ruta_adjunto_8" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								<input type="file" id="ruta_adjunto_8" name="ruta_adjunto_8" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
 								
 								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(8)">
 									Borrar 🗑️
@@ -292,7 +295,7 @@ if($qry['codSAP'] == null){
 								</div>
 
 								<div id="contenedor_adjunto_9" style="display: flex; align-items: center; gap: 10px;" hidden="true">
-								<input type="file" id="ruta_adjunto_9" name="ruta_adjunto_9" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								<input type="file" id="ruta_adjunto_9" name="ruta_adjunto_9" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
 								
 								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(9)">
 									Borrar 🗑️
@@ -300,7 +303,7 @@ if($qry['codSAP'] == null){
 								</div>
 
 								<div id="contenedor_adjunto_10" style="display: flex; align-items: center; gap: 10px;" hidden="true">
-								<input type="file" id="ruta_adjunto_10" name="ruta_adjunto_10" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								<input type="file" id="ruta_adjunto_10" name="ruta_adjunto_10" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
 								
 								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(10)">
 									Borrar 🗑️
