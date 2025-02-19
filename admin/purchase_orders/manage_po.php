@@ -520,7 +520,16 @@ _item.find('.marca_id').autocomplete({
 		console.log(ui)
 		_item.find('input[name="marca_id[]"]').val(ui.item.id)
 		_item.find('.marca-description').text(ui.item.description)
-	}
+	},
+	change: function (event, ui) {
+            if (!ui.item) {
+                // Si no se seleccionó un valor válido del autocomplete
+                _item.find('input[name="marca_id[]"]').val("");
+                _item.find('.marca-description').text("");
+                _item.find('.marca_id').data('selected', false); // Marca como inválido
+                alert("Por favor, selecciona un artículo válido de la lista.");
+            }
+        }
 });
 
 }
@@ -546,7 +555,16 @@ select:function(event,ui){
 console.log(ui)
 _item.find('input[name="departamento_id[]"]').val(ui.item.id)
 _item.find('.departamento-description').text(ui.item.description)
-}
+},
+change: function (event, ui) {
+            if (!ui.item) {
+                // Si no se seleccionó un valor válido del autocomplete
+                _item.find('input[name="departamento_id[]"]').val("");
+                _item.find('.departamento-description').text("");
+                _item.find('.departamento_id').data('selected', false); // Marca como inválido
+                alert("Por favor, selecciona un artículo válido de la lista.");
+            }
+        }
 });
 
 }
@@ -615,8 +633,10 @@ function es_duplicado(){
 		})
 		if($('#item-list .po-item').length > 0){
 			$('#item-list .po-item').each(function(){
-				var tr = $(this)
-				_autocomplete(tr)
+				var tr = $(this);
+				_autocomplete(tr);
+				_autocompleteMarca(tr);
+				_autocompleteDepartamento(tr);
 				tr.find('[name="qty[]"],[name="unit_price[]"]').on('input keypress',function(e){
 					calculate()
 				})
