@@ -16,7 +16,7 @@ try {
 
     $companyDBSAP = 'SBO_C184_DB2_TST2';
   
-     if ($_SESSION['userdata']['codSAP'] == '1888')
+     if ($_SESSION['userdata']['codSAP'] == '1833')
      {
         $companyDBSAP = 'SBO_C184_DB2_TST2';}
 
@@ -90,6 +90,7 @@ if ($conn->connect_error) {
                     $unitPrice = $item['unit_price'];
                     $codigo_marca = $item['codigo_marca'];
                     $codigo_departamento = $item['codigo_departamento'];
+                    $url = $item['url'];
     
                     // Determinar el grupo de IVA
                     $vatGroup = ($taxPercentage == 0) ? 'C0' : 'C1';
@@ -99,6 +100,7 @@ if ($conn->connect_error) {
                         'ItemCode' => $itemCode,
                         'UnitPrice' => $unitPrice,
                         'U_Comentario' => $description,
+                        'U_LP_EnlaceCompra' => $url,
                         'Quantity' => $quantity,
                         'TaxCode' => $vatGroup,
                         'RequiredDate' => $requiredDateYMD,
@@ -156,16 +158,16 @@ function enviar_solicitud_inventario($solicitud_id){
         $hostSAP = 'sap-bo-srvl-mtdtech.skyinone.net';
         $puertoSAP = '50000';
     
-        //$companyDBSAP = 'SBO_C184_DB2_TST2';
         $companyDBSAP = 'SBO_C184_DB2_TST2';
+        //$companyDBSAP = 'SBO_C184_DB2_PRD';
     
-        /*
+        
         if ($_SESSION['userdata']['codSAP'] == '1833')
         {
             $companyDBSAP = 'SBO_C184_DB2_TST2';
         }
 
-        */
+        
 
     
         $userNameSAP = 'SAPABO\\ef82f11a-65d9-44a3';
