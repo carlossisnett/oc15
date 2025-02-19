@@ -84,11 +84,12 @@ if($qry['codSAP'] == null){
 ?>
 <div class="card card-outline card-info">
 	<div class="card-header">
-		<h3 class="card-title"><?php echo isset($id) ? "Actualizar los detalles de la solicitud orden de compra": "Nueva solicitud de compra" ?> </h3>
+		<!-- <h3 class="card-title" id="title"><?php echo isset($id) ? "Actualizar los detalles de la solicitud orden de compra": "Nueva solicitud de compra" ?> </h3> -->
+		<h3 class="card-title" id="title"> Nueva solicitud de compra </h3>
 	</div>
 	<div class="card-body">
 		<form action="" id="po-form">
-			<input type="hidden" name ="id" value="<?php echo isset($id) ? $id : '' ?>">
+			<input type="hidden" id="id_element" name ="id" value="<?php echo isset($id) ? $id : '' ?>">
 			<div class="row">
 				<div class="col-md-6 form-group">
 					<label for="po_no">Solicitud # <span class="po_err_msg text-danger"></span></label>
@@ -139,7 +140,7 @@ if($qry['codSAP'] == null){
 							<?php 
 							if(isset($id)):
 							//$order_items_qry = $conn->query("SELECT o.*,i.name, i.description, i.codSAP FROM `order_items` o inner join item_list i on o.item_id = i.id where o.`po_id` = '$id' ");
-							$order_items_qry = $conn->query("SELECT o.*,i.name, i.description, i.codSAP,concat(i.codSAP,' ',i.description) as nombre_item, concat(ma.codigo_ccosto,' ',ma.nombre_ccosto) as nombre_marca,concat(de.codigo_ccosto,' ',de.nombre_ccosto) as nombre_departamento
+							$order_items_qry = $conn->query("SELECT o.*,i.name, o.description, i.codSAP,concat(i.codSAP,' ',i.description) as nombre_item, concat(ma.codigo_ccosto,' ',ma.nombre_ccosto) as nombre_marca,concat(de.codigo_ccosto,' ',de.nombre_ccosto) as nombre_departamento
                             FROM `order_items` o 
                             inner join item_list i on o.item_id = i.id 
                             inner join centro_costo ma on o.codigo_marca = ma.codigo_ccosto
@@ -164,7 +165,7 @@ if($qry['codSAP'] == null){
 								</td>
 
 								<td class="align-middle p-1">
-									<input type="text" class="text-center w-100 border-0" name="descripcion[]" value="<?php echo isset($row['descripcion']) ? ($row['descripcion']) : "" ?>" />
+									<input type="text" class="text-center w-100 border-0" name="description[]" value="<?php echo isset($row['description']) ? ($row['description']) : "" ?>" />
 								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
@@ -580,7 +581,21 @@ function erase_adjunto(id){
 	adjunto_element.value = "";
 }
 
+function es_duplicado(){
+	const queryString = window.location.search;
+	if(queryString.includes("duplicate=true") == true){
+		return true;
+	} else{
+			return false;
+		}
+}
+
 	$(document).ready(function(){
+		if(es_duplicado() == true){
+			document.getElementById("title").innerText = "Duplicar Solicitud de Compra";
+			const elem = document.getElementById("id_element");
+			elem.name = "original_id";
+		}
 		$('#add_row').click(function(){
 			var tr = $('#item-clone tr').clone()
 			$('#item-list tbody').append(tr)
@@ -608,6 +623,9 @@ function erase_adjunto(id){
 				$('#item-list tfoot').find('[name="discount_percentage"],[name="tax_percentage"]').on('input keypress',function(e){
 					calculate()
 				})
+				$('#item-list tfoot').find('[name="discount_amount"],[name="tax_amount"]').on('input keyup change blur paste keypress',function(e){
+				calculate_amount()
+			})
 				tr.find('[name="qty[]"],[name="unit_price[]"]').trigger('keypress')
 			})
 		}else{
@@ -628,8 +646,15 @@ function erase_adjunto(id){
 			start_loader();
 			const guardarBoton = document.getElementById('guardar_boton');
 			guardarBoton.disabled = true;
+
+			$function_name = '';
+			if(es_duplicado() == true){
+				$function_name = "duplicate_po";
+			} else{
+				$function_name = "save_po";
+			}
 			$.ajax({
-				url:_base_url_+"classes/Master.php?f=save_po",
+				url:_base_url_+"classes/Master.php?f=" + $function_name,
 				data: new FormData($(this)[0]),
                 cache: false,
                 contentType: false,

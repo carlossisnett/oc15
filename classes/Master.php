@@ -283,6 +283,103 @@ Class Master extends DBConnection {
 		return json_encode($resp);
 	}
 
+	function duplicate_po(){
+		extract($_POST);
+		$data = "";
+
+		/*
+		 // Encode the $_POST array into JSON
+		 $jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
+
+		 // Define the path to the external JSON file
+		 $filePath = 'post_data.json';
+	 
+		 // Write the JSON data to the file
+		 file_put_contents($filePath, $jsonData);
+		*/
+	
+		foreach($_POST as $k =>$v){
+			if(in_array($k,array('discount_amount','tax_amount')))
+				$v= str_replace(',','',$v);
+			if(!in_array($k,array('id','po_no')) && !is_array($_POST[$k])){
+				$v = addslashes(trim($v));
+				if(!empty($data)) $data .=",";
+				if($k != 'original_id'){
+				$data .= " `{$k}`='{$v}' ";
+				}
+			}
+		}
+
+		$po_no ="";
+		while(true){
+				$po_no = "PO-".(sprintf("%'.011d", mt_rand(1,99999999999)));
+				$check = $this->conn->query("SELECT * FROM `po_list` where `po_no` = '{$po_no}'")->num_rows;
+				if($check <= 0)
+				break;
+			}
+		
+
+		$username_ins = $_SESSION['userdata']['username'];
+
+		$data .= ", po_no = '{$po_no}' ";
+		$data .= ", username = '{$username_ins}' ";
+		
+
+		//echo $data;
+
+		$sql = "INSERT INTO `po_list` set {$data} ";
+
+		$save = $this->conn->query($sql);
+		if($save){
+			$resp['status'] = 'success';
+			$po_id = empty($id) ? $this->conn->insert_id : $id ;
+			$resp['id'] = $po_id;
+			$data = "";
+			foreach($item_id as $k =>$v){
+				if(!empty($data)) $data .=",";
+				$data .= "('{$po_id}','{$v}','{$unit_price[$k]}','{$qty[$k]}','{$marca_id[$k]}','{$departamento_id[$k]}', '{$url[$k]}', '{$description[$k]}')";
+			}
+
+			if(!empty($data)){
+				$this->conn->query("DELETE FROM `order_items` where po_id = '{$po_id}'");
+				$save = $this->conn->query("INSERT INTO `order_items` (`po_id`,`item_id`,`unit_price`,`quantity`,codigo_marca,codigo_departamento,url,description) VALUES {$data} ");
+				//echo "INSERT INTO `order_items` (`po_id`,`item_id`,`unit`,`unit_price`,`quantity`) VALUES {$data} ";
+			}
+
+			if(empty($id)){
+				$ResultRequestSAP = sendPurchaseRequest($po_id);
+				$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
+				$pos0Msj = $ArrayResultRequestSAP[0];
+				$pos1DocEntry = $ArrayResultRequestSAP[1];
+				$pos2DocNum = $ArrayResultRequestSAP[2];
+				$this->settings->set_flashdata('success',"Orden de compra guardada correctamente $pos0Msj");
+				$this->conn->query("update `po_list` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$po_id}'");
+				#echo $Master->guardar_adjunto($pos2DocNum);
+				//enviar_correo();
+				$this->guardar_adjunto($po_no);
+				try {
+					$resultado = enviar_email2($po_id, $pos1DocEntry);
+
+					/*
+					if ($po_id != 233)
+					{$resultado = enviar_email2($po_id, $pos1DocEntry);}
+					*/
+					//$resultado = enviar_email(['nelvir.mirabal@prensa.com','nelvir.mirabal@prensa.com'], '2','3');
+					
+					//echo $resultado; // Salida: Correo enviado para PO ID: 123 con SAP: SAP456789
+				} catch (Exception $e) {
+					echo "Error al enviar el correo: " . $e->getMessage();
+				}
+			}
+			else
+				$this->settings->set_flashdata('success',"Orden de compra actualizada correctamente.");
+		}else{
+			$resp['status'] = 'failed';
+			$resp['err'] = $this->conn->error."[{$sql}]";
+		}
+		return json_encode($resp);
+	}
+
 	function save_inventory_request(){
 		extract($_POST);
 		$data = "";
@@ -537,6 +634,9 @@ switch ($action) {
 	break;
 	case 'save_po':
 		echo $Master->save_po();
+	break;
+	case 'duplicate_po':
+		echo $Master->duplicate_po();
 	break;
 	case 'save_inventory_request':
 		echo $Master->save_inventory_request();

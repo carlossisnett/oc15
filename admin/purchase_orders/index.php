@@ -87,7 +87,7 @@
 									<!-- <div class="dropdown-divider"></div>-->
 				                    <!--<a class="dropdown-item" href="?page=purchase_orders/manage_po&id=<?php echo $row['id']?>&duplicate=true"><span class="fa fa-edit text-primary"></span> Editar</a> -->
 				                    <div class="dropdown-divider"></div>
-									<a class="dropdown-item" href="?page=purchase_orders/manage_poid=<?php echo $row['id'] ?>&"><span class="fa fa-copy text-warning"></span> Duplicar
+									<a class="dropdown-item" href="?page=purchase_orders/manage_po&id=<?php echo $row['id'] ?>&duplicate=true"><span class="fa fa-copy text-warning"></span> Duplicar
 									<!--
 									</a><div class="dropdown-divider"></div>
 				                    <a class="dropdown-item delete_data" href="javascript:void(0)" data-id="<?php echo $row['id'] ?>"><span class="fa fa-trash text-danger"></span> Eliminar</a>-->
