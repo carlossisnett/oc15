@@ -154,6 +154,18 @@ if ($conn->connect_error) {
 function enviar_solicitud_inventario($solicitud_id){
 
     try {
+        $secrets_file = file_get_contents("secrets_SAP.json");
+        $secrets = json_decode($secrets_file);
+
+        
+
+        $hostSAP = $secrets->hostSAP;
+        $puertoSAP = $secrets->puertoSAP;
+        $companyDBSAP = $secrets->companyDBSAP;
+        $userNameSAP = $secrets->userNameSAP;
+        $passwordSAP = $secrets->passwordSAP;
+
+        /*
         // Datos de configuración
         $hostSAP = 'sap-bo-srvl-mtdtech.skyinone.net';
         $puertoSAP = '50000';
@@ -173,12 +185,28 @@ function enviar_solicitud_inventario($solicitud_id){
         $userNameSAP = 'SAPABO\\ef82f11a-65d9-44a3';
         $passwordSAP = 'Sky0ne2020.';
 
+        */
+
+
+        $secrets_file = file_get_contents("secrets_mysql.json");
+        $secrets = json_decode($secrets_file);
+
+        $servername = $secrets->servername;
+        $username = $secrets->username;
+        $password = $secrets->password;
+        $password = $secrets->password;
+        $dbname = $secrets->dbname;
+
+
+    /*
 
     // Configuración de la conexión a la base de datos MySQL
     $servername = "localhost";
     $username = "root";
     $password = "";
     $dbname = "ordenes_compra_pruebas";
+
+    */
 
     $conn = new mysqli($servername, $username, $password, $dbname);
 
