@@ -154,7 +154,7 @@ if ($conn->connect_error) {
 function enviar_solicitud_inventario($solicitud_id){
 
     try {
-        $secrets_file = file_get_contents("secrets_SAP.json");
+        $secrets_file = file_get_contents(__DIR__ . "/secrets_SAP.json");
         $secrets = json_decode($secrets_file);
 
         
@@ -187,8 +187,7 @@ function enviar_solicitud_inventario($solicitud_id){
 
         */
 
-
-        $secrets_file = file_get_contents("secrets_mysql.json");
+        $secrets_file = file_get_contents(__DIR__ . "/secrets_mysql.json");
         $secrets = json_decode($secrets_file);
 
         $servername = $secrets->servername;
