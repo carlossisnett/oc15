@@ -135,7 +135,7 @@ Class Master extends DBConnection {
 		$qry = $this->conn->query("SELECT id,codSAP, concat(codSAP, ' ' , `description`) as `description` FROM item_list where `description` LIKE '%{$q}%'");
 		$data = array();
 		while($row = $qry->fetch_assoc()){
-			$data[] = array("label"=>$row['description'],"id"=>$row['id'],"name"=>$row['codSAP']);
+			$data[] = array("label"=>$row['description'],"id"=>$row['id'],"name"=>$row['codSAP'], "stock_actual"=>$row['stock_actual']);
 		}
 		return json_encode($data);
 	}
