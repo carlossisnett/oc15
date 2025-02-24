@@ -77,6 +77,7 @@ if($qry['codSAP'] == null){
   <colgroup>
     <col width="5%">
     <col width="5%">
+	<col width="5%">
     <col width="30%">
     <col width="30%">
     <col width="30%">
@@ -85,6 +86,7 @@ if($qry['codSAP'] == null){
     <tr class="bg-navy disabled">
       <th class="px-1 py-1 text-center"></th>
       <th class="px-1 py-1 text-center">Cantidad</th>
+	  <th class="px-1 py-1 text-center">Inventario</th>
       <th class="px-1 py-1 text-center">Artículo</th>
       <th class="px-1 py-1 text-center">Marca</th>
       <th class="px-1 py-1 text-center">Departamento</th>
@@ -110,6 +112,10 @@ if($qry['codSAP'] == null){
       <!--Campo Cantidad-->
       <td class="align-middle p-0 text-center">
         <input type="number" class="text-center w-100 border-0" step="any" name="qty[]" value="<?php echo $row['quantity'] ?>"/>
+      </td>
+
+	  <td class="align-middle p-0 text-center">
+        <input type="number" class="text-center w-100 border-0" step="any" name="inventario[]" value="" disabled/>
       </td>
       <!--Campo Artículo-->
       <td class="align-middle p-1">
@@ -194,6 +200,10 @@ if($qry['codSAP'] == null){
 								<td class="align-middle p-0 text-center">
 									<input type="number" class="text-center w-100 border-0" step="any" name="qty[]"/>
 								</td>
+
+								<td class="align-middle p-0 text-center">
+									<input type="number" class="text-center w-100 border-0" step="any" name="inventario[]" disabled/>
+								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
 									<input type="hidden" name="item_id[]">
@@ -211,7 +221,16 @@ if($qry['codSAP'] == null){
 								</td>
 							</tr>
 </table>
+<div id="stock_store">
+
+</div>
 <script>
+	function create_stock(id_item, stock_actual){
+		let node = document.createElement("div");
+		node.setAttribute('stock_actual', stock_actual.toString());
+		let stock_store = document.getElementById('stock_store');
+		stock_store.appendChild(node);
+	}
 	function rem_item(_this){
 		_this.closest('tr').remove()
 	}
