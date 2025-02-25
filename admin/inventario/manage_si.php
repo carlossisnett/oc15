@@ -110,11 +110,11 @@ if($qry['codSAP'] == null){
         <button class="btn btn-sm btn-danger py-0" type="button" onclick="rem_item($(this))"><i class="fa fa-times"></i></button>
       </td>
       <!--Campo Cantidad-->
-      <td class="align-middle p-0 text-center">
+      <td class="align-middle p-0 text-center quantity">
         <input type="number" class="text-center w-100 border-0" step="any" name="qty[]" value="<?php echo $row['quantity'] ?>"/>
       </td>
 
-	  <td class="align-middle p-0 text-center">
+	  <td class="align-middle p-0 text-center inventario">
         <input type="number" class="text-center w-100 border-0" step="any" name="inventario[]" value="" disabled/>
       </td>
       <!--Campo Artículo-->
@@ -197,11 +197,11 @@ if($qry['codSAP'] == null){
 									<button class="btn btn-sm btn-danger py-0" type="button" onclick="rem_item($(this))"><i class="fa fa-times"></i></button>
 								</td>
 								<!--Campo Cantidad-->
-								<td class="align-middle p-0 text-center">
-									<input type="number" class="text-center w-100 border-0" step="any" name="qty[]"/>
+								<td class="align-middle p-0 text-center quantity">
+									<input type="number" class="text-center w-100 border-0" style="background-color: none" step="any" name="qty[]"/>
 								</td>
 
-								<td class="align-middle p-0 text-center">
+								<td class="align-middle p-0 text-center inventario">
 									<input type="number" class="text-center w-100 border-0" step="any" name="inventario[]" disabled/>
 								</td>
 								<!--Campo oculto item_id-->
@@ -221,16 +221,7 @@ if($qry['codSAP'] == null){
 								</td>
 							</tr>
 </table>
-<div id="stock_store">
-
-</div>
 <script>
-	function create_stock(id_item, stock_actual){
-		let node = document.createElement("div");
-		node.setAttribute('stock_actual', stock_actual.toString());
-		let stock_store = document.getElementById('stock_store');
-		stock_store.appendChild(node);
-	}
 	function rem_item(_this){
 		_this.closest('tr').remove()
 	}
@@ -309,6 +300,41 @@ if($qry['codSAP'] == null){
 		$('#sub_total').text(parseFloat(_total).toLocaleString("en-US"))
 		total_amount = _total - discount_amount + tax_amount;
 		$('[name="total"]').val(parseFloat(total_amount).toLocaleString("en-US"))
+	}
+
+	function verify_inventory(cantidad_element, inventory_element){
+		let cantidad = parseFloat(cantidad_element.val());
+		let inventory = parseFloat(inventory_element.val());
+		if(cantidad > inventory){
+			alert("La cantidad solicitada no puede ser mayor al inventario disponible");
+			cantidad_element.css('background-color', 'yellow');
+			//cantidad_element.val("");
+		}
+		else{
+			cantidad_element.css('background-color', 'none');
+		}
+	}
+
+	function get_stock(item_id, tr_element){
+		$.ajax({
+					url:_base_url_+"classes/Master.php?f=get_stock",
+					method:'POST',
+					data:{item_id: item_id},
+					dataType:'json',
+					error:err=>{
+						console.log(err)
+					},
+					success:function(resp){
+						//console.log(resp.stock);
+						let cutoff_index = resp.stock.indexOf(".");
+						let shorted_value = resp.stock.substring(0, cutoff_index + 3);
+						tr_element.find("td.inventario input").val(shorted_value);
+
+						//console.log("Cantidad : " + tr_element.find("td.quantity input").val());
+						verify_inventory(tr_element.find("td.quantity input"), tr_element.find("td.inventario input"));
+						return shorted_value;
+					}
+				})
 	}
 
 	function _autocomplete(_item){
@@ -397,6 +423,15 @@ _item.find('.departamento-description').text(ui.item.description)
 
 }
 
+$(document).on("change", "input.item_id", function () {
+    let row = $(this).closest("td");  // Find the closest row
+	let itemIdInput = row.find("input[name='item_id[]']");
+	let tr = $(this).closest("tr");
+	let stock_actual = get_stock(itemIdInput.val(), tr);
+	
+	//let stock_element = row.find("input[name='inventario[]']");
+});
+
 	$(document).ready(function(){
 		$('#add_row').click(function(){
 			var tr = $('#item-clone tr').clone()
@@ -407,6 +442,8 @@ _item.find('.departamento-description').text(ui.item.description)
 			tr.find('[name="qty[]"],[name="unit_price[]"]').on('input keypress',function(e){
 				calculate()
 			})
+
+		
 			$('#item-list tfoot').find('[name="discount_percentage"],[name="tax_percentage"]').on('input keypress',function(e){
 				calculate()
 			})
@@ -422,6 +459,7 @@ _item.find('.departamento-description').text(ui.item.description)
 				tr.find('[name="qty[]"],[name="unit_price[]"]').on('input keypress',function(e){
 					calculate()
 				})
+
 				$('#item-list tfoot').find('[name="discount_percentage"],[name="tax_percentage"]').on('input keypress',function(e){
 					calculate()
 				})
