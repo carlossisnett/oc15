@@ -311,7 +311,7 @@ if($qry['codSAP'] == null){
 			//cantidad_element.val("");
 		}
 		else{
-			cantidad_element.css('background-color', 'none');
+			cantidad_element.css('background-color', 'white');
 		}
 	}
 
@@ -439,6 +439,9 @@ $(document).on("change", "input.item_id", function () {
 			_autocomplete(tr);
 			_autocompleteMarca(tr);
 			_autocompleteDepartamento(tr);
+			tr.find('[name="qty[]"]').on('input keypress',function(e){
+				verify_inventory(tr.find("td.quantity input"), tr.find("td.inventario input"));
+			})
 			tr.find('[name="qty[]"],[name="unit_price[]"]').on('input keypress',function(e){
 				calculate()
 			})
@@ -456,6 +459,9 @@ $(document).on("change", "input.item_id", function () {
 			$('#item-list .po-item').each(function(){
 				var tr = $(this)
 				_autocomplete(tr)
+				tr.find('[name="qty[]"]').on('input keypress',function(e){
+				verify_inventory(tr.find("td.quantity input"), tr.find("td.inventario input"));
+			})
 				tr.find('[name="qty[]"],[name="unit_price[]"]').on('input keypress',function(e){
 					calculate()
 				})

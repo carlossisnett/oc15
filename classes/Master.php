@@ -135,11 +135,22 @@ Class Master extends DBConnection {
 		$qry = $this->conn->query("SELECT id,codSAP, concat(codSAP, ' ' , `description`) as `description` FROM item_list where `description` LIKE '%{$q}%'");
 		$data = array();
 		while($row = $qry->fetch_assoc()){
-			$data[] = array("label"=>$row['description'],"id"=>$row['id'],"name"=>$row['codSAP'], "stock_actual"=>$row['stock_actual']);
+			$data[] = array("label"=>$row['description'],"id"=>$row['id'],"name"=>$row['codSAP']);
 		}
 		return json_encode($data);
 	}
 
+
+	function get_stock(){
+		extract($_POST);
+		$qry = $this->conn->query("SELECT * FROM item_list where id = '{$item_id}'");
+		//$data = array();
+		$item_object = $qry->fetch_object();
+		$stock = ["stock"=> $item_object->stock_actual];
+		return json_encode($stock);
+	}
+
+	
 	/*
 	Esta funcion existe para solo buscar los items que son de inventario, es decir a diferencia de la funcion anterior no busca items que son servicios
 	*/
@@ -652,6 +663,9 @@ switch ($action) {
 	break;
 	case 'search_departamento':
 		echo $Master->search_departamento();
+	break;
+	case 'get_stock':
+		echo $Master->get_stock();
 	break;
 
 	
