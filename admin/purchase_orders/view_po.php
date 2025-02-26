@@ -121,6 +121,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                     </thead>
                     <tbody>
                         <?php 
+                        require "view_functions.php";
                         if(isset($id)):
                         //$order_items_qry = $conn->query("SELECT o.*,i.name, i.description, i.codSAP,concat(i.codSAP,' ',i.description) as nombre_item, concat(ma.codigo_ccosto,' ',ma.nombre_ccosto) as nombre_marca,concat(de.codigo_ccosto,' ',de.nombre_ccosto) as nombre_departamento FROM `order_items` o inner join item_list i on o.item_id = i.id where o.`po_id` = '$id' ");
                         $order_items_qry = $conn->query("SELECT o.*,i.name, o.description, i.codSAP,concat(i.codSAP,' ',i.description) as nombre_item, concat(ma.codigo_ccosto,' ',ma.nombre_ccosto) as nombre_marca,concat(de.codigo_ccosto,' ',de.nombre_ccosto) as nombre_departamento
@@ -143,7 +144,8 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                             <!--<td class="align-middle p-1 text-right total-price"><?php echo number_format($row['quantity'] * $row['unit_price']) ?></td>-->
                             <!--Campo Cantidad-->
 								<td class="align-middle p-0 text-center">
-									<input type="number" class="text-center w-100 border-0" step="any" name="qty[]" readonly="readonly" value="<?php echo $row['quantity'] ?>"/>
+									<input type="text" class="text-center w-100 border-0" step="any" name="qty[]" readonly="readonly" value="<?php
+ echo special_format($row['quantity']) ?>"/>
 								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
@@ -168,9 +170,9 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 									<input type="text" class="text-center w-100 border-0" readonly="readonly" name="url[]" value="<?php echo isset($row['url']) ? ($row['url']) : "" ?>" />
 								</td>
 								<td class="align-middle p-1">
-									<input type="number" step="any" class="text-right w-100 border-0" name="unit_price[]" readonly="readonly" value="<?php echo ($row['unit_price']) ?>"/>
+									<input type="text" step="any" class="text-right w-100 border-0" name="unit_price[]" readonly="readonly" value="<?php echo special_format($row['unit_price']) ?>"/>
 								</td>
-								<td class="align-middle p-1 text-right total-price"><?php echo number_format($row['quantity'] * $row['unit_price'], 2) ?></td>
+								<td class="align-middle p-1 text-right total-price"><?php echo special_format($row['quantity'] * $row['unit_price']) ?></td>
                         </tr>
                         <?php endwhile;endif; ?>
                     </tbody>
@@ -178,20 +180,20 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                         <tr class="bg-lightblue">
                             <tr>
                                 <th class="p-1 text-right" colspan="7">Sub Total</th>
-                                <th class="p-1 text-right" id="sub_total"><?php echo $sub_total ?></th>
+                                <th class="p-1 text-right" id="sub_total"><?php echo(special_format($sub_total)) ?></th>
                             </tr>
                             <tr>
                                 <th class="p-1 text-right" colspan="7">Descuento (<?php echo isset($discount_percentage) ? $discount_percentage : 0 ?>%)
                                 </th>
-                                <th class="p-1 text-right"><?php echo isset($discount_amount) ? $discount_amount : 0 ?></th>
+                                <th class="p-1 text-right"><?php echo isset($discount_amount) ? special_format($discount_amount) : 0 ?></th>
                             </tr>
                             <tr>
                                 <th class="p-1 text-right" colspan="7">Impuestos Incluidos (<?php echo isset($tax_percentage) ? $tax_percentage : 0 ?>%)</th>
-                                <th class="p-1 text-right"><?php echo isset($tax_amount) ? $tax_amount : 0 ?></th>
+                                <th class="p-1 text-right"><?php echo isset($tax_amount) ? special_format($tax_amount): 0 ?></th>
                             </tr>
                             <tr>
                                 <th class="p-1 text-right" colspan="7">Total</th>
-                                <th class="p-1 text-right" id="total"><?php echo isset($total) ? $total : $sub_total - $discount_amount + $tax_amount ?></th>
+                                <th class="p-1 text-right" id="total"><?php echo isset($total) ? special_format($total) : special_format($sub_total - $discount_amount + $tax_amount)  ?></th>
                             </tr>
                         </tr>
                     </tfoot>

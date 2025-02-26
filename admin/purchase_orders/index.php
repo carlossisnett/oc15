@@ -38,6 +38,7 @@
 				</thead>
 				<tbody>
 					<?php 
+					require "view_functions.php";
 					$i = 1;
 					//echo "SELECT po.*, CONCAT_WS(' ', u.firstname, u.lastname) as sname FROM `po_list` po inner join `users` u on po.username = u.username where po.username = '" . $_SESSION['userdata']['username'] . "' order by unix_timestamp(po.date_updated) ";	
 					
@@ -60,7 +61,7 @@
 							<td class=""><?php echo $row['po_no'] ?></td>
 							<td class="text-center"><?php echo $row['SAPDocEntry'] ?></td>
 							<td class=""><?php echo $row['sname'] ?></td>
-							<td class="text-right"><?php echo number_format($row['total_amount'], 2) ?></td>
+							<td class="text-right"><?php echo special_format($row['total_amount']) ?></td>
 							<td>
 								<?php 
 									switch ($row['status']) {
@@ -87,7 +88,7 @@
 									<!-- <div class="dropdown-divider"></div>-->
 				                    <!--<a class="dropdown-item" href="?page=purchase_orders/manage_po&id=<?php echo $row['id']?>&duplicate=true"><span class="fa fa-edit text-primary"></span> Editar</a> -->
 				                    <div class="dropdown-divider"></div>
-									<a class="dropdown-item" href="?page=purchase_orders/manage_po&id=<?php echo $row['id'] ?>&duplicate=true"><span class="fa fa-copy text-warning"></span> Duplicar
+									<a class="dropdown-item" href="?page=purchase_orders/manage_po&id=<?php echo $row['id'] ?>&duplicate=true"><span class="fa fa-copy text-warning"></span> Duplicar </a>
 									<!--
 									</a><div class="dropdown-divider"></div>
 				                    <a class="dropdown-item delete_data" href="javascript:void(0)" data-id="<?php echo $row['id'] ?>"><span class="fa fa-trash text-danger"></span> Eliminar</a>-->
