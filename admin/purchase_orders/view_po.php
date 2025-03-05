@@ -97,6 +97,9 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                     <p  class="m-0"><b>Proveedor</b></p>
                     <?php
                     $query = $conn->query("SELECT o.*, p.name FROM order_items o JOIN proveedores p ON p.id = o.proveedor_id where o.po_id = '{$_GET['id']}' LIMIT 1;");
+                    if(gettype($query) == "boolean"){
+                        echo "";
+                    } else {
                     $rows = $query->fetch_array();
                     if(isset($rows)) {
                     $proveedor_id = $rows['proveedor_id'];
@@ -104,6 +107,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                     } else {
                         $name_proovedor = "";
                     }
+                }
                     ?>
                     <p><b><?php echo isset($name_proveedor) ? $name_proveedor : "" ?></b></p>
                     </div>
