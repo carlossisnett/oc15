@@ -91,6 +91,20 @@ if($qry['codSAP'] == null){
 		<form action="" id="po-form">
 			<input type="hidden" id="id_element" name ="id" value="<?php echo isset($id) ? $id : '' ?>">
 			<div class="row">
+			<div class="col-md-6 form-group">
+					<label for="supplier_id">Proveedor</label>
+					<select name="supplier_id" id="supplier_id" class="custom-select custom-select-sm rounded-0 select2">
+						<option value="" disabled <?php /* echo !isset($supplier_id) ? "selected" :'' */ ?>></option>
+						<?php 
+							
+							$supplier_qry = $conn->query("SELECT * FROM `proveedores` order by `name` asc");
+							while($row = $supplier_qry->fetch_assoc()):
+							
+						?>
+						<option value="<?php  echo $row['id']  ?>" <?php  echo isset($supplier_id) && $supplier_id == $row['id'] ? 'selected' : ''  ?> <?php  echo $row['status'] == 0? 'disabled' : ''  ?>><?php  echo($row['codSAP']); echo(" "); echo($row['name']);  ?></option>
+						<?php  endwhile;  ?>
+					</select>
+				</div>
 				<div class="col-md-6 form-group">
 					<label for="po_no">Solicitud # <span class="po_err_msg text-danger"></span></label>
 					<input type="text" class="form-control form-control-sm rounded-0" id="po_no" name="po_no" value="<?php echo isset($po_no) ? $po_no : '' ?>" disabled>
@@ -127,7 +141,7 @@ if($qry['codSAP'] == null){
 							<tr class="bg-navy disabled">
 								<th class="px-1 py-1 text-center"></th>
 								<th class="px-1 py-1 text-center">Cantidad</th>
-								<th class="px-1 py-1 text-center">Artículo</th>
+								<th class="px-1 py-1 text-center">Nombre del Artículo</th>
 								<th class="px-1 py-1 text-center">Descripción (opcional)</th>
 								<th class="px-1 py-1 text-center">Marca</th>
 								<th class="px-1 py-1 text-center">Departamento</th>
@@ -667,12 +681,7 @@ function es_duplicado(){
 			const guardarBoton = document.getElementById('guardar_boton');
 			guardarBoton.disabled = true;
 
-			$function_name = '';
-			if(es_duplicado() == true){
-				$function_name = "duplicate_po";
-			} else{
-				$function_name = "save_po";
-			}
+			$function_name = 'save_po';
 			$.ajax({
 				url:_base_url_+"classes/Master.php?f=" + $function_name,
 				data: new FormData($(this)[0]),

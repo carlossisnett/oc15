@@ -184,7 +184,169 @@ Class Master extends DBConnection {
 		}
 		return json_encode($data);
 	}
+
 	function save_po(){
+		extract($_POST);
+		$data = "";
+
+		
+		
+		 // Encode the $_POST array into JSON
+		 $jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
+
+		 // Define the path to the external JSON file
+		 $filePath = 'post_data_pruebas.json';
+	 
+		 // Write the JSON data to the file
+		 file_put_contents($filePath, $jsonData);
+		
+		 
+
+		
+		foreach($_POST as $k =>$v){
+			if(in_array($k,array('discount_amount','tax_amount')))
+				$v= str_replace(',','',$v);
+		}
+
+		$po_no = "";
+			while(true){
+				$po_no = "PO-".(sprintf("%'.011d", mt_rand(1,99999999999)));
+				$check = $this->conn->query("SELECT * FROM `po_list` where `po_no` = '{$po_no}'")->num_rows;
+				if($check <= 0)
+				break;
+			}
+
+		if(isset($discount_amount) == false){
+			$discount_amount = 0;
+		}
+		if(isset($discount_percentage) == false){
+			$discount_percentage = 0;
+		}
+		if(isset($tax_amount) == false){
+			$tax_amount = 0;
+		}
+		if(isset($tax_percentage) == false){
+			$tax_percentage = 0;
+		}
+
+		if(isset($sub_total) == false){
+			$sub_total = null;
+		}
+		if(isset($notes) == false){
+			$notes = null;
+		}
+		if(isset($ruta_adjunto) == false){
+			$ruta_adjunto = null;
+		}
+
+
+		$username = $_SESSION['userdata']['username'];
+
+		$prepared = $this->conn->prepare("INSERT INTO po_list(required_date, username, po_no, discount_percentage, discount_amount, tax_percentage, tax_amount, notes, sub_total, total, ruta_adjunto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+		$prepared->bind_param("sssddddsdds", $required_date, $username, $po_no, $discount_percentage, $discount_amount, $tax_percentage, $tax_amount, $notes, $sub_total, $total, $ruta_adjunto);
+		$prepared->execute();
+
+		
+		$prepared = $this->conn->prepare("SELECT id FROM po_list where po_no = ?");
+		$prepared->bind_param("s", $po_no);
+		$prepared->execute();
+		$result = $prepared->get_result();
+		$row = $result->fetch_assoc();
+		$id = $row['id'];
+		$supplier_id = (int)$supplier_id;
+
+		#Si se creo la orden de compra entonces proceder a agregar los articulos a ella
+		if(isset($row)){
+			for($x = 0; $x < count($item_id); $x++){
+				$prepared = $this->conn->prepare("INSERT INTO order_items(quantity, description, unit_price, po_id, item_id, codigo_marca, codigo_departamento, url, proveedor_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+				$prepared->bind_param("dsdiisssi", $qty[$x], $description[$x], $unit_price[$x], $id, $item_id[$x], $marca_id[$x], $departamento_id[$x], $url[$x], $supplier_id);
+				$prepared->execute();
+			}
+			$resp['status'] = 'success';
+			$resp['id'] = $id;
+			$resp['po_no'] = $po_no;
+			$ResultRequestSAP = sendPurchaseRequest($id);
+				$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
+				$pos0Msj = $ArrayResultRequestSAP[0];
+				$pos1DocEntry = $ArrayResultRequestSAP[1];
+				$pos2DocNum = $ArrayResultRequestSAP[2];
+				$this->settings->set_flashdata('success',"Orden de compra guardada correctamente $pos0Msj");
+				$this->conn->query("update `po_list` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$id}'");
+				#echo $Master->guardar_adjunto($pos2DocNum);
+				//enviar_correo();
+				$this->guardar_adjunto($po_no);
+				try {
+					$resultado = enviar_email2($id, $pos1DocEntry);
+
+					
+					//if ($po_id != 233)
+					//{$resultado = enviar_email2($po_id, $pos1DocEntry);}
+					
+					//$resultado = enviar_email(['nelvir.mirabal@prensa.com','nelvir.mirabal@prensa.com'], '2','3');
+					
+					//echo $resultado; // Salida: Correo enviado para PO ID: 123 con SAP: SAP456789
+				} catch (Exception $e) {
+					echo "Error al enviar el correo: " . $e->getMessage();
+				}
+
+		} else{
+			$resp['status'] = 'failed';
+			$resp['err'] = $this->conn->error."[{$sql}]";
+		}
+		return json_encode($resp);
+	}
+		/*
+		if($save){
+			$resp['status'] = 'success';
+			$po_id = empty($id) ? $this->conn->insert_id : $id ;
+			$resp['id'] = $po_id;
+			$data = "";
+			foreach($item_id as $k =>$v){
+				if(!empty($data)) $data .=",";
+				$data .= "('{$po_id}','{$v}','{$unit_price[$k]}','{$qty[$k]}','{$marca_id[$k]}','{$departamento_id[$k]}', '{$url[$k]}', '{$description[$k]}')";
+			}
+			if(!empty($data)){
+				$this->conn->query("DELETE FROM `order_items` where po_id = '{$po_id}'");
+				$save = $this->conn->query("INSERT INTO `order_items` (`po_id`,`item_id`,`unit_price`,`quantity`,codigo_marca,codigo_departamento,url,description) VALUES {$data} ");
+				//echo "INSERT INTO `order_items` (`po_id`,`item_id`,`unit`,`unit_price`,`quantity`) VALUES {$data} ";
+			}
+			if(empty($id))
+			{
+				$ResultRequestSAP = sendPurchaseRequest($po_id);
+				$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
+				$pos0Msj = $ArrayResultRequestSAP[0];
+				$pos1DocEntry = $ArrayResultRequestSAP[1];
+				$pos2DocNum = $ArrayResultRequestSAP[2];
+				$this->settings->set_flashdata('success',"Orden de compra guardada correctamente $pos0Msj");
+				$this->conn->query("update `po_list` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$po_id}'");
+				#echo $Master->guardar_adjunto($pos2DocNum);
+				//enviar_correo();
+				$this->guardar_adjunto($po_no);
+				try {
+					$resultado = enviar_email2($po_id, $pos1DocEntry);
+
+					
+					//if ($po_id != 233)
+					//{$resultado = enviar_email2($po_id, $pos1DocEntry);}
+					
+					//$resultado = enviar_email(['nelvir.mirabal@prensa.com','nelvir.mirabal@prensa.com'], '2','3');
+					
+					//echo $resultado; // Salida: Correo enviado para PO ID: 123 con SAP: SAP456789
+				} catch (Exception $e) {
+					echo "Error al enviar el correo: " . $e->getMessage();
+				}
+			}
+			else
+				$this->settings->set_flashdata('success',"Orden de compra actualizada correctamente.");
+		}else{
+			$resp['status'] = 'failed';
+			$resp['err'] = $this->conn->error."[{$sql}]";
+		}
+		return json_encode($resp);
+		*/
+	
+	function save_po_old(){
 		extract($_POST);
 		$data = "";
 

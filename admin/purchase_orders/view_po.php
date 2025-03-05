@@ -81,17 +81,33 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                 </div>
             </div>
             <div class="col-4 row">
-                <div class="col-4">
+                <div class="col-3">
                     <p  class="m-0"><b># Solicitud:</b></p>
                     <p><b><?php echo $po_no ?></b></p>
                 </div>
-                <div class="col-4">
+                <div class="col-3">
                     <p  class="m-0"><b># SAP:</b></p>
                     <p><b><?php echo $SAPDocEntry ?></b></p>
                 </div>
-                <div class="col-4">
+                <div class="col-3">
                     <p  class="m-0"><b>Fecha de Creación</b></p>
                     <p><b><?php echo date("Y-m-d",strtotime($date_created)) ?></b></p>
+                </div>
+                <div class="col-3">
+                    <p  class="m-0"><b>Proveedor</b></p>
+                    <?php
+                    $query = $conn->query("SELECT o.*, p.name FROM order_items o JOIN proveedores p ON p.id = o.proveedor_id where o.po_id = '{$_GET['id']}' LIMIT 1;");
+                    $rows = $query->fetch_array();
+                    if(isset($rows)) {
+                    $proveedor_id = $rows['proveedor_id'];
+                    $name_proveedor = $rows['name'];
+                    } else {
+                        $name_proovedor = "";
+                    }
+                    ?>
+                    <p><b><?php echo isset($name_proveedor) ? $name_proveedor : "" ?></b></p>
+                    </div>
+                    
                 </div>
             </div>
         </div>
