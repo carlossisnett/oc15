@@ -77,7 +77,7 @@ if ($conn->connect_error) {
             ];
     
             // Recuperar los items correspondientes de la tabla order_items
-            $sqlItems = "SELECT a.*, b.codSAP FROM order_items a inner join item_list b on a.item_id = b.id WHERE a.po_id = $poId";
+            $sqlItems = "SELECT a.*, b.codSAP, p.codSAP as proveedor_SAP FROM order_items a inner join item_list b on a.item_id = b.id join proveedores p on a.proveedor_id = p.id  WHERE a.po_id = $poId";
             $resultItems = $conn->query($sqlItems);
     
             if ($resultItems->num_rows > 0) {
@@ -91,6 +91,7 @@ if ($conn->connect_error) {
                     $codigo_marca = $item['codigo_marca'];
                     $codigo_departamento = $item['codigo_departamento'];
                     $url = $item['url'];
+                    $proveedor_sap = $item['proveedor_SAP']; // Codigo de SAP del proveedor
     
                     // Determinar el grupo de IVA
                     $vatGroup = ($taxPercentage == 0) ? 'C0' : 'C1';
@@ -105,7 +106,8 @@ if ($conn->connect_error) {
                         'TaxCode' => $vatGroup,
                         'RequiredDate' => $requiredDateYMD,
                         'CostingCode' => $codigo_marca,
-                        'CostingCode2' => $codigo_departamento
+                        'CostingCode2' => $codigo_departamento,
+                        'LineVendor' => $proveedor_sap
                         //'VatGroup' => $vatGroup,
                         //'DiscPercent' => $discountPercentage
                     ];
