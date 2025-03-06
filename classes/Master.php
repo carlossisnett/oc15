@@ -253,14 +253,16 @@ Class Master extends DBConnection {
 		$prepared->execute();
 		$result = $prepared->get_result();
 		$row = $result->fetch_assoc();
-		$id = $row['id'];
+		$id = (int)$row['id'];
 		$supplier_id = (int)$supplier_id;
 
 		#Si se creo la orden de compra entonces proceder a agregar los articulos a ella
 		if(isset($row)){
 			for($x = 0; $x < count($item_id); $x++){
+				$price = (float)$unit_price[$x];
+				$quantity = (float)$qty[$x];
 				$prepared = $this->conn->prepare("INSERT INTO order_items(quantity, description, unit_price, po_id, item_id, codigo_marca, codigo_departamento, url, proveedor_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-				$prepared->bind_param("dsdiisssi", $qty[$x], $description[$x], $unit_price[$x], $id, $item_id[$x], $marca_id[$x], $departamento_id[$x], $url[$x], $supplier_id);
+				$prepared->bind_param("dsdissssi", $quantity, $description[$x], $price, $id, $item_id[$x], $marca_id[$x], $departamento_id[$x], $url[$x], $supplier_id);
 				$prepared->execute();
 			}
 			$resp['status'] = 'success';
