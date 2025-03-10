@@ -43,7 +43,7 @@ if ($conn->connect_error) {
 
 
     // Datos de la Purchase Request
-    $sql = "SELECT a.* FROM po_list a where a.id = $poId";
+    $sql = "SELECT a.*, u.codSAP FROM po_list a join users u on u.username = a.username where a.id = $poId";
     //$sql = "SELECT a.*, b.codSAP FROM po_list a inner join supplier_list b on a.supplier_id = b.id where a.id = $poId";
     
     $result = $conn->query($sql);
@@ -53,7 +53,7 @@ if ($conn->connect_error) {
             $poId = $row['id'];
             $poNo = $row['po_no'];
             $supplierId = $row['supplier_id'];
-            $supplierCodSAP = $_SESSION['userdata']['codSAP'];//$row['codSAP'];
+            $supplierCodSAP = $row['codSAP'];// $_SESSION['userdata']['codSAP'];
             $dateCreated = $row['date_created'];
             $dateCreatedYMD = date('Y-m-d', strtotime($row['date_created']));
             $requiredDateYMD = date('Y-m-d', strtotime($row['required_date']));
@@ -160,8 +160,8 @@ function enviar_solicitud_inventario($solicitud_id){
         $hostSAP = 'sap-bo-srvl-mtdtech.skyinone.net';
         $puertoSAP = '50000';
     
-        $companyDBSAP = 'SBO_C184_DB2_TST2';
-        // $companyDBSAP = 'SBO_C184_DB2_PRD';
+       $companyDBSAP = 'SBO_C184_DB2_TST2';
+         //$companyDBSAP = 'SBO_C184_DB2_PRD';
     
         
         if ($_SESSION['userdata']['codSAP'] == '1833')
