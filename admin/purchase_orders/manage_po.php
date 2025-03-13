@@ -93,15 +93,32 @@ if($qry['codSAP'] == null){
 			<div class="row">
 			<div class="col-md-6 form-group">
 					<label for="supplier_id">Proveedor</label>
-					<select name="supplier_id" id="supplier_id" class="custom-select custom-select-sm rounded-0 select2">
-						<option value="" disabled <?php /* echo !isset($supplier_id) ? "selected" :'' */ ?>></option>
+					<select name="supplier_id" id="supplier_id" class="custom-select custom-select-sm rounded-0 select2" required>
+						<option value="" selected <?php /* echo !isset($supplier_id) ? "selected" :'' */ ?>></option>
 						<?php 
+
+						// Solo corre cuando ya tenemos una orden de compra creada:
+						if(isset($id)){
+							
+						$query = $conn->query("SELECT o.*, p.name FROM order_items o JOIN proveedores p ON p.id = o.proveedor_id where o.po_id = '{$_GET['id']}' LIMIT 1;");
+						if(gettype($query) == "boolean"){
+							echo "";
+						} else {
+						$rows = $query->fetch_array();
+						if(isset($rows)) {
+						$proveedor_id = $rows['proveedor_id'];
+						$name_proveedor = $rows['name'];
+						} else {
+							$name_proovedor = "";
+						}
+					}
+						}
 							
 							$supplier_qry = $conn->query("SELECT * FROM `proveedores` order by `name` asc");
 							while($row = $supplier_qry->fetch_assoc()):
 							
 						?>
-						<option value="<?php  echo $row['id']  ?>" <?php  echo isset($supplier_id) && $supplier_id == $row['id'] ? 'selected' : ''  ?> <?php  echo $row['status'] == 0? 'disabled' : ''  ?>><?php  echo($row['codSAP']); echo(" "); echo($row['name']);  ?></option>
+						<option value="<?php  echo $row['id']  ?>" <?php  echo isset($proveedor_id) && $proveedor_id == $row['id'] ? 'selected' : ''  ?> <?php  echo $row['status'] == 0? 'disabled' : ''  ?>><?php  echo($row['codSAP']); echo(" "); echo($row['name']);  ?></option>
 						<?php  endwhile;  ?>
 					</select>
 				</div>
