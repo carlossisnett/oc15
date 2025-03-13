@@ -66,7 +66,9 @@ if($qry['codSAP'] == null){
                 class="form-control form-control-sm rounded-0" 
                 id="required_date" 
                 name="required_date" 
-                value="<?php echo isset($required_date) ? $required_date : '' ?>" 
+                value="<?php echo isset($required_date) ? $required_date : date('Y-m-d'); ?>" 
+    			min="<?php echo date('Y-m-d'); ?>"  
+
                 required 
                 title="Fecha en la que requiere el producto o servicio"
             >
