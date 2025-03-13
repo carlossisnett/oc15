@@ -99,7 +99,6 @@ class Login extends DBConnection {
 
 	public function reset_password(){
 		require "enviar_correo.php";
-		$this->logToFile("reset_password");
 		extract($_POST);
 		$stmt = $this->conn->prepare("SELECT * FROM users WHERE email = ?");
 		$stmt->bind_param("s", $email);
@@ -131,7 +130,6 @@ class Login extends DBConnection {
 
 	public function change_password(){
 		extract($_POST);
-		$this->logToFile("recovery_id: $recovery_id, email: $email, password: $password");
 		$prepared = $this->conn->prepare("SELECT * FROM users WHERE recovery_id = ? AND email = ?");
             $prepared->bind_param("ss", $recovery_id, $email);
             $prepared->execute();
