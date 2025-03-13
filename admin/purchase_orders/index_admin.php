@@ -19,7 +19,8 @@
 						<col width="10%">
 						<col width="10%"> <!-- Marca -->
 						<col width="8%"> <!-- Departamento -->
-						<col width="20%">
+						<col width="10%">
+						<col width="10%">
 						<col width="10%">
 						<col width="10%">
 						<col width="10%">
@@ -30,6 +31,7 @@
 						<th>Fecha Creación</th>
 						<th># Solicitud de Compra</th>
 						<th># SAP</th>
+						<th>Proveedor</th>
 						<th>Solicitante</th>
 						<th>Monto Total</th>
 						<th>Estado</th>
@@ -48,6 +50,13 @@
 						$qry = $conn->query($strqry);
 					
 						while($row = $qry->fetch_assoc()):
+							$prov_name = $conn->query("SELECT pro.name from proveedores pro join order_items o on pro.id = o.proveedor_id join po_list p on p.id = o.po_id where p.id = '{$row['id']}' LIMIT 1")->fetch_assoc();
+							if($prov_name != null){
+								$row['proveedor_name'] = $prov_name["name"];
+							} else {
+								$row['proveedor_name'] = "";
+							}
+
 							$row['item_count'] = $conn->query("SELECT * FROM order_items where po_id = '{$row['id']}'")->num_rows;
 							if($row['total'] != null) {
 								$row['total_amount'] = $row['total'];
@@ -60,6 +69,7 @@
 							<td class=""><?php echo date("M d,Y H:i",strtotime($row['date_created'])) ; ?></td>
 							<td class=""><?php echo $row['po_no'] ?></td>
 							<td class="text-center"><?php echo $row['SAPDocEntry'] ?></td>
+							<td class="text-center"><?php echo $row['proveedor_name'] ?></td>
 							<td class=""><?php echo $row['sname'] ?></td>
 							<td class="text-right"><?php echo special_format($row['total_amount']) ?></td>
 							<td>
