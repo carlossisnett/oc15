@@ -133,10 +133,16 @@ Class Master extends DBConnection {
 		extract($_POST);
 		//$qry = $this->conn->query("SELECT * FROM item_list where `name` LIKE '%{$q}%'");
 		$qry = $this->conn->query("SELECT id,codSAP, concat(codSAP, ' ' , `description`) as `description` FROM item_list where `description` LIKE '%{$q}%'");
+		$qry_2 = $this->conn->query("SELECT id,codSAP, concat(codSAP, ' ' , `description`) as `description` FROM item_list where `codSAP` LIKE '%{$q}%'");
 		$data = array();
 		while($row = $qry->fetch_assoc()){
 			$data[] = array("label"=>$row['description'],"id"=>$row['id'],"name"=>$row['codSAP']);
 		}
+		while($row = $qry_2->fetch_assoc()){
+			$data[] = array("label"=>$row['description'],"id"=>$row['id'],"name"=>$row['codSAP']);
+		}
+		
+		$data = array_unique($data);
 		return json_encode($data);
 	}
 
