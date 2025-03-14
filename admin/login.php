@@ -51,7 +51,12 @@
     <div class="col-6 text-center">
         <button type="submit" class="btn btn-danger btn-block" style="font-size: 16px;">INICIAR SESIÓN</button>
     </div>
+ 
 </div>
+<br>
+<div class="text-center">
+    <a href="../admin/reset_password.php"> Olvidé mi contraseña </a>
+  </div>
 
       </form>
       <!-- /.social-auth-links -->

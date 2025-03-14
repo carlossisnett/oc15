@@ -42,12 +42,81 @@ $(document).ready(function(){
 						location.replace(_base_url_+'admin');
 					}else if(resp.status == 'incorrect'){
 						var _frm = $('#login-frm')
-						var _msg = "<div class='alert alert-danger text-white err_msg'><i class='fa fa-exclamation-triangle'></i> Autenticación fallida</div>"
+						var _msg = "<div class='alert alert-danger text-white err_msg'><i class='fa fa-exclamation-triangle'></i> Autenticación fallida, si no ha establecido una nueva contraseña haga click en Olvidé mi contraseña para hacerlo</div>"
 						_frm.prepend(_msg)
 						_frm.find('input').addClass('is-invalid')
 						$('[name="username"]').focus()
 					}
 						end_loader()
+				}
+			}
+		})
+	})
+
+	$('#reset-frm').submit(function(e){
+		e.preventDefault()
+		start_loader()
+		if($('.err_msg').length > 0)
+			$('.err_msg').remove()
+		$.ajax({
+			url:_base_url_+'classes/Login.php?f=reset_password',
+			method:'POST',
+			data:$(this).serialize(),
+			error:err=>{
+				console.log(err)
+
+			},
+			success:function(resp){
+				if(resp){
+					console.log("Respuesta del servidor: ", resp)
+					
+					resp = JSON.parse(resp)
+					if(resp.status == 'success'){
+						//var _frm = $('#reset-frm')
+						//var _msg = "<div class='alert alert-danger text-white err_msg'><i class='fa fa-exclamation-triangle'></i> Solicitud recibida, revise su correo electrónico</div>"
+						//_frm.prepend(_msg)
+						location.replace(_base_url_+'admin/received_request.php');
+					}else if(resp.status == 'incorrect'){
+						var _frm = $('#reset-frm')
+						var _msg = "<div class='alert alert-danger text-white err_msg'><i class='fa fa-exclamation-triangle'></i> Autenticación fallida</div>"
+						_frm.prepend(_msg)
+						_frm.find('input').addClass('is-invalid')
+					}
+						end_loader()
+						
+				}
+			}
+		})
+	})
+
+	$('#change_password_form').submit(function(e){
+		e.preventDefault()
+		start_loader()
+		if($('.err_msg').length > 0)
+			$('.err_msg').remove()
+		$.ajax({
+			url:_base_url_+'classes/Login.php?f=change_password',
+			method:'POST',
+			data:$(this).serialize(),
+			error:err=>{
+				console.log(err)
+
+			},
+			success:function(resp){
+				if(resp){
+					console.log("Respuesta del servidor: ", resp)
+					
+					resp = JSON.parse(resp)
+					if(resp.status == 'success'){
+						location.replace(_base_url_+'admin/successful_password_change.php');
+					}else if(resp.status == 'incorrect'){
+						var _frm = $('#reset-frm')
+						var _msg = "<div class='alert alert-danger text-white err_msg'><i class='fa fa-exclamation-triangle'></i> Autenticación fallida</div>"
+						_frm.prepend(_msg)
+						_frm.find('input').addClass('is-invalid')
+					}
+						end_loader()
+						
 				}
 			}
 		})
