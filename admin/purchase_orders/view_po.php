@@ -249,6 +249,22 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                         ?>
                     </div>
                 </div>
+                <div class="row">
+                <?php
+$files = scandir($ruta_adjunto);
+$files = array_diff($files, array('.', '..')); // Remove . and ..
+?>
+                <?php foreach ($files as $file): ?>
+    <?php if (pathinfo($file, PATHINFO_EXTENSION) === 'pdf'): ?> 
+        <iframe class="pdf" 
+                src="<?php echo $ruta_adjunto . '/' . $file; ?>"
+                width="600" height="350">
+        </iframe>
+        <br> <!-- Add space between PDFs -->
+    <?php endif; ?>
+<?php endforeach; ?>
+                        
+                </div>
             </div>
         </div>
 	</div>

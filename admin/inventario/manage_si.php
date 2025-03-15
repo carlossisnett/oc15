@@ -342,6 +342,10 @@ if($qry['codSAP'] == null){
 	function _autocomplete(_item){
 		_item.find('.item_id').autocomplete({
 			source:function(request, response){
+				if(request.term.length < 3){
+						return;
+					}
+
 				$.ajax({
 					url:_base_url_+"classes/Master.php?f=search_inventory_items",
 					method:'POST',
