@@ -250,19 +250,27 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                     </div>
                 </div>
                 <div class="row">
+                <div class="col-md-12">
                 <?php
-$files = scandir($ruta_adjunto);
-$files = array_diff($files, array('.', '..')); // Remove . and ..
-?>
-                <?php foreach ($files as $file): ?>
-    <?php if (pathinfo($file, PATHINFO_EXTENSION) === 'pdf'): ?> 
-        <iframe class="pdf" 
-                src="<?php echo $ruta_adjunto . '/' . $file; ?>"
-                width="600" height="350">
-        </iframe>
-        <br> <!-- Add space between PDFs -->
-    <?php endif; ?>
-<?php endforeach; ?>
+                    if(isset($ruta_adjunto)){
+                        $files = scandir($ruta_adjunto);
+                        $files = array_diff($files, array('.', '..')); // Remove . and ..
+                        //$only_files = array_filter($files, fn($file) => pathinfo($file, PATHINFO_EXTENSION) === 'pdf'); // Filter only PDFs
+                    }
+                        ?>
+
+                        <div class="pdf-container">
+                            <?php
+                            if($ruta_adjunto == null){
+                                echo "<label>No hay adjuntos</label> <br>";
+                            } else {
+                                echo "<label>Adjuntos</label><br>";
+                                foreach ($files as $file) {
+                                    echo '<a href="' . $ruta_adjunto . '/' . $file . '" target="_blank">' . $file . '</a><br>';
+                                }
+                            } ?>
+                        </div>
+                    </div>
                         
                 </div>
             </div>

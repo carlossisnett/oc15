@@ -740,6 +740,7 @@ function guardar_adjunto($po_no){
 		}
 		$i++;
 	}
+	$this->conn->query("UPDATE `po_list` SET ruta_adjunto  = '$file_dir' where id = $id");
 }
 	function delete_po(){
 		extract($_POST);
