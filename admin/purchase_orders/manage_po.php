@@ -134,7 +134,7 @@ if($qry['codSAP'] == null){
                 class="form-control form-control-sm rounded-0" 
                 id="required_date" 
                 name="required_date" 
-                value="<?php echo isset($required_date) ? $required_date : date('Y-m-d'); ?>" 
+                value="<?php echo date('Y-m-d'); ?>" 
     			min="<?php echo date('Y-m-d'); ?>" 
                 required 
                 title="Fecha en la que requiere el producto o servicio"
@@ -644,6 +644,8 @@ function es_duplicado(){
 		}
 }
 
+var proceder_sin_adjunto = false;
+
 	$(document).ready(function(){
 		if(es_duplicado() == true){
 			document.getElementById("title").innerText = "Duplicar Solicitud de Compra";
@@ -690,6 +692,25 @@ function es_duplicado(){
         $('.select2').select2({placeholder:"Por favor selecciona aquí",width:"relative"})
 		$('#po-form').submit(function(e){
 			e.preventDefault();
+			let adjunto_1 = document.getElementById('ruta_adjunto_1');
+			let adjunto_2 = document.getElementById('ruta_adjunto_2');
+			let adjunto_3 = document.getElementById('ruta_adjunto_3');
+			let adjunto_4 = document.getElementById('ruta_adjunto_4');
+			let adjunto_5 = document.getElementById('ruta_adjunto_5');
+			let adjunto_6 = document.getElementById('ruta_adjunto_6');
+			let adjunto_7 = document.getElementById('ruta_adjunto_7');
+			let adjunto_8 = document.getElementById('ruta_adjunto_8');
+			let adjunto_9 = document.getElementById('ruta_adjunto_9');
+			let adjunto_10 = document.getElementById('ruta_adjunto_10');
+			if(proceder_sin_adjunto == false && adjunto_1.value == "" && adjunto_2.value == "" && adjunto_3.value == "" && adjunto_4.value == "" && adjunto_5.value == "" && adjunto_6.value == "" && adjunto_7.value == "" && adjunto_8.value == "" && adjunto_9.value == "" && adjunto_10.value == ""){
+					proceder_sin_adjunto = window.confirm("No has adjuntado ningún archivo. ¿Deseas continuar sin adjuntar archivos?");
+					// Si el usuario responde afirmativo entonces proceder_sin_adjunto = true y se procede con el resto de la funcion
+					if(proceder_sin_adjunto == false){
+						return;
+					}
+				}
+			
+
             var _this = $(this)
 			$('.err-msg').remove();
 			$('[name="po_no"]').removeClass('border-danger')
