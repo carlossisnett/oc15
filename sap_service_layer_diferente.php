@@ -221,19 +221,97 @@ class SAPServiceLayer
         $url = $base_url . $requests_url;
 
         $i = 0;
-
-        
+        $connection = new mysqli("localhost", "root", "", "ordenes_compra_pruebas");
         while($i < 26){
         
+            $url = $base_url . "/" . $requests_url;
 
-        $url = $base_url . "/" . $requests_url;
+            
 
+            $response = $this->sendRequest("GET", $url);
+            $file = fopen('all_items_' . strval($i) . '.json','w+');
+            fwrite($file, json_encode($response));
+            fclose($file);
+
+            $json_string = file_get_contents('all_items_' . $i . '.json');
+
+            $data = json_decode($json_string, true);
+
+            //print_r($data);
+
+            $count = count($data['value']);
+            $j = 0;
+
+            
+
+                               /* 
+                               Example of the query I'm building:
+                UPDATE item_list
+                SET 
+                    stock_actual = CASE 
+                        WHEN codSAP = '1' THEN $sum
+                        WHEN codSAP = '2' THEN $sum
+                        WHEN codSAP = '3' THEN $sum
+                        ELSE stock_actual
+                    END
+                WHERE codSAP IN ('1', '2', '3');
+
+                */
+
+            $sql_query = "UPDATE item_list SET stock_actual = CASE ";
+            $case_query = "";
+            $sql_query_end = "END WHERE codSAP IN (";
+            while($j < $count){
+                $itemcode = $data['value'][$j]['ItemCode'];
+                $inventory_item = $data['value'][$j]['InventoryItem'];
+                $warehouse_collection = $data['value'][$j]['ItemWarehouseInfoCollection'];
+
+                $count_warehouse = count($warehouse_collection);
+                $k = 0;
+                $sum = 0;
+
+                if($inventory_item == 'tYES'){
+                    $inventory_item = true;
+                }else {
+                    $inventory_item = false;
+                }
+
+                if($inventory_item == true) {
+                    while($k < $count_warehouse){
+                        $quantity = $warehouse_collection[$k]['InStock'];
+                        $sum += $quantity;
+                        $k++;
+                        }
+
+                    $case_query = $case_query . "WHEN codSAP = '$itemcode' THEN $sum ";
+                    $sql_query_end .= "'$itemcode'" . ", ";
+                        
+                    //$result = $connection->query("UPDATE item_list SET stock_actual = $sum WHERE codSAP = '$itemcode'");
+                    
+
+                    /*
+                    $myfile = fopen("items_stock.txt", "a") or die("Unable to open file!");
+                    $txt = "itemcode: $itemcode, stock: $sum \n";
+                    fwrite($myfile, $txt);
+                    fclose($myfile);
+
+                    */
+
+                }
+                $j++;
+
+
+            }
+        $sql_query_end = substr($sql_query_end, 0, -2);
+        $fullquery = $sql_query . $case_query . " ELSE stock_actual " . $sql_query_end . ");";
+        $result = $connection->query($fullquery);
+        $myfile = fopen("items_stock.txt", "a") or die("Unable to open file!");
+        //$txt = "itemcode: $itemcode, stock: $sum \n";
+        fwrite($myfile, $fullquery);
+        fclose($myfile);
+            
         
-
-        $response = $this->sendRequest("GET", $url);
-        $file = fopen('all_items_' . strval($i) . '.json','w+');
-        fwrite($file, json_encode($response));
-        fclose($file);
+        unlink('all_items_' . strval($i) . '.json');
 
         $requests_url = $response['odata.nextLink'];
 
