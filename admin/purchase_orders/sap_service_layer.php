@@ -107,10 +107,11 @@ class SAPServiceLayer
     // Send the GET request
     $response = $this->sendRequest("GET", $url);
     /*
-    $file = fopen('response_sap.json','w+');
+    $file = fopen('response_sap_abiertas.json','w+');
     fwrite($file, json_encode($response));
     fclose($file);
-        */
+    */
+        
     if (!$response || !isset($response['value'])) {
         throw new Exception("Failed to retrieve open purchase requests.");
      } else{
