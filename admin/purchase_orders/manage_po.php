@@ -179,6 +179,7 @@ if($qry['codSAP'] == null){
                             where o.`po_id` = '$id' ");
 							echo $conn->error;
 							while($row = $order_items_qry->fetch_assoc()):
+								$marca_id = $row['codigo_marca'];
 							?>
 							<tr class="po-item" data-id="">
 								<!--Botón Remover Item-->
@@ -200,8 +201,13 @@ if($qry['codSAP'] == null){
 								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
-									<input type="hidden" name="marca_id[]" value="<?php echo $row['codigo_marca'] ?>">
-									<input type="text" class="text-center w-100 border-0 marca_id" value="<?php echo $row['nombre_marca'] ?>" required/>
+								<select name="marca_id[]" class="custom-select custom-select-sm rounded-0 select2" required>
+									<?php
+									$marcas_query = $conn->query("SELECT codigo_ccosto, concat(codigo_ccosto, ' ' , `nombre_ccosto`) as `nombre_ccosto` FROM centro_costo where dimension_ccosto = 1 and activo = 'Y' order by `nombre_ccosto`");
+									while($row_2 = $marcas_query->fetch_assoc()):
+									?>
+								<option value="<?php  echo $row_2['codigo_ccosto']  ?>" <?php  echo isset($marca_id) && $marca_id == $row_2['codigo_ccosto'] ? 'selected' : ''  ?>> <?php  echo($row_2['nombre_ccosto']);?> </option>
+								<?php  endwhile;  ?>
 								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
@@ -397,8 +403,14 @@ if($qry['codSAP'] == null){
 								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
-									<input type="hidden" name="marca_id[]">
-									<input type="text" class="text-left w-100 border-0 marca_id" required/>
+								<select name="marca_id[]" class="custom-select custom-select-sm rounded-0 select2" required>
+									<?php
+									$marcas_query = $conn->query("SELECT DISTINCT codigo_ccosto, concat(codigo_ccosto, ' ' , `nombre_ccosto`) as `nombre_ccosto` FROM centro_costo where dimension_ccosto = 1 and activo = 'Y' order by `nombre_ccosto`");
+									while($row_2 = $marcas_query->fetch_assoc()):
+									?>
+								<option value="<?php  echo $row_2['codigo_ccosto']  ?>"> <?php  echo($row_2['nombre_ccosto']);?> </option>
+								<?php  endwhile;  ?>
+									</select>
 								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
@@ -535,23 +547,12 @@ if($qry['codSAP'] == null){
 		})
 	}
 
+	
+
 	function _autocompleteMarca(_item){
 
-_item.find('.marca_id').autocomplete({
-	source:function(request, response){
-		$.ajax({
-			url:_base_url_+"classes/Master.php?f=search_marca",
-			method:'POST',
-			data:{q:request.term},
-			dataType:'json',
-			error:err=>{
-				console.log(err)
-			},
-			success:function(resp){
-				response(resp)
-			}
-		})
-	},
+_item.find('.marca_id').autocomplete(
+	{
 	select:function(event,ui){
 		console.log(ui)
 		_item.find('input[name="marca_id[]"]').val(ui.item.id)
@@ -569,6 +570,7 @@ _item.find('.marca_id').autocomplete({
 });
 
 }
+
 
 function _autocompleteDepartamento(_item){
 
@@ -647,6 +649,17 @@ function es_duplicado(){
 var proceder_sin_adjunto = false;
 
 	$(document).ready(function(){
+/*
+
+		$('.select2').select2({
+    dropdownParent: $('body'),
+    dropdownAutoWidth: true,
+    width: '100%',
+    positionDropdown: 'below'  // Ensures it tries to open downward
+});
+
+*/
+
 		if(es_duplicado() == true){
 			document.getElementById("title").innerText = "Duplicar Solicitud de Compra";
 			const elem = document.getElementById("id_element");
@@ -656,7 +669,7 @@ var proceder_sin_adjunto = false;
 			var tr = $('#item-clone tr').clone()
 			$('#item-list tbody').append(tr)
 			_autocomplete(tr);
-			_autocompleteMarca(tr);
+			//_autocompleteMarca(tr);
 			_autocompleteDepartamento(tr);
 			tr.find('[name="qty[]"],[name="unit_price[]"]').on('input keypress',function(e){
 				calculate()
@@ -673,7 +686,7 @@ var proceder_sin_adjunto = false;
 			$('#item-list .po-item').each(function(){
 				var tr = $(this);
 				_autocomplete(tr);
-				_autocompleteMarca(tr);
+				//_autocompleteMarca(tr);
 				_autocompleteDepartamento(tr);
 				tr.find('[name="qty[]"],[name="unit_price[]"]').on('input keypress',function(e){
 					calculate()
