@@ -92,10 +92,10 @@ class SAPServiceLayer
     #$requests_url = "/PurchaseRequests/\$metadata";
 
     // Calculate the date 2 weeks ago
-    $twoWeeksAgo = date("Y-m-d", strtotime("-2 weeks"));
+    $time_ago = date("Y-m-d", strtotime("-2 days"));
 
     // Build the query to filter open Purchase Requests older than 2 weeks
-    $query = urlencode("DocumentStatus eq 'O' and CreationDate lt '$twoWeeksAgo'");
+    $query = urlencode("DocumentStatus eq 'O' and CreationDate lt '$time_ago'");
     echo "Query: " . $query . "\n";
     
 
