@@ -180,6 +180,7 @@ if($qry['codSAP'] == null){
 							echo $conn->error;
 							while($row = $order_items_qry->fetch_assoc()):
 								$marca_id = $row['codigo_marca'];
+								$departamento_id = $row['codigo_departamento'];
 							?>
 							<tr class="po-item" data-id="">
 								<!--Botón Remover Item-->
@@ -202,17 +203,26 @@ if($qry['codSAP'] == null){
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
 								<select name="marca_id[]" class="custom-select custom-select-sm rounded-0 select2" required>
+								
 									<?php
 									$marcas_query = $conn->query("SELECT codigo_ccosto, concat(codigo_ccosto, ' ' , `nombre_ccosto`) as `nombre_ccosto` FROM centro_costo where dimension_ccosto = 1 and activo = 'Y' order by `nombre_ccosto`");
 									while($row_2 = $marcas_query->fetch_assoc()):
 									?>
 								<option value="<?php  echo $row_2['codigo_ccosto']  ?>" <?php  echo isset($marca_id) && $marca_id == $row_2['codigo_ccosto'] ? 'selected' : ''  ?>> <?php  echo($row_2['nombre_ccosto']);?> </option>
+									
 								<?php  endwhile;  ?>
+								</select>
 								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
-									<input type="hidden" name="departamento_id[]" value="<?php echo $row['codigo_departamento'] ?>">
-									<input type="text" class="text-center w-100 border-0 departamento_id" value="<?php echo $row['nombre_departamento'] ?>" required/>
+
+								<select name="departamento_id[]" class="custom-select custom-select-sm rounded-0 select2" required>
+									<?php
+									$departamentos_query = $conn->query("SELECT codigo_ccosto, concat(codigo_ccosto, ' ' , `nombre_ccosto`) as `nombre_ccosto` FROM centro_costo where dimension_ccosto = 2 and activo = 'Y' order by `nombre_ccosto`");
+									while($row_2 = $departamentos_query->fetch_assoc()):
+									?>
+								<option value="<?php  echo $row_2['codigo_ccosto']  ?>" <?php  echo isset($departamento_id) && $departamento_id == $row_2['codigo_ccosto'] ? 'selected' : ''  ?>> <?php  echo($row_2['nombre_ccosto']);?> </option>
+								<?php  endwhile;  ?>
 								</td>
 								<td class="align-middle p-1">
 									<input type="text" class="text-center w-100 border-0" name="url[]" value="<?php echo isset($row['url']) ? ($row['url']) : "" ?>" />
@@ -404,6 +414,7 @@ if($qry['codSAP'] == null){
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
 								<select name="marca_id[]" class="custom-select custom-select-sm rounded-0 select2" required>
+								<option value="" selected disabled>-- Escoge una marca --</option>
 									<?php
 									$marcas_query = $conn->query("SELECT DISTINCT codigo_ccosto, concat(codigo_ccosto, ' ' , `nombre_ccosto`) as `nombre_ccosto` FROM centro_costo where dimension_ccosto = 1 and activo = 'Y' order by `nombre_ccosto`");
 									while($row_2 = $marcas_query->fetch_assoc()):
@@ -414,8 +425,15 @@ if($qry['codSAP'] == null){
 								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
-									<input type="hidden" name="departamento_id[]">
-									<input type="text" class="text-left w-100 border-0 departamento_id" required/>
+								<select name="departamento_id[]" class="custom-select custom-select-sm rounded-0 select2" required>
+								<option value="" selected disabled>-- Escoge una marca --</option >
+									<?php
+									$marcas_query = $conn->query("SELECT DISTINCT codigo_ccosto, concat(codigo_ccosto, ' ' , `nombre_ccosto`) as `nombre_ccosto` FROM centro_costo where dimension_ccosto = 2 and activo = 'Y' order by `nombre_ccosto`");
+									while($row_2 = $marcas_query->fetch_assoc()):
+									?>
+								<option value="<?php  echo $row_2['codigo_ccosto']  ?>"> <?php  echo($row_2['nombre_ccosto']);?> </option>
+								<?php  endwhile;  ?>
+									</select>
 								</td>
 								<td class="align-middle p-1">
 									<input type="text" name="url[]" class="text-left w-100 border-0" />
@@ -667,10 +685,21 @@ var proceder_sin_adjunto = false;
 		}
 		$('#add_row').click(function(){
 			var tr = $('#item-clone tr').clone()
+
 			$('#item-list tbody').append(tr)
 			_autocomplete(tr);
 			//_autocompleteMarca(tr);
-			_autocompleteDepartamento(tr);
+			//_autocompleteDepartamento(tr);
+			tr.find("input, select").val(""); // Clear input/select values
+    		tr.find(".select2").removeClass("select2-hidden-accessible").removeAttr("data-select2-id").show(); // Reset select2
+    		tr.find(".select2-container").remove(); // Remove old select2 container
+
+			tr.find(".select2").select2({
+				width: "100%", // Make sure it resizes properly
+				allowClear: true, // Enables clearing the selection
+				placeholder: "-- Seleccione una opción --" // Keeps placeholder
+    		});
+
 			tr.find('[name="qty[]"],[name="unit_price[]"]').on('input keypress',function(e){
 				calculate()
 			})
@@ -687,7 +716,7 @@ var proceder_sin_adjunto = false;
 				var tr = $(this);
 				_autocomplete(tr);
 				//_autocompleteMarca(tr);
-				_autocompleteDepartamento(tr);
+				//_autocompleteDepartamento(tr);
 				tr.find('[name="qty[]"],[name="unit_price[]"]').on('input keypress',function(e){
 					calculate()
 				})

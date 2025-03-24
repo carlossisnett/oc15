@@ -200,7 +200,7 @@ if($qry['codSAP'] == null){
 								</td>
 								<!--Campo Cantidad-->
 								<td class="align-middle p-0 text-center quantity">
-									<input type="number" class="text-center w-100 border-0" style="background-color: none" step="any" name="qty[]"/>
+									<input type="number" class="text-center w-100 border-0" style="background-color: none" step="any" name="qty[]" required/>
 								</td>
 
 								<td class="align-middle p-0 text-center inventario">
@@ -213,13 +213,32 @@ if($qry['codSAP'] == null){
 								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
-									<input type="hidden" name="marca_id[]">
-									<input type="text" class="text-left w-100 border-0 marca_id" required/>
+								<select name="marca_id[]" class="custom-select custom-select-sm rounded-0 select2" required>
+								<option value="" selected disabled>-- Escoge una marca --</option>
+									<?php
+									$marcas_query = $conn->query("SELECT codigo_ccosto, concat(codigo_ccosto, ' ' , `nombre_ccosto`) as `nombre_ccosto` FROM centro_costo where dimension_ccosto = 1 and activo = 'Y' order by `nombre_ccosto`");
+									while($row_2 = $marcas_query->fetch_assoc()):
+									?>
+								<option value="<?php  echo $row_2['codigo_ccosto']  ?>"> <?php  echo($row_2['nombre_ccosto']);?> </option>
+								<?php  endwhile;  ?>
+									</select>
+
+									<!--input type="hidden" name="marca_id[]">
+									<input type="text" class="text-left w-100 border-0 marca_id" required/ -->
 								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
-									<input type="hidden" name="departamento_id[]">
-									<input type="text" class="text-left w-100 border-0 departamento_id" required/>
+								<select name="departamento_id[]" class="custom-select custom-select-sm rounded-0 select2" required>
+									<?php
+									$departamentos_query = $conn->query("SELECT codigo_ccosto, concat(codigo_ccosto, ' ' , `nombre_ccosto`) as `nombre_ccosto` FROM centro_costo where dimension_ccosto = 2 and activo = 'Y' order by `nombre_ccosto`");
+									while($row_2 = $departamentos_query->fetch_assoc()):
+									?>
+								<option value="<?php  echo $row_2['codigo_ccosto']  ?>" <?php  echo isset($departamento_id) && $departamento_id == $row_2['codigo_ccosto'] ? 'selected' : ''  ?>> <?php  echo($row_2['nombre_ccosto']);?> </option>
+								<?php  endwhile;  ?>
+									</select>
+
+									<!--input type="hidden" name="departamento_id[]">
+									<input type="text" class="text-left w-100 border-0 departamento_id" required/ -->
 								</td>
 							</tr>
 </table>
@@ -307,10 +326,14 @@ if($qry['codSAP'] == null){
 	function verify_inventory(cantidad_element, inventory_element){
 		let cantidad = parseFloat(cantidad_element.val());
 		let inventory = parseFloat(inventory_element.val());
+
 		if(cantidad > inventory){
 			alert("La cantidad solicitada no puede ser mayor al inventario disponible");
 			cantidad_element.css('background-color', 'yellow');
 			//cantidad_element.val("");
+		} else if(cantidad == 0){
+			alert("La cantidad solicitada no puede ser cero");
+			cantidad_element.css('background-color', 'yellow');
 		}
 		else{
 			cantidad_element.css('background-color', 'white');
@@ -443,8 +466,17 @@ $(document).on("change", "input.item_id", function () {
 			var tr = $('#item-clone tr').clone()
 			$('#item-list tbody').append(tr)
 			_autocomplete(tr);
-			_autocompleteMarca(tr);
-			_autocompleteDepartamento(tr);
+		//_autocompleteMarca(tr);
+			//_autocompleteDepartamento(tr);
+			tr.find("input, select").val(""); // Clear input/select values
+    		tr.find(".select2").removeClass("select2-hidden-accessible").removeAttr("data-select2-id").show(); // Reset select2
+    		tr.find(".select2-container").remove(); // Remove old select2 container
+
+			tr.find(".select2").select2({
+				width: "100%", // Make sure it resizes properly
+				allowClear: true, // Enables clearing the selection
+				placeholder: "-- Seleccione una opción --" // Keeps placeholder
+    		});
 			tr.find('[name="qty[]"]').on('input keypress',function(e){
 				verify_inventory(tr.find("td.quantity input"), tr.find("td.inventario input"));
 			})
