@@ -357,6 +357,21 @@ Class Master extends DBConnection {
 		}
 		return json_encode($resp);
 		*/
+
+	function change_po_status(){
+		extract($_POST);
+		$save = $this->conn->query("UPDATE `po_list` set status = '{$status}' where id = '{$id}' ");
+		if($save){
+			$resp['status'] = 'success';
+			$this->settings->set_flashdata('success',"Estado de la orden de compra actualizado correctamente.");
+		}
+		else{
+			$resp['status'] = 'failed';
+			$resp['error'] = $this->conn->error;
+		}
+		return json_encode($resp);
+
+	}
 	
 	function save_po_old(){
 		extract($_POST);
@@ -777,6 +792,19 @@ function guardar_adjunto($po_no){
 		 }
 		 return json_encode($resp);
 	}
+
+	function update_approver(){
+		extract($_POST);
+		$save = $this->conn->query("INSERT INTO `aprobadores` (`user_id`,`departamento`) VALUES ('{$user_id}','{$departamento_id}') ");
+		if($save){
+			$resp['status'] = 'success';
+			$this->settings->set_flashdata('success',"Aprobador guardado correctamente.");
+		}else{
+			$resp['status'] = 'failed';
+			$resp['error'] = $this->conn->error;
+		}
+		return json_encode($resp);
+	}
 	
 	function delete_img(){
 		extract($_POST);
@@ -841,6 +869,12 @@ switch ($action) {
 	break;
 	case 'get_stock':
 		echo $Master->get_stock();
+	break;
+	case 'change_po_status':
+		echo $Master->change_po_status();
+	break;
+	case 'update_approver':
+		echo $Master->update_approver();
 	break;
 
 	
