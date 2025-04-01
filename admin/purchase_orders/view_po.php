@@ -82,19 +82,19 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
             </div>
             <div class="col-4 row">
                 <div class="col-3">
-                    <p  class="m-0"><b># Solicitud:</b></p>
+                    <p  class="mb-2"><b># Solicitud:</b></p>
                     <p><b><?php echo $po_no ?></b></p>
                 </div>
                 <div class="col-3">
-                    <p  class="m-0"><b># SAP:</b></p>
+                    <p  class="mb-2"><b># SAP:</b></p>
                     <p><b><?php echo $SAPDocEntry ?></b></p>
                 </div>
                 <div class="col-3">
-                    <p  class="m-0"><b>Fecha de Creación</b></p>
+                    <p  class="mb-2"><b>Fecha de Creación</b></p>
                     <p><b><?php echo date("Y-m-d",strtotime($date_created)) ?></b></p>
                 </div>
                 <div class="col-3">
-                    <p  class="m-0"><b>Proveedor</b></p>
+                    <p  class="mb-2"><b>Proveedor</b></p>
                     <?php
                     $query = $conn->query("SELECT o.*, p.name FROM order_items o JOIN proveedores p ON p.id = o.proveedor_id where o.po_id = '{$_GET['id']}' LIMIT 1;");
                     if(gettype($query) == "boolean"){
@@ -111,8 +111,65 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                     ?>
                     <p><b><?php echo isset($name_proveedor) ? $name_proveedor : "" ?></b></p>
                     </div>
-                    
                 </div>
+                <div class="col-4 row">
+                <div class="col-3">
+                <p  class="mb-2"><b> Estado</b></p>
+                <?php
+                if($status == 1){
+                    echo "<span class='py-2 px-4 btn-flat btn-success'>Aprobada</span>";
+                } else if($status == 2){
+                    echo "<span class='py-2 px-4 btn-flat btn-danger'>Rechazada</span>";
+                } else if($status == 3){
+                    echo "<span class='py-2 px-4 btn-flat btn-success'>Cerrada</span>";
+                } else if ($status == 0) {
+                    echo "<span class='py-2 px-4 btn-flat btn-secondary'>Pendiente</span>";
+                }
+                ?>
+               
+            </div>
+            <?php 
+             $query = $conn->query("SELECT o.codigo_departamento FROM order_items o where o.po_id = '{$_GET['id']}' LIMIT 1;");
+             if(gettype($query) == "boolean"){
+                 echo "";
+             } else {
+             $rows = $query->fetch_array();
+             if(isset($rows)) {
+             $codigo_departamento = $rows['codigo_departamento'];
+             } 
+         }
+            echo $codigo_departamento;
+            $user_id = $_settings->userdata('id'); // Get visitor user id
+            $user = $conn->query("SELECT * FROM users where id ='".$_settings->userdata('id')."'");
+
+            foreach($user->fetch_array() as $k =>$v){
+                $meta[$k] = $v;
+            }
+
+            echo "  " . $meta['id'];
+
+            $aprobador = $conn->query("SELECT * from aprobadores where user_id = '{$user_id}' and departamento = '{$codigo_departamento}'");
+            
+            if($aprobador->num_rows == 0){
+                echo "";
+            } else if($aprobador->num_rows > 0):
+            //$aprobador = $aprobador->fetch_array();
+            ?>
+                   <div class="col-3">
+    <p class="mb-2"><b>Cambiar estado</b></p>
+    <form id="change_po_status" method="post">
+        <div class="d-flex gap-2">
+            <select class="form-select" aria-label="Default select example">
+                <option value="0" <?php if($status == 0){echo "selected";} ?> >Pendiente</option>
+                <option value="1" <?php if($status == 1){echo "selected";} ?> >Aprobar </option>
+                <option value="2" <?php if($status == 2){echo "selected";} ?> >Rechazar</option>
+            </select>
+        </div>
+    </form>
+</div>
+<?php endif; ?>
+            </div>
+            </div>
             </div>
         </div>
         <div class="row">
@@ -227,27 +284,6 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                         <label for="notes" class="control-label">Notas</label>
                         <p><?php echo isset($notes) ? $notes : '' ?></p>
                     </div>
-                    <div class="col-6">
-                        <label for="status" class="control-label">Estado</label>
-                        <br>
-                        <?php 
-                        switch($status){
-                            case 1:
-                                echo "<span class='py-2 px-4 btn-flat btn-success'>Aprobada</span>";
-                                break;
-                            case 2:
-                                echo "<span class='py-2 px-4 btn-flat btn-danger'>Negada</span>";
-                                break;
-
-                            case 3:
-                                echo "<span class='py-2 px-4 btn-flat btn-success'>Cerrada</span>";
-                                break;
-                            default:
-                                echo "<span class='py-2 px-4 btn-flat btn-secondary'>Pendiente</span>";
-                                break;
-                        }
-                        ?>
-                    </div>
                 </div>
                 <div class="row">
                 <div class="col-md-12">
@@ -303,6 +339,55 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 	</tr>
 </table>
 <script>
+    $('select').on('change', function(e){
+        let proceder = false;
+        if(this.value == 0){
+            proceder = window.confirm("¿Desea cambiar el estado de la solicitud de compra a Pendiente?");
+        }
+        if(this.value == 1){
+            proceder = window.confirm("¿Desea aprobar la solicitud de compra?");
+        }
+        if(this.value == 2){
+            proceder = window.confirm("¿Desea rechazar la solicitud de compra?");
+        }
+    if(proceder == true){
+        $.ajax({
+				url:_base_url_+"classes/Master.php?f=" + 'change_po_status',
+				data: {status: this.value, id: <?php echo $_GET['id'] ?>, user_id: <?php echo $user_id ?>},
+                cache: false,
+                contentType: "application/x-www-form-urlencoded",
+                processData: true,
+                method: 'POST',
+                type: 'POST',
+                dataType: 'json',
+				error:err=>{
+					console.log(err)
+					alert_toast("Ocurrió un error",'error');
+					end_loader();
+				},
+				success:function(resp){
+					if(typeof resp =='object' && resp.status == 'success'){
+						location.href = "./?page=purchase_orders/view_po&id="+<?php echo $_GET['id'] ?>;
+					}else if((resp.status == 'failed' || resp.status == 'po_failed') && !!resp.msg){
+                        var el = $('<div>')
+                            el.addClass("alert alert-danger err-msg").text(resp.msg)
+                            _this.prepend(el)
+                            el.show('slow')
+                            $("html, body").animate({ scrollTop: 0 }, "fast");
+                            end_loader()
+							if(resp.status == 'po_failed'){
+								$('[name="po_no"]').addClass('border-danger').focus()
+							}
+                    }else{
+						alert_toast("Ocurrió un error",'error');
+						end_loader();
+                        console.log(resp)
+					}
+				}
+			})
+    }
+});
+
 	$(function(){
         $('#print').click(function(e){
             e.preventDefault();

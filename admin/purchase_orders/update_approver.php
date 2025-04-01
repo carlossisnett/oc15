@@ -35,7 +35,7 @@ GLOBAL $conn;
 <select name="departamento_id" class="custom-select custom-select-sm rounded-0 select2" required>
 								<option value="" selected disabled>-- Escoge un departamento --</option >
 									<?php
-									$marcas_query = $conn->query("SELECT DISTINCT codigo_ccosto, concat(codigo_ccosto, ' ' , `nombre_ccosto`) as `nombre_ccosto` FROM centro_costo where dimension_ccosto = 2 and activo = 'Y' order by `nombre_ccosto`");
+									$marcas_query = $conn->query("SELECT DISTINCT codigo_ccosto, nombre_ccosto FROM centro_costo where dimension_ccosto = 2 and activo = 'Y' order by `nombre_ccosto`");
 									while($row_2 = $marcas_query->fetch_assoc()):
 									?>
 								<option value="<?php  echo $row_2['codigo_ccosto']  ?>"> <?php  echo($row_2['nombre_ccosto']);?> </option>

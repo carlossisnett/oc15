@@ -195,6 +195,135 @@ Class Master extends DBConnection {
 		return json_encode($data);
 	}
 
+	function edit_po(){
+		extract($_POST);
+		$data = "";
+
+		
+		
+		 // Encode the $_POST array into JSON
+		 $jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
+
+		 // Define the path to the external JSON file
+		 $filePath = 'post_data_pruebas.json';
+	 
+		 // Write the JSON data to the file
+		 file_put_contents($filePath, $jsonData);
+		
+		 
+
+		
+		foreach($_POST as $k =>$v){
+			if(in_array($k,array('discount_amount','tax_amount')))
+				$v= str_replace(',','',$v);
+		}
+
+
+		if(isset($discount_amount) == false){
+			$discount_amount = 0;
+		}
+		if(isset($discount_percentage) == false){
+			$discount_percentage = 0;
+		}
+		if(isset($tax_amount) == false){
+			$tax_amount = 0;
+		}
+		if(isset($tax_percentage) == false){
+			$tax_percentage = 0;
+		}
+
+		if(isset($sub_total) == false){
+			$sub_total = null;
+		}
+		if(isset($notes) == false){
+			$notes = null;
+		}
+		if(isset($ruta_adjunto) == false){
+			$ruta_adjunto = null;
+		}
+
+
+		$username = $_SESSION['userdata']['username'];
+
+		$prepared = $this->conn->prepare("UPDATE po_list 
+			SET required_date = ?, 
+				username = ?, 
+				discount_percentage = ?, 
+				discount_amount = ?, 
+				tax_percentage = ?, 
+				tax_amount = ?, 
+				notes = ?, 
+				sub_total = ?, 
+				total = ?, 
+				ruta_adjunto = ? 
+			WHERE id = ?");
+
+		$prepared->bind_param("ssddddsddss", $required_date, $username, $discount_percentage, $discount_amount, $tax_percentage, $tax_amount, $notes, $sub_total, $total, $ruta_adjunto, $id);
+		$prepared->execute();
+
+		
+		$prepared = $this->conn->prepare("SELECT po_no FROM po_list where id = ?");
+		$prepared->bind_param("s", $id);
+		$prepared->execute();
+		$result = $prepared->get_result();
+		$row = $result->fetch_assoc();
+		$po_no = $row['po_no'];
+		$id = (int)$id;
+		
+		$supplier_id = (int)$supplier_id;
+
+		#Si se creo la orden de compra entonces proceder a agregar los articulos a ella
+		if(isset($row))
+			for($x = 0; $x < count($item_id); $x++){
+				// Solo modificamos los order item ids que ya existian en la base de datos, es decir no los que son default
+				if($order_item_id[$x] != "default"){
+					$price = (float)$unit_price[$x];
+					$quantity = (float)$qty[$x];
+					$prepared = $this->conn->prepare("UPDATE order_items 
+					SET quantity = ?, 
+						description = ?, 
+						unit_price = ?, 
+						po_id = ?, 
+						item_id = ?, 
+						codigo_marca = ?, 
+						codigo_departamento = ?, 
+						url = ?, 
+						proveedor_id = ? 
+					WHERE id = ?");
+				
+					$prepared->bind_param("dsdissssii", $quantity, $description[$x], $price, $id, $item_id[$x], $marca_id[$x], $departamento_id[$x], $url[$x], $supplier_id, $order_item_id[$x]);
+					$prepared->execute();
+				}
+			}
+			$resp['status'] = 'success';
+			$resp['id'] = $id;
+			$resp['po_no'] = $po_no;
+				$this->guardar_adjunto($po_no);
+				try {
+					$resultado = enviar_email(["carlos.sisnett@prensa.com"], "Orden de compra ha sido modificada", "Orden de compra ha sido modificada con exito.", "desarrollo@prensa.com");
+
+					
+					//if ($po_id != 233)
+					//{$resultado = enviar_email2($po_id, $pos1DocEntry);}
+					
+					//$resultado = enviar_email(['nelvir.mirabal@prensa.com','nelvir.mirabal@prensa.com'], '2','3');
+					
+					//echo $resultado; // Salida: Correo enviado para PO ID: 123 con SAP: SAP456789
+				} catch (Exception $e) {
+					echo "Error al enviar el correo: " . $e->getMessage();
+				}
+
+		
+		/*
+		else{
+			$resp['status'] = 'failed';
+			$resp['err'] = $this->conn->error."[{$sql}]";
+		}
+
+		*/
+		return json_encode($resp);
+	}
+
 	function save_po(){
 		extract($_POST);
 		$data = "";
@@ -360,8 +489,19 @@ Class Master extends DBConnection {
 
 	function change_po_status(){
 		extract($_POST);
+
+		/*
+		$jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
+
+		// Define the path to the external JSON file
+		$filePath = 'po_status_data.json';
+	
+		// Write the JSON data to the file
+		file_put_contents($filePath, $jsonData);
+		*/
 		$save = $this->conn->query("UPDATE `po_list` set status = '{$status}' where id = '{$id}' ");
-		if($save){
+		$save_2 = $this->conn->query("INSERT INTO `aprobaciones` (user_id, orden_compra_id, estado) VALUES ('{$user_id}', '{$id}', '{$status}') ");
+		if($save_2){
 			$resp['status'] = 'success';
 			$this->settings->set_flashdata('success',"Estado de la orden de compra actualizado correctamente.");
 		}
@@ -875,6 +1015,9 @@ switch ($action) {
 	break;
 	case 'update_approver':
 		echo $Master->update_approver();
+	break;
+	case 'edit_po':
+		echo $Master->edit_po();
 	break;
 
 	
