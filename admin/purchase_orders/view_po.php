@@ -129,16 +129,20 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                
             </div>
             <?php 
-             $query = $conn->query("SELECT o.codigo_departamento FROM order_items o where o.po_id = '{$_GET['id']}' LIMIT 1;");
+             $query = $conn->query("SELECT codigo_departamento FROM order_items where po_id = '{$_GET['id']}';");
              if(gettype($query) == "boolean"){
                  echo "";
-             } else {
-             $rows = $query->fetch_array();
-             if(isset($rows)) {
-             $codigo_departamento = $rows['codigo_departamento'];
-             } 
-         }
-            echo $codigo_departamento;
+             }
+            while($row = $query->fetch_assoc()) {
+                    $departamentos[] = $row['codigo_departamento'];
+                }
+             //echo $rows;
+             //$codigo_departamento = $rows['codigo_departamento'];
+             $codigo_departamento_list = "'" . implode("', '", $departamentos) . "'";
+            
+         
+            //echo $codigo_departamento_list;
+           
             $user_id = $_settings->userdata('id'); // Get visitor user id
             $user = $conn->query("SELECT * FROM users where id ='".$_settings->userdata('id')."'");
 
@@ -146,9 +150,11 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                 $meta[$k] = $v;
             }
 
-            echo "  " . $meta['id'];
+            //echo "  " . $meta['id'];
 
-            $aprobador = $conn->query("SELECT * from aprobadores where user_id = '{$user_id}' and departamento = '{$codigo_departamento}'");
+            $aprobador = $conn->query("SELECT * FROM aprobadores 
+          WHERE user_id = '{$user_id}' 
+          AND departamento IN ({$codigo_departamento_list})");
             
             if($aprobador->num_rows == 0){
                 echo "";

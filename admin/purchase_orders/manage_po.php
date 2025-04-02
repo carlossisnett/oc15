@@ -181,8 +181,10 @@ if($qry['codSAP'] == null){
 							while($row = $order_items_qry->fetch_assoc()):
 								$marca_id = $row['codigo_marca'];
 								$departamento_id = $row['codigo_departamento'];
+								$order_item_id = $row['id'];
 							?>
 							<tr class="po-item" data-id="">
+								<input type="hidden" name="order_item_id[]" value="<?php echo $order_item_id ?>">
 								<!--Botón Remover Item-->
 								<td class="align-middle p-1 text-center">
 									<button class="btn btn-sm btn-danger py-0" type="button" onclick="rem_item($(this))"><i class="fa fa-times"></i></button>
@@ -398,6 +400,7 @@ if($qry['codSAP'] == null){
 								<td class="align-middle p-1 text-center">
 									<button class="btn btn-sm btn-danger py-0" type="button" onclick="rem_item($(this))"><i class="fa fa-times"></i></button>
 								</td>
+								<input type="hidden" name="order_item_id[]" value="default">
 								<!--Campo Cantidad-->
 								<td class="align-middle p-0 text-center">
 									<input type="number" class="text-center w-100 border-0" step="any" name="qty[]"/>
@@ -426,7 +429,7 @@ if($qry['codSAP'] == null){
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
 								<select name="departamento_id[]" class="custom-select custom-select-sm rounded-0 select2" required>
-								<option value="" selected disabled>-- Escoge una marca --</option >
+								<option value="" selected disabled>-- Escoge un departamento --</option >
 									<?php
 									$marcas_query = $conn->query("SELECT DISTINCT codigo_ccosto, concat(codigo_ccosto, ' ' , `nombre_ccosto`) as `nombre_ccosto` FROM centro_costo where dimension_ccosto = 2 and activo = 'Y' order by `nombre_ccosto`");
 									while($row_2 = $marcas_query->fetch_assoc()):
@@ -664,6 +667,15 @@ function es_duplicado(){
 		}
 }
 
+function es_editado(){
+	const queryString = window.location.search;
+	if(queryString.includes("edit=true") == true){
+		return true;
+	} else{
+			return false;
+		}
+}
+
 var proceder_sin_adjunto = false;
 
 	$(document).ready(function(){
@@ -764,9 +776,14 @@ var proceder_sin_adjunto = false;
 			$('#total').val(rawPrice); // Set the value without commas before submitting
 			start_loader();
 			const guardarBoton = document.getElementById('guardar_boton');
-			guardarBoton.disabled = true;
+			if(es_editado() == false){
+				guardarBoton.disabled = true;
+			}
 
 			$function_name = 'save_po';
+			if(es_editado() == true){
+				$function_name = 'edit_po';
+			}
 			$.ajax({
 				url:_base_url_+"classes/Master.php?f=" + $function_name,
 				data: new FormData($(this)[0]),

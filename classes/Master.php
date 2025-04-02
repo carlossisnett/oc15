@@ -487,6 +487,64 @@ Class Master extends DBConnection {
 		return json_encode($resp);
 		*/
 
+	/*
+	Esta funcion determina si con la aprobacion del usuario recibido ya se puede aprobar la orden de compra
+	esto se necesita porque hay ordenes de compra que requieren mas de 1 aprobacion al solicitar articulos
+	para distintos departamentos
+
+	Id de la solicitud de compra, Id del usuario que aprueba -> ___
+	String, String -> ____
+	*/
+
+	function is_po_ready_to_be_approved($id, $user_id, $status){
+		// if gerente general approves consider it
+
+		if($status == 0 or $status == 2){
+			return false;
+		}
+
+		$query = $this->conn->query("SELECT DISTINCT codigo_departamento from order_items where po_id = '{$id}'");
+		$rows = $query->fetch_assoc();
+		$codigo_departamento_list = "'" . implode("', '", $rows) . "'";
+		
+		$query_2 = $this->conn->query("SELECT DISTINCT * from aprobadores where departamento in ({$codigo_departamento_list})");
+		$rows_2 = array(); // Initialize an empty array to store rows
+		while ($row = $query_2->fetch_assoc()) {
+			$rows_2[] = $row; // Store each row in an array
+		}
+		if(count($rows_2) == 1){
+			return true;
+		} else{
+				$rows_2 = array_diff([$user_id], $rows_2);
+				foreach($rows_2 as $key => $value){
+					if($this->is_po_approved_by_this_approver($value, $id) == false){
+						return false;
+					}
+				}
+				return true;
+		}
+	}
+
+	function is_po_approved_by_this_departament($codigo_departamento, $po_id){
+		$query = $this->conn->query("SELECT * from aprobaciones where departamento = '{$codigo_departamento}' and orden_compra_id = '{$po_id}' and estado = 1");
+		$rows = $query->fetch_assoc();
+		if($rows == 1){
+			return true;
+		} else{
+			return false;
+		}
+	}
+
+	function is_po_approved_by_this_approver($user_id, $po_id){
+		$query = $this->conn->query("SELECT * from aprobaciones where user_id = '{$user_id}' and orden_compra_id = '{$po_id}' and estado = 1");
+		$rows = $query->fetch_assoc();
+		if($rows == 1){
+			return true;
+		} else{
+			return false;
+		}
+	}
+
 	function change_po_status(){
 		extract($_POST);
 
@@ -499,11 +557,28 @@ Class Master extends DBConnection {
 		// Write the JSON data to the file
 		file_put_contents($filePath, $jsonData);
 		*/
-		$save = $this->conn->query("UPDATE `po_list` set status = '{$status}' where id = '{$id}' ");
+
+		if($status == 0 or $status == 2){
+			$save = $this->conn->query("UPDATE `po_list` set status = '{$status}' where id = '{$id}' ");
+		}
+
+		$approved = $this->is_po_ready_to_be_approved($id, $user_id, $status);
+
+		if($approved == true) {
+			$save = $this->conn->query("UPDATE `po_list` set status = '{$status}' where id = '{$id}' ");
+		};
+		
 		$save_2 = $this->conn->query("INSERT INTO `aprobaciones` (user_id, orden_compra_id, estado) VALUES ('{$user_id}', '{$id}', '{$status}') ");
 		if($save_2){
 			$resp['status'] = 'success';
+
+			if($approved == true) {
+				$this->settings->set_flashdata('success',"Orden de compra aprobada correctamente.");
+			} elseif ($status == 1  and $approved == false) {
+				$this->settings->set_flashdata('success',"Orden de compra ha sido actualizada correctamente. Falta la aprobación de los otros departamentos.");
+			} elseif ($status = 2 and $approved = false) {
 			$this->settings->set_flashdata('success',"Estado de la orden de compra actualizado correctamente.");
+			}
 		}
 		else{
 			$resp['status'] = 'failed';
