@@ -597,6 +597,10 @@ Class Master extends DBConnection {
 		file_put_contents($filePath, $jsonData);
 		*/
 
+		$stmt = $this->conn->prepare("INSERT INTO aprobaciones (user_id, orden_compra_id, estado) VALUES (?, ?, ?)");
+		$stmt->bind_param("iii", $user_id, $id, $status);
+		$stmt->execute();
+
 		$save = false;
 
 		if($status == 0 or $status == 2){

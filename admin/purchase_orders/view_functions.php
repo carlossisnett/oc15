@@ -54,5 +54,19 @@ function special_format($number_string){
     }
 }
 
+function describir_estado($status){
+    switch($status){
+        case 0:
+            return "Cambió el estado de la solicitud a <b>Pendiente</b>";
+            break;
+        case 1:
+            return "<b>Aprobó </b> la solicitud";
+            break;
+        case 2:
+            return "<b>Rechazó</b> la solicitud";
+            break;
+    }
+}
+
 
 ?>

@@ -178,6 +178,29 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
             </div>
             </div>
         </div>
+
+        
+                
+                    <?php
+                    require_once "view_functions.php";
+                    $historial = $conn->query("SELECT u.name , a.estado, a.hora_creacion FROM aprobaciones a JOIN users u ON u.id = a.user_id where orden_compra_id = '{$_GET['id']}'");
+                    if(gettype($historial) == "boolean"){
+                        echo "";
+                    } else {
+                        if ($historial && $historial->num_rows > 0) {
+                            echo "Historial de la orden de compra <br>";
+                            echo "<ul>";
+                        
+                            while ($row = $historial->fetch_assoc()) {
+                                echo "<li>" . htmlspecialchars($row['name']) . " " . describir_estado($row['estado']) . " el " . date("Y-m-d H:i:s", strtotime($row['hora_creacion'])) . "</li>";
+                            }
+                        
+                            echo "</ul>";
+                    echo "</ul>";
+                    }
+                }
+                    ?>
+       
         <div class="row">
             <div class="col-md-12">
                 <table class="table table-striped table-bordered" id="item-list">
@@ -204,7 +227,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                     </thead>
                     <tbody>
                         <?php 
-                        require "view_functions.php";
+                        //require "view_functions.php";
                         if(isset($id)):
                         
                             $prepared = $conn->prepare("SELECT o.*,i.name, o.description, i.codSAP,concat(i.codSAP,' ',i.description) as nombre_item, concat(ma.codigo_ccosto,' ',ma.nombre_ccosto) as nombre_marca,concat(de.codigo_ccosto,' ',de.nombre_ccosto) as nombre_departamento
