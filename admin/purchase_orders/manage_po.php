@@ -185,6 +185,8 @@ if($qry['codSAP'] == null){
 							?>
 							<tr class="po-item" data-id="">
 								<input type="hidden" name="order_item_id[]" value="<?php echo $order_item_id ?>">
+								<input type="hidden" name="delete[]" value="false">
+
 								<!--Botón Remover Item-->
 								<td class="align-middle p-1 text-center">
 									<button class="btn btn-sm btn-danger py-0" type="button" onclick="rem_item($(this))"><i class="fa fa-times"></i></button>
@@ -396,11 +398,14 @@ if($qry['codSAP'] == null){
 </table>
 <table class="d-none" id="item-clone">
 <tr class="po-item" data-id="">
+<input type="hidden" name="delete[]" value="false">
+<input type="hidden" name="order_item_id[]" value="">
 								<!--Botón Remover Item-->
 								<td class="align-middle p-1 text-center">
 									<button class="btn btn-sm btn-danger py-0" type="button" onclick="rem_item($(this))"><i class="fa fa-times"></i></button>
+									
 								</td>
-								<input type="hidden" name="order_item_id[]" value="default">
+								
 								<!--Campo Cantidad-->
 								<td class="align-middle p-0 text-center">
 									<input type="number" class="text-center w-100 border-0" step="any" name="qty[]"/>
@@ -450,7 +455,13 @@ if($qry['codSAP'] == null){
 
 <script>
 	function rem_item(_this){
+		if(es_editado()){
+			let row = _this.closest('tr'); 
+    		row.find('input[name="delete[]"]').val("true"); // Change value to "true"
+    		row.hide(); // Hide the row
+		} else{
 		_this.closest('tr').remove()
+		}
 	}
 	function calculate(){
 		var _total = 0
@@ -697,8 +708,9 @@ var proceder_sin_adjunto = false;
 		}
 		$('#add_row').click(function(){
 			var tr = $('#item-clone tr').clone()
-
 			$('#item-list tbody').append(tr)
+    		tr.find('input[name="order_item_id[]"]').val("true");
+			//tr.find('input[name="order_item_id[]"]').val('NEW_VALUE').attr('value', 'default');  
 			_autocomplete(tr);
 			//_autocompleteMarca(tr);
 			//_autocompleteDepartamento(tr);

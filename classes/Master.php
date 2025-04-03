@@ -205,7 +205,7 @@ Class Master extends DBConnection {
 		 $jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
 
 		 // Define the path to the external JSON file
-		 $filePath = 'post_data_pruebas.json';
+		 $filePath = 'post_data_ediciones.json';
 	 
 		 // Write the JSON data to the file
 		 file_put_contents($filePath, $jsonData);
@@ -276,7 +276,8 @@ Class Master extends DBConnection {
 		if(isset($row))
 			for($x = 0; $x < count($item_id); $x++){
 				// Solo modificamos los order item ids que ya existian en la base de datos, es decir no los que son default
-				if($order_item_id[$x] != "default"){
+				if($order_item_id[$x] != ""){
+					if($delete[$x] == "false"){ 
 					$price = (float)$unit_price[$x];
 					$quantity = (float)$qty[$x];
 					$prepared = $this->conn->prepare("UPDATE order_items 
@@ -293,8 +294,21 @@ Class Master extends DBConnection {
 				
 					$prepared->bind_param("dsdissssii", $quantity, $description[$x], $price, $id, $item_id[$x], $marca_id[$x], $departamento_id[$x], $url[$x], $supplier_id, $order_item_id[$x]);
 					$prepared->execute();
+					} else{
+						$prepared = $this->conn->prepare("DELETE FROM order_items WHERE id = ?");
+						$prepared->bind_param("i", $order_item_id[$x]);
+						$prepared->execute();
+					}
+				} else{
+					// Crea un nuevo order item
+					$price = (float)$unit_price[$x];
+					$quantity = (float)$qty[$x];
+					$prepared = $this->conn->prepare("INSERT INTO order_items(quantity, description, unit_price, po_id, item_id, codigo_marca, codigo_departamento, url, proveedor_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+					$prepared->bind_param("dsdissssi", $quantity, $description[$x], $price, $id, $item_id[$x], $marca_id[$x], $departamento_id[$x], $url[$x], $supplier_id);
+					$prepared->execute();
 				}
 			}
+
 			$resp['status'] = 'success';
 			$resp['id'] = $id;
 			$resp['po_no'] = $po_no;
