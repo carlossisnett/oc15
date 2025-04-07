@@ -121,7 +121,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                 } else if($status == 2){
                     echo "<span class='py-2 px-4 btn-flat btn-danger'>Rechazada</span>";
                 } else if($status == 3){
-                    echo "<span class='py-2 px-4 btn-flat btn-success'>Cerrada</span>";
+                    echo "<b>Listo para aprobar</b>";
                 } else if ($status == 0) {
                     echo "<span class='py-2 px-4 btn-flat btn-secondary'>Pendiente</span>";
                 }
@@ -129,51 +129,11 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                
             </div>
             <?php 
-             $query = $conn->query("SELECT codigo_departamento FROM order_items where po_id = '{$_GET['id']}';");
-             if(gettype($query) == "boolean"){
-                 echo "";
-             }
-            while($row = $query->fetch_assoc()) {
-                    $departamentos[] = $row['codigo_departamento'];
-                }
-             //echo $rows;
-             //$codigo_departamento = $rows['codigo_departamento'];
-             $codigo_departamento_list = "'" . implode("', '", $departamentos) . "'";
-            
-         
-            //echo $codigo_departamento_list;
-           
-            $user_id = $_settings->userdata('id'); // Get visitor user id
-            $user = $conn->query("SELECT * FROM users where id ='".$_settings->userdata('id')."'");
-
-            foreach($user->fetch_array() as $k =>$v){
-                $meta[$k] = $v;
-            }
-
-            //echo "  " . $meta['id'];
-
-            $aprobador = $conn->query("SELECT * FROM aprobadores 
-          WHERE user_id = '{$user_id}' 
-          AND departamento IN ({$codigo_departamento_list})");
-            
-            if($aprobador->num_rows == 0){
-                echo "";
-            } else if($aprobador->num_rows > 0):
-            //$aprobador = $aprobador->fetch_array();
+            require_once "view_functions.php";
+            $user_id = $_settings->userdata('id');
+            cambiar_estado_para_aprobador($id, $user_id, $conn, $status);
+            cambiar_estado_para_compras($id, $user_id, $conn, $status);
             ?>
-                   <div class="col-3">
-    <p class="mb-2"><b>Cambiar estado</b></p>
-    <form id="change_po_status" method="post">
-        <div class="d-flex gap-2">
-            <select class="form-select" aria-label="Default select example">
-                <option value="0" <?php if($status == 0){echo "selected";} ?> >Pendiente</option>
-                <option value="1" <?php if($status == 1){echo "selected";} ?> >Aprobar </option>
-                <option value="2" <?php if($status == 2){echo "selected";} ?> >Rechazar</option>
-            </select>
-        </div>
-    </form>
-</div>
-<?php endif; ?>
             </div>
             </div>
             </div>
@@ -182,7 +142,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
         
                 
                     <?php
-                    require_once "view_functions.php";
+                    
                     $historial = $conn->query("SELECT u.name , a.estado, a.hora_creacion FROM aprobaciones a JOIN users u ON u.id = a.user_id where orden_compra_id = '{$_GET['id']}'");
                     if(gettype($historial) == "boolean"){
                         echo "";
@@ -378,6 +338,9 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
         }
         if(this.value == 2){
             proceder = window.confirm("¿Desea rechazar la solicitud de compra?");
+        }
+        if(this.value == 3){
+            proceder = window.confirm("¿Desea cambiar el estado de la solicitud de compra a 'Lista para aprobar'?");
         }
     if(proceder == true){
         $.ajax({
