@@ -42,6 +42,8 @@
 					<?php 
 					require "view_functions.php";
 					$i = 1;
+
+					
 					//echo "SELECT po.*, CONCAT_WS(' ', u.firstname, u.lastname) as sname FROM `po_list` po inner join `users` u on po.username = u.username where po.username = '" . $_SESSION['userdata']['username'] . "' order by unix_timestamp(po.date_updated) ";	
 					
 					//$qry = $conn->query("SELECT po.*, CONCAT_WS(' ', u.firstname, u.lastname) as sname FROM `po_list` po inner join `users` u on po.username = u.username order by unix_timestamp(po.date_updated) ");
@@ -97,8 +99,10 @@
 				                  <div class="dropdown-menu" role="menu">
 								  	<a class="dropdown-item" href="?page=purchase_orders/view_po&id=<?php echo $row['id'] ?>"><span class="fa fa-eye text-primary"></span> Ver</a>
 				                    <!-- Botón Editar/Duplicar/Eliminar deshabilitado temporalmente -->
-									<!-- <div class="dropdown-divider"></div>-->
-				                    <!--<a class="dropdown-item" href="?page=purchase_orders/manage_po&id=<?php echo $row['id']?>&duplicate=true"><span class="fa fa-edit text-primary"></span> Editar</a> -->
+									<div class="dropdown-divider"></div>
+									 <?php if($_SESSION['userdata']['type'] == 1 || $_SESSION['userdata']['type'] == 2): ?>
+				                    <a class="dropdown-item" href="?page=purchase_orders/manage_po&id=<?php echo $row['id']?>&edit=true"><span class="fa fa-edit text-primary"></span> Editar</a>
+									<?php endif ?>
 				                    <div class="dropdown-divider"></div>
 									<a class="dropdown-item" href="?page=purchase_orders/manage_po&id=<?php echo $row['id'] ?>&duplicate=true"><span class="fa fa-copy text-warning"></span> Duplicar </a>
 									<!--

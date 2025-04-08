@@ -451,55 +451,6 @@ Class Master extends DBConnection {
 		}
 		return json_encode($resp);
 	}
-		/*
-		if($save){
-			$resp['status'] = 'success';
-			$po_id = empty($id) ? $this->conn->insert_id : $id ;
-			$resp['id'] = $po_id;
-			$data = "";
-			foreach($item_id as $k =>$v){
-				if(!empty($data)) $data .=",";
-				$data .= "('{$po_id}','{$v}','{$unit_price[$k]}','{$qty[$k]}','{$marca_id[$k]}','{$departamento_id[$k]}', '{$url[$k]}', '{$description[$k]}')";
-			}
-			if(!empty($data)){
-				$this->conn->query("DELETE FROM `order_items` where po_id = '{$po_id}'");
-				$save = $this->conn->query("INSERT INTO `order_items` (`po_id`,`item_id`,`unit_price`,`quantity`,codigo_marca,codigo_departamento,url,description) VALUES {$data} ");
-				//echo "INSERT INTO `order_items` (`po_id`,`item_id`,`unit`,`unit_price`,`quantity`) VALUES {$data} ";
-			}
-			if(empty($id))
-			{
-				$ResultRequestSAP = sendPurchaseRequest($po_id);
-				$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
-				$pos0Msj = $ArrayResultRequestSAP[0];
-				$pos1DocEntry = $ArrayResultRequestSAP[1];
-				$pos2DocNum = $ArrayResultRequestSAP[2];
-				$this->settings->set_flashdata('success',"Orden de compra guardada correctamente $pos0Msj");
-				$this->conn->query("update `po_list` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$po_id}'");
-				#echo $Master->guardar_adjunto($pos2DocNum);
-				//enviar_correo();
-				$this->guardar_adjunto($po_no);
-				try {
-					$resultado = enviar_email2($po_id, $pos1DocEntry);
-
-					
-					//if ($po_id != 233)
-					//{$resultado = enviar_email2($po_id, $pos1DocEntry);}
-					
-					//$resultado = enviar_email(['nelvir.mirabal@prensa.com','nelvir.mirabal@prensa.com'], '2','3');
-					
-					//echo $resultado; // Salida: Correo enviado para PO ID: 123 con SAP: SAP456789
-				} catch (Exception $e) {
-					echo "Error al enviar el correo: " . $e->getMessage();
-				}
-			}
-			else
-				$this->settings->set_flashdata('success',"Orden de compra actualizada correctamente.");
-		}else{
-			$resp['status'] = 'failed';
-			$resp['err'] = $this->conn->error."[{$sql}]";
-		}
-		return json_encode($resp);
-		*/
 
 	/*
 	Esta funcion determina si con la aprobacion del usuario recibido ya se puede aprobar la orden de compra
@@ -536,7 +487,7 @@ Class Master extends DBConnection {
 			$rows_2[] = $row; // Store each row in an array
 		}
 		if(count($rows_2) == 1){
-			$this->settings->set_flashdata('success',"Primer if Orden de compra aprobada correctamente. $codigo_departamento_list");
+			$this->settings->set_flashdata('success',"Orden de compra aprobada correctamente.");
 			return true;
 		} else{
 				foreach($rows_2 as $key => $value){
@@ -546,7 +497,7 @@ Class Master extends DBConnection {
 						}
 					}
 				}
-				$this->settings->set_flashdata('success'," segundo return true Orden de compra aprobada correctamente.");
+				$this->settings->set_flashdata('success',"Orden de compra aprobada correctamente.");
 				return true;
 		}
 	}
@@ -572,10 +523,106 @@ Class Master extends DBConnection {
 		}
 	}
 
+	/*
+	Esta funcion le notifica al solicitante, al aprobador, y a compras que la solicitud que el aprobador
+	acaba de aprobar ha sido aprobada.
+
+	Esta funcion recibe el id del usuario del aprobador y de la solicitud de compra
+	*/
+
+	function enviar_email_solicitud_aprobada($user_id, $po_id) {
+		$user_query = $this->conn->query("SELECT * from users where id = '{$user_id}' ");
+			$user_row = $user_query->fetch_assoc();
+
+			$po_list_query = $this->conn->query("SELECT * from po_list where id = '{$po_id}' ");
+			$po_list_row = $po_list_query->fetch_assoc();
+
+			$solicitante_query = $this->conn->query("SELECT * from users where username = '{$po_list_row['username']}' ");
+			$solicitante_row = $solicitante_query->fetch_assoc();
+			$solicitante_email = $solicitante_row['email'];
+			$to = [$user_row['email'], "compras@prensa.com", $solicitante_email, "carlos.sisnett@prensa.com"];
+			
+			$firstname = $user_row['firstname'];
+			$lastname = $user_row['lastname'];
+			$nombre_completo = $firstname . " " . $lastname;
+			$no_sap = $po_list_row['SAPDocEntry'];
+			$url_orden = base_url . "admin/?page=purchase_orders/view_po&id=" . $po_id;
+			$subject = "Solicitud de compra $no_sap ha sido aprobada por $nombre_completo";
+			$link_element = "<a href='$url_orden'>Ver Solicitud de Compra $no_sap</a>";
+			$body = "La orden de compra $no_sap ha sido aprobada por $nombre_completo.  <br> $link_element";
+			enviar_email($to, $subject, $body, "Desarrollo Prensa");
+			// Utilizar la plantilla que utilizamos cuando se crea una orden de compra aqui:
+	}
+
+	/*
+	String -> Array || Boolean
+	Dada el id de una orden de compra esta funcion retorna el ids de los aprobadores que pueden aprobar la orden de compra, si no hay aprobador retorna false
+	*/
+
+	function determinar_aprobadores($po_id){
+		$query = $this->conn->query("SELECT codigo_departamento FROM order_items where po_id = $po_id;");
+		if(gettype($query) == "boolean"){
+			echo "";
+			return false;
+		}
+	   while($row = $query->fetch_assoc()) {
+			   $departamentos[] = $row['codigo_departamento'];
+		   }
+		//echo $rows;
+		//$codigo_departamento = $rows['codigo_departamento'];
+		$codigo_departamento_list = "'" . implode("', '", $departamentos) . "'";
+	
+	   $aprobador = $this->conn->query("SELECT user_id FROM aprobadores 
+	 WHERE departamento IN ({$codigo_departamento_list})");
+
+	 $lista_aprobadores = array(); // Initialize an empty array to store rows
+	   
+	   if($aprobador->num_rows == 0){
+		   echo "";
+		   return false;
+	   } else if($aprobador->num_rows > 0){
+		$lista_aprobadores = $aprobador->fetch_array();
+		return $lista_aprobadores;
+	}
+}
+
+	/*
+	Esta funcion le envia un email a los aprobadores cuando una solicitud ya esta lista para aprobar (estado 3)
+	String -> Boolean
+
+	Retorna true si la funcion fue exitosa, false si no se pudo enviar el email
+	*/
+
+	function notificar_a_aprobadores($po_id){
+		$aprobadores = $this->determinar_aprobadores($po_id);
+		if($aprobadores == false){
+			enviar_email(["desarrollo@prensa.com"], "Solicitud $po_id no tiene aprobador", "Solicitud $po_id no tiene aprobador, por favor asignar uno al departamento que le corresponde y notificarle al aprobador está lista para aprobar", "Desarrollo Prensa");
+			return false;
+		}
+		$to = array();
+		foreach($aprobadores as $key => $value){
+			$user_query = $this->conn->query("SELECT * from users where id = $value ");
+			$user_row = $user_query->fetch_assoc();
+			$to[] = $user_row['email'];
+		}
+	
+		$po_list_query = $this->conn->query("SELECT * from po_list where id = '{$po_id}' ");
+		$po_list_row = $po_list_query->fetch_assoc();
+		$numero_sap = $po_list_row['SAPDocEntry'];
+
+		$title = "Solicitud de compra $numero_sap necesita su aprobación";
+		$url_orden = base_url . "admin/?page=purchase_orders/view_po&id=" . $po_id;
+		$url_todas_ordenes = base_url . "admin/?page=all_purchase_orders";
+		$body = "La solicitud de compra $numero_sap necesita su aprobación. <br> <a href='$url_orden'>Ver Solicitud de Compra $numero_sap</a> <br> <a href='$url_todas_ordenes'>Ver todas las Solicitudes de Compra pendiente por aprobación</a>";
+		
+		enviar_email($to, $title, $body, "Desarrollo Prensa");
+		return true;
+	}
+
 	function change_po_status(){
 		extract($_POST);
 
-		/*
+		
 		$jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
 
 		// Define the path to the external JSON file
@@ -583,7 +630,7 @@ Class Master extends DBConnection {
 	
 		// Write the JSON data to the file
 		file_put_contents($filePath, $jsonData);
-		*/
+		
 
 		if($status == 0 or $status == 2 or $status == 3){
 			$save = $this->conn->query("UPDATE `po_list` set status = '{$status}' where id = '{$id}' ");
@@ -594,28 +641,30 @@ Class Master extends DBConnection {
 		// Cuando compras mueve la orden de compra a lista por aprobar no se sigue el flujo de aprobacion
 		if($status != 3){
 
-		if($approved == true) {
-			$save = $this->conn->query("UPDATE `po_list` set status = '{$status}' where id = '{$id}' ");
-		};
-		
-		$save_2 = $this->conn->query("INSERT INTO `aprobaciones` (user_id, orden_compra_id, estado) VALUES ('{$user_id}', '{$id}', '{$status}') ");
-		if($save_2){
-			$resp['status'] = 'success';
 			if($approved == true) {
-				$this->settings->set_flashdata('success',"Orden de compra aprobada correctamente.");
-			} elseif ($status == 1  and $approved == false) {
-				$this->settings->set_flashdata('success',"Orden de compra ha sido actualizada correctamente. Falta la aprobación de los otros departamentos.");
-			} elseif ($status = 2 and $approved = false) {
-			$this->settings->set_flashdata('success',"Estado de la orden de compra actualizado correctamente.");
-			}
+				$save = $this->conn->query("UPDATE `po_list` set status = '{$status}' where id = '{$id}' ");
+				$this->enviar_email_solicitud_aprobada($user_id, $id);
+			};
 			
-		}
-		else{
-			$resp['status'] = 'failed';
-			$resp['error'] = $this->conn->error;
-		}
+			$save_2 = $this->conn->query("INSERT INTO `aprobaciones` (user_id, orden_compra_id, estado) VALUES ('{$user_id}', '{$id}', '{$status}') ");
+			if($save_2){
+				$resp['status'] = 'success';
+				if($approved == true) {
+					$this->settings->set_flashdata('success',"Orden de compra aprobada correctamente.");
+				} elseif ($status == 1  and $approved == false) {
+					$this->settings->set_flashdata('success',"Orden de compra ha sido actualizada correctamente. Falta la aprobación de los otros departamentos.");
+				} elseif ($status = 2 and $approved = false) {
+				$this->settings->set_flashdata('success',"Estado de la orden de compra actualizado correctamente.");
+				}
+				
+			}
+			else{
+				$resp['status'] = 'failed';
+				$resp['error'] = $this->conn->error;
+			}
 
 	} else{
+		$this->notificar_a_aprobadores($id);
 		$resp['status'] = 'success';
 		$this->settings->set_flashdata('success',"Estado de la orden de compra actualizado correctamente.");
 	}

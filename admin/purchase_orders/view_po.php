@@ -138,9 +138,6 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
             </div>
             </div>
         </div>
-
-        
-                
                     <?php
                     
                     $historial = $conn->query("SELECT u.name , a.estado, a.hora_creacion FROM aprobaciones a JOIN users u ON u.id = a.user_id where orden_compra_id = '{$_GET['id']}'");
