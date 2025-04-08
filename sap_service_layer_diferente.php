@@ -1,7 +1,6 @@
 <?php
 
-class SAPServiceLayer
-{
+class SAPServiceLayer{
     private $serviceLayerUrl;
     private $companyDB;
     private $userName;
@@ -44,6 +43,11 @@ class SAPServiceLayer
     {
         $createUrl = "{$this->serviceLayerUrl}/PurchaseRequests";
         return $this->sendRequest('POST', $createUrl, json_encode($purchaseRequestData));
+    }
+
+    public function createPurchaseOrder($purchaseOrderData){
+        $createUrl = "{$this->serviceLayerUrl}/PurchaseOrders";
+        return $this->sendRequest('POST', $createUrl, json_encode($purchaseOrderData));
     }
 
     // Función genérica para enviar solicitudes al Service Layer
@@ -92,7 +96,7 @@ class SAPServiceLayer
     #$requests_url = "/PurchaseRequests/\$metadata";
 
     // Calculate the date 2 weeks ago
-    $twoWeeksAgo = date("Y-m-d", strtotime("-2 weeks"));
+    $twoWeeksAgo = date("Y-m-d", strtotime("-2 days"));
 
     // Build the query to filter open Purchase Requests older than 2 weeks
     $query = urlencode("DocumentStatus eq 'O' and CreationDate lt '$twoWeeksAgo'");
@@ -221,8 +225,8 @@ class SAPServiceLayer
         $url = $base_url . $requests_url;
 
         $i = 0;
-        $connection = new mysqli("localhost", "root", "", "ordenes_compra_pruebas");
-        while($i < 26){
+        $connection = new mysqli("localhost", "root", "", "ordenes_compra");
+        while($i < 25){
         
             $url = $base_url . "/" . $requests_url;
 
@@ -324,6 +328,166 @@ class SAPServiceLayer
         
  
     }
+
+    public function get_purchase_orders(){
+            
+            $base_url = $this->serviceLayerUrl;
+            $requests_url = "PurchaseOrders";
+    
+            $url = $base_url . $requests_url;
+    
+            $i = 24;
+            $connection = new mysqli("localhost", "root", "", "ordenes_compra");
+            while($i < 25){
+            
+                $url = $base_url . "/" . $requests_url;
+    
+                
+    
+                $response = $this->sendRequest("GET", $url);
+                $file = fopen('all_purchase_orders_' . strval($i) . '.json','w+');
+                fwrite($file, json_encode($response));
+                fclose($file);
+    
+                $json_string = file_get_contents('all_purchase_orders_' . $i . '.json');
+    
+                $data = json_decode($json_string, true);
+    
+                //print_r($data);
+    
+                $count = count($data['value']);
+                $j = 0;
+    
+    
+                }
+
+            
+            
+     
+        }
+
+    public function create_purchase_order($poId){
+        try {
+            $conn = new mysqli("localhost", "root", "", "ordenes_compra_pruebas");
+        // Datos de la Purchase Request
+        $sql = "SELECT a.*, u.codSAP FROM po_list a join users u on u.username = a.username where a.id = $poId";
+        //$sql = "SELECT a.*, b.codSAP FROM po_list a inner join supplier_list b on a.supplier_id = b.id where a.id = $poId";
+        
+        $result = $conn->query($sql);
+        
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                $poId = $row['id'];
+                $poNo = $row['po_no'];
+                $supplierId = $row['supplier_id'];
+                $supplierCodSAP = $row['codSAP'];// $_SESSION['userdata']['codSAP'];
+                $dateCreated = $row['date_created'];
+                $dateCreatedYMD = date('Y-m-d', strtotime($row['date_created']));
+                $requiredDateYMD = date('Y-m-d', strtotime($row['required_date']));
+                $notes = $row['notes'];
+                $taxPercentage = $row['tax_percentage'];
+                $discountPercentage = $row['discount_percentage'];
+                
+                // Construir la solicitud de compra
+                $purchaseRequest = [
+                    'CardCode' => "P0002766",
+                    'DocStatus' => 'O',
+                    'DocDate' => $dateCreatedYMD,
+                    'RequriedDate' => $dateCreatedYMD,
+                    'DocDueDate' => $dateCreatedYMD,
+                    'TaxDate' => $dateCreatedYMD,
+                    'ReqType' => 171,
+                    'Requester' => $supplierCodSAP,
+                    'Comments' => $poNo . " " . $notes,
+                    'DocumentLines' => []
+                ];
+        
+                // Recuperar los items correspondientes de la tabla order_items
+                $sqlItems = "SELECT a.*, b.codSAP, p.codSAP as proveedor_SAP FROM order_items a inner join item_list b on a.item_id = b.id join proveedores p on a.proveedor_id = p.id  WHERE a.po_id = $poId";
+                $resultItems = $conn->query($sqlItems);
+        
+                if ($resultItems->num_rows > 0) {
+                    while ($item = $resultItems->fetch_assoc()) {
+
+                    // print $item['codSAP'];
+                        $itemCode =  $item['codSAP']; //'S0000002';  // Código de item fijo según el requerimiento
+                        $description = $item['description'];
+                        $quantity = $item['quantity'];
+                        $unitPrice = $item['unit_price'];
+                        $codigo_marca = $item['codigo_marca'];
+                        $codigo_departamento = $item['codigo_departamento'];
+                        $url = $item['url'];
+                        $proveedor_sap = $item['proveedor_SAP']; // Codigo de SAP del proveedor
+        
+                        // Determinar el grupo de IVA
+                        $vatGroup = ($taxPercentage == 0) ? 'C0' : 'C1';
+        
+                        // Construir la línea del documento
+                        $line = [
+                            'ItemCode' => $itemCode,
+                            'UnitPrice' => $unitPrice,
+                            'U_Comentario' => $description,
+                            'U_LP_EnlaceCompra' => $url,
+                            'Quantity' => $quantity,
+                            'TaxCode' => $vatGroup,
+                            'RequiredDate' => $requiredDateYMD,
+                            'CostingCode' => $codigo_marca,
+                            'CostingCode2' => $codigo_departamento,
+                            'LineVendor' => $proveedor_sap
+                            
+                            
+                            //'VatGroup' => $vatGroup,
+                            //'DiscPercent' => $discountPercentage
+                        ];
+        
+                        // Agregar la línea al array de líneas del documento
+                        $purchaseRequest['DocumentLines'][] = $line;
+                    }
+                }
+
+
+            }
+
+        } else {
+            echo "No se encontraron registros en la tabla po_list.";
+        }
+
+        echo "Line count: " . count($purchaseRequest['DocumentLines']) . "\n";
+
+            
+        $conn->close();
+
+        // Inicializar el Service Layer y crear la Purchase Request
+        $response = $this->createPurchaseOrder($purchaseRequest);
+
+        $json = json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
+        file_put_contents('purchase_order_output.json', $json);
+
+        //$xresult = json_encode($result);
+
+        //echo var_dump($response);
+        //print $xresult;
+
+        // Obtener el número de la Purchase Request creada
+        if (isset($xresult['DocEntry'])) {
+
+            return 'Solicitud SAP creada exitosamente. Número de documento: ' . $result['DocNum'] . '|' . $result['DocNum'] . '|' . $result['DocEntry']  ;
+        } else {
+            return 'Error: No se pudo obtener el número del documento.';
+        }
+
+        //require_once(/enviar_correo)
+    
+        //enviar_email(['nelvir.mirabal@prensa.com'],'PruebaCompra','Este es un correo de prueba para verificar la funcionalidad.');
+    
+        // Cerrar sesión
+        $sap->logout();
+    } catch (Exception $e) {
+        return 'Error: ' . $e->getMessage();
+    }
+
+}
 
 }
 
