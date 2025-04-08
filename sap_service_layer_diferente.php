@@ -366,9 +366,23 @@ class SAPServiceLayer{
      
         }
 
+    public function get_proveedor($po_id, $conn){
+        $query = $conn->query("SELECT o.*, p.codSAP FROM order_items o JOIN proveedores p ON p.id = o.proveedor_id where o.po_id = $po_id LIMIT 1;");
+        if(gettype($query) == "boolean"){
+            echo "";
+        } else {
+                $rows = $query->fetch_array();
+                if(isset($rows)) {
+                    return $rows['codSAP'];
+                }
+        }
+    }
+
     public function create_purchase_order($poId){
         try {
             $conn = new mysqli("localhost", "root", "", "ordenes_compra_pruebas");
+            $proveedor_id = $this->get_proveedor($poId, $conn);
+
         // Datos de la Purchase Request
         $sql = "SELECT a.*, u.codSAP FROM po_list a join users u on u.username = a.username where a.id = $poId";
         //$sql = "SELECT a.*, b.codSAP FROM po_list a inner join supplier_list b on a.supplier_id = b.id where a.id = $poId";
@@ -390,7 +404,7 @@ class SAPServiceLayer{
                 
                 // Construir la solicitud de compra
                 $purchaseRequest = [
-                    'CardCode' => "P0002766",
+                    'CardCode' => $proveedor_id,
                     'DocStatus' => 'O',
                     'DocDate' => $dateCreatedYMD,
                     'RequriedDate' => $dateCreatedYMD,
