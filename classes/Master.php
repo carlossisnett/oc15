@@ -506,54 +506,35 @@ Class Master extends DBConnection {
 	function is_po_ready_to_be_approved($id, $user_id, $status){
 		// if gerente general approves consider it
 
-		if($status == 0 or $status == 2){
+		if($status == 0 or $status == 2 or $status == 3){
 			return false;
 		}
 
-		$query = $this->conn->query("SELECT codigo_departamento FROM order_items where po_id = $id");
-             if(gettype($query) == "boolean"){
-                 echo "";
-             }
-            while($row = $query->fetch_assoc()) {
-                    $departamentos[] = $row['codigo_departamento'];
-                }
-             //echo $rows;
-             //$codigo_departamento = $rows['codigo_departamento'];
-             $codigo_departamento_list = "'" . implode("', '", $departamentos) . "'";
+		$departamentos_por_aprobar = $this->departamentos_que_faltan_por_aprobar($id);
+			$departamentos_que_usuario_puede_aprobar = $this->departamentos_que_usuario_puede_aprobar($user_id);
+			// Extract only the department values
+			$departamentos = array_column($departamentos_que_usuario_puede_aprobar, 'departamento');
 
-			 // Si solo hay un departamento entonces solo se verifica si el usuario actual puede aprobarlo
-			 if(count($departamentos) == 1){
-				$query_3 = $this->conn->query("SELECT user_id from aprobadores where departamento = '{$departamentos[0]}' and user_id = '{$user_id}' ");
-				if($query_3->num_rows == 1){
-					return true;
-				}
-			 } else {
-				 // Si hay mas de un departamento entonces se verifica si el usuario actual puede aprobarlos todos
-					
-					$query_2 = $this->conn->query("SELECT DISTINCT user_id from aprobadores where departamento in ({$codigo_departamento_list})");
-					$rows_2 = array(); // Initialize an empty array to store rows
-					while ($row = $query_2->fetch_assoc()) {
-						$rows_2[] = $row; // Store each row in an array
-					}
+			// Convert to a string formatted for SQL
+			$departamentos_sql = "'" . implode("', '", $departamentos) . "'";
 
+			$hora_aprobacion = date('Y-m-d H:i:s');
+			//$departamentos_string = "'" . implode("', '", $departamentos_que_usuario_puede_aprobar) . "'";
 
-					if(puede_este_usuario_aprobar_estos_departamentos($user_id, $departamentos) == true){
-						$this->settings->set_flashdata('success',"Orden de compra aprobada correctamente.");
-						return true;
-					} else{
-						// Se verifica si alguno de los aprobadores ha aprobado la orden de compra entonces
-						// se rechaza la orden de compra, si no la han rechazado entonces se aprueba retornando true
-							foreach($rows_2 as $key => $value){
-								if($value['user_id'] != $user_id){ 
-									if($this->is_po_approved_by_this_approver($value['user_id'], $id) == false){
-										return false;
-									}
-								}
-							}
-							$this->settings->set_flashdata('success',"Orden de compra aprobada correctamente.");
-							return true;
-					}
-			 }
+			$this->conn->query("UPDATE `order_items` 
+								  SET aprobador_user_id = '{$user_id}', 
+									  status = '{$status}', 
+									  hora_aprobacion = '{$hora_aprobacion}' 
+								  WHERE po_id = '{$id}' and codigo_departamento in ({$departamentos_sql})");
+
+			if($this->containsAllElements(
+				array_column($departamentos_por_aprobar, 'codigo_departamento'),
+				array_column($departamentos_que_usuario_puede_aprobar, 'departamento')) == false){
+				return false;
+			} else {
+				return true;
+		}
+
 	}
 
 	/*
