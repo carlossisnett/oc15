@@ -421,6 +421,7 @@ Class Master extends DBConnection {
 			$resp['status'] = 'success';
 			$resp['id'] = $id;
 			$resp['po_no'] = $po_no;
+			/*
 			$ResultRequestSAP = sendPurchaseRequest($id);
 				$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
 				$pos0Msj = $ArrayResultRequestSAP[0];
@@ -430,6 +431,7 @@ Class Master extends DBConnection {
 				$this->conn->query("update `po_list` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$id}'");
 				#echo $Master->guardar_adjunto($pos2DocNum);
 				//enviar_correo();
+				*/
 				$this->guardar_adjunto($po_no);
 				try {
 					$resultado = enviar_email2($id, $pos1DocEntry);
@@ -450,6 +452,46 @@ Class Master extends DBConnection {
 			$resp['err'] = $this->conn->error."[{$sql}]";
 		}
 		return json_encode($resp);
+	}
+
+	/*
+	Esta funcion devuelve un array con los departamentos que faltan por aprobar, es decir aquellos que tienen status 0 o 2
+	
+	Number -> Array
+	330 -> 
+	*/
+
+	function departamentos_que_faltan_por_aprobar($po_id){
+		$query = $this->conn->query("SELECT codigo_departamento from order_items where po_id = '{$po_id}' and (status = 0 or status = 2 or status is null)");
+		$rows = array(); // Initialize an empty array to store rows
+		while ($row = $query->fetch_assoc()) {
+			$rows[] = $row; // Store each row in an array
+		}
+		return $rows;
+	}
+
+	/*
+	Esta funcion devuelve un array con los departamentos que el usuario puede aprobar, es decir aquellos que tiene en la tabla aprobadores
+	
+	Number -> Array
+	*/
+
+	function departamentos_que_usuario_puede_aprobar($user_id){
+		$query = $this->conn->query("SELECT departamento from aprobadores where user_id = '{$user_id}'");
+		$rows = array(); // Initialize an empty array to store rows
+		while ($row = $query->fetch_assoc()) {
+			$rows[] = $row; // Store each row in an array
+		}
+		return $rows;
+	}
+
+	/*
+	Retorna true si todos los elementos del subset se encuentran en mainArray, de lo contrario retorna false.
+	Array, Array -> Boolean
+	*/
+
+	function containsAllElements($subset, $mainArray) {
+		return empty(array_diff($subset, $mainArray));
 	}
 
 	/*
@@ -479,27 +521,62 @@ Class Master extends DBConnection {
              //$codigo_departamento = $rows['codigo_departamento'];
              $codigo_departamento_list = "'" . implode("', '", $departamentos) . "'";
 
+			 // Si solo hay un departamento entonces solo se verifica si el usuario actual puede aprobarlo
+			 if(count($departamentos) == 1){
+				$query_3 = $this->conn->query("SELECT user_id from aprobadores where departamento = '{$departamentos[0]}' and user_id = '{$user_id}' ");
+				if($query_3->num_rows == 1){
+					return true;
+				}
+			 } else {
+				 // Si hay mas de un departamento entonces se verifica si el usuario actual puede aprobarlos todos
+					
+					$query_2 = $this->conn->query("SELECT DISTINCT user_id from aprobadores where departamento in ({$codigo_departamento_list})");
+					$rows_2 = array(); // Initialize an empty array to store rows
+					while ($row = $query_2->fetch_assoc()) {
+						$rows_2[] = $row; // Store each row in an array
+					}
 
-		
-		$query_2 = $this->conn->query("SELECT DISTINCT user_id from aprobadores where departamento in ({$codigo_departamento_list})");
-		$rows_2 = array(); // Initialize an empty array to store rows
-		while ($row = $query_2->fetch_assoc()) {
-			$rows_2[] = $row; // Store each row in an array
-		}
-		if(count($rows_2) == 1){
-			$this->settings->set_flashdata('success',"Orden de compra aprobada correctamente.");
+
+					if(puede_este_usuario_aprobar_estos_departamentos($user_id, $departamentos) == true){
+						$this->settings->set_flashdata('success',"Orden de compra aprobada correctamente.");
+						return true;
+					} else{
+						// Se verifica si alguno de los aprobadores ha aprobado la orden de compra entonces
+						// se rechaza la orden de compra, si no la han rechazado entonces se aprueba retornando true
+							foreach($rows_2 as $key => $value){
+								if($value['user_id'] != $user_id){ 
+									if($this->is_po_approved_by_this_approver($value['user_id'], $id) == false){
+										return false;
+									}
+								}
+							}
+							$this->settings->set_flashdata('success',"Orden de compra aprobada correctamente.");
+							return true;
+					}
+			 }
+	}
+
+	/*
+	Retorna true si el usuario puede aprobar el departamento recibido, false si no puede
+	*/
+
+	function puede_este_usuario_aprobar_este_departamento($user_id, $codigo_departamento){
+		$query = $this->conn->query("SELECT * from aprobadores where user_id = '{$user_id}' and departamento = '{$codigo_departamento}' ");
+		$rows = $query->fetch_assoc();
+		if($rows == 1){
 			return true;
 		} else{
-				foreach($rows_2 as $key => $value){
-					if($value['user_id'] != $user_id){ 
-						if($this->is_po_approved_by_this_approver($value['user_id'], $id) == false){
-							return false;
-						}
-					}
-				}
-				$this->settings->set_flashdata('success',"Orden de compra aprobada correctamente.");
-				return true;
+			return false;
 		}
+	}
+
+	function puede_este_usuario_aprobar_estos_departamentos($user_id, $departamentos){
+		foreach($departamentos as $key => $value){
+			if(puede_este_usuario_aprobar_este_departamento($user_id, $value) == false){
+				return false;
+			}
+		}
+		return true;
 	}
 
 	function is_po_approved_by_this_departament($codigo_departamento, $po_id){
