@@ -421,7 +421,7 @@ Class Master extends DBConnection {
 			$resp['status'] = 'success';
 			$resp['id'] = $id;
 			$resp['po_no'] = $po_no;
-			/*
+			
 			$ResultRequestSAP = sendPurchaseRequest($id);
 				$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
 				$pos0Msj = $ArrayResultRequestSAP[0];
@@ -431,7 +431,7 @@ Class Master extends DBConnection {
 				$this->conn->query("update `po_list` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$id}'");
 				#echo $Master->guardar_adjunto($pos2DocNum);
 				//enviar_correo();
-				*/
+				
 				$this->guardar_adjunto($po_no);
 				try {
 					$resultado = enviar_email2($id, $pos1DocEntry);
