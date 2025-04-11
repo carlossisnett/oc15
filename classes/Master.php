@@ -338,6 +338,8 @@ Class Master extends DBConnection {
 		return json_encode($resp);
 	}
 
+
+
 	function save_po(){
 		extract($_POST);
 		$data = "";
@@ -421,37 +423,68 @@ Class Master extends DBConnection {
 			$resp['status'] = 'success';
 			$resp['id'] = $id;
 			$resp['po_no'] = $po_no;
+
+			$this->guardar_adjunto($po_no);
+
+			if($this->es_pedido($id) == true){
+				$this->conn->query("UPDATE `po_list` set pedido = 1 where id = '{$id}' ");
+				enviar_email3($id);
+				$this->settings->set_flashdata('success',"Orden de compra guardada correctamente");
+			}
+
+			else {
+				$this->conn->query("UPDATE `po_list` set pedido = 0 where id = '{$id}' ");
 			
-			$ResultRequestSAP = sendPurchaseRequest($id);
-				$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
-				$pos0Msj = $ArrayResultRequestSAP[0];
-				$pos1DocEntry = $ArrayResultRequestSAP[1];
-				$pos2DocNum = $ArrayResultRequestSAP[2];
-				$this->settings->set_flashdata('success',"Orden de compra guardada correctamente $pos0Msj");
-				$this->conn->query("update `po_list` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$id}'");
+				$ResultRequestSAP = sendPurchaseRequest($id);
+					$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
+					$pos0Msj = $ArrayResultRequestSAP[0];
+					$pos1DocEntry = $ArrayResultRequestSAP[1];
+					$pos2DocNum = $ArrayResultRequestSAP[2];
+					$this->settings->set_flashdata('success',"Orden de compra guardada correctamente $pos0Msj");
+					$this->conn->query("update `po_list` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$id}'");
+
+					try {
+						$resultado = enviar_email2($id, $pos1DocEntry);
+	
+						
+						//if ($po_id != 233)
+						//{$resultado = enviar_email2($po_id, $pos1DocEntry);}
+						
+						//$resultado = enviar_email(['nelvir.mirabal@prensa.com','nelvir.mirabal@prensa.com'], '2','3');
+						
+						//echo $resultado; // Salida: Correo enviado para PO ID: 123 con SAP: SAP456789
+					} catch (Exception $e) {
+						echo "Error al enviar el correo: " . $e->getMessage();
+					}
+
+			}
 				#echo $Master->guardar_adjunto($pos2DocNum);
 				//enviar_correo();
 				
-				$this->guardar_adjunto($po_no);
-				try {
-					$resultado = enviar_email2($id, $pos1DocEntry);
-
-					
-					//if ($po_id != 233)
-					//{$resultado = enviar_email2($po_id, $pos1DocEntry);}
-					
-					//$resultado = enviar_email(['nelvir.mirabal@prensa.com','nelvir.mirabal@prensa.com'], '2','3');
-					
-					//echo $resultado; // Salida: Correo enviado para PO ID: 123 con SAP: SAP456789
-				} catch (Exception $e) {
-					echo "Error al enviar el correo: " . $e->getMessage();
-				}
+				
 
 		} else{
 			$resp['status'] = 'failed';
 			$resp['err'] = $this->conn->error."[{$sql}]";
 		}
 		return json_encode($resp);
+	}
+
+	/*
+		Retorna true si el departamento de la orden de compra esta en la lista de codes_to_check, false si no lo está
+	*/
+
+	function es_pedido($po_id){
+		$departamentos = $this->departamentos_que_faltan_por_aprobar($po_id);
+		$codes_to_check = ["CB000001", "CB000003", "CB000002"];
+
+		foreach ($codes_to_check as $code) {
+			if (in_array($code, array_column($departamentos, 'codigo_departamento'))) {
+				return true;
+			}
+		}
+		return false;
+
 	}
 
 	/*
