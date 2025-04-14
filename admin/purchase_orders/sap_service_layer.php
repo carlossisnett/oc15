@@ -46,6 +46,11 @@ class SAPServiceLayer
         return $this->sendRequest('POST', $createUrl, json_encode($purchaseRequestData));
     }
 
+    public function createPurchaseOrder($purchaseOrderData){
+        $createUrl = "{$this->serviceLayerUrl}/PurchaseOrders";
+        return $this->sendRequest('POST', $createUrl, json_encode($purchaseOrderData));
+    }
+
     // Función genérica para enviar solicitudes al Service Layer
     private function sendRequest($method, $url, $data = null)
     {

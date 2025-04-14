@@ -434,7 +434,6 @@ Class Master extends DBConnection {
 
 			else {
 				$this->conn->query("UPDATE `po_list` set pedido = 0 where id = '{$id}' ");
-			
 				$ResultRequestSAP = sendPurchaseRequest($id);
 					$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
 					$pos0Msj = $ArrayResultRequestSAP[0];
@@ -476,7 +475,7 @@ Class Master extends DBConnection {
 
 	function es_pedido($po_id){
 		$departamentos = $this->departamentos_que_faltan_por_aprobar($po_id);
-		$codes_to_check = ["CB000001", "CB000003", "CB000002"];
+		$codes_to_check = ["CB000001151515151515"];
 
 		foreach ($codes_to_check as $code) {
 			if (in_array($code, array_column($departamentos, 'codigo_departamento'))) {
@@ -731,13 +730,15 @@ Class Master extends DBConnection {
 
 		// Cuando compras mueve la orden de compra a lista por aprobar no se sigue el flujo de aprobacion
 		if($status != 3){
-
+			$save_2 = $this->conn->query("INSERT INTO `aprobaciones` (user_id, orden_compra_id, estado) VALUES ('{$user_id}', '{$id}', '{$status}') ");
 			if($approved == true) {
 				$save = $this->conn->query("UPDATE `po_list` set status = '{$status}' where id = '{$id}' ");
-				$this->enviar_email_solicitud_aprobada($user_id, $id);
+				//create_purchase_order($id);
+				// cambiar correo que se envia:
+				enviar_email_orden_de_compra_aprobada($id);
 			};
 			
-			$save_2 = $this->conn->query("INSERT INTO `aprobaciones` (user_id, orden_compra_id, estado) VALUES ('{$user_id}', '{$id}', '{$status}') ");
+			
 			if($save_2){
 				$resp['status'] = 'success';
 				if($approved == true) {
@@ -763,6 +764,8 @@ Class Master extends DBConnection {
 		return json_encode($resp);
 
 	}
+
+	
 	
 	function save_po_old(){
 		extract($_POST);

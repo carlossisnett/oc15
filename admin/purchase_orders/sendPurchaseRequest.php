@@ -3,8 +3,7 @@
 require_once 'sap_service_layer.php';  
 
 
-function sendPurchaseRequest ($poId)
-{
+function sendPurchaseRequest ($poId){
 
 try {
     // Datos de configuración
@@ -12,14 +11,17 @@ try {
     $puertoSAP = '50000';
    
 
-    //$companyDBSAP = 'SBO_C184_DB2_PRD';
+    $companyDBSAP = 'SBO_C184_DB2_PRD';
 
+    /*
+     $companyDBSAP = 'SBO_C184_DB2_TST2';
+     
     $companyDBSAP = 'SBO_C184_DB2_TST2';
   
      if ($_SESSION['userdata']['codSAP'] == '1833')
      {
         $companyDBSAP = 'SBO_C184_DB2_TST2';}
-
+    */
    
     $userNameSAP = 'SAPABO\\ef82f11a-65d9-44a3';
     $passwordSAP = 'Sky0ne2020.';
@@ -29,7 +31,7 @@ try {
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "ordenes_compra_pruebas";
+$dbname = "ordenes_compra";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
@@ -160,15 +162,15 @@ function enviar_solicitud_inventario($solicitud_id){
         $hostSAP = 'sap-bo-srvl-mtdtech.skyinone.net';
         $puertoSAP = '50000';
     
-       $companyDBSAP = 'SBO_C184_DB2_TST2';
-         //$companyDBSAP = 'SBO_C184_DB2_PRD';
+       //$companyDBSAP = 'SBO_C184_DB2_TST2';
+         $companyDBSAP = 'SBO_C184_DB2_PRD';
     
-        
+        /*
         if ($_SESSION['userdata']['codSAP'] == '1833')
         {
             $companyDBSAP = 'SBO_C184_DB2_TST2';
         }
-
+        */
         
 
     
@@ -180,7 +182,7 @@ function enviar_solicitud_inventario($solicitud_id){
     $servername = "localhost";
     $username = "root";
     $password = "";
-    $dbname = "ordenes_compra_pruebas";
+    $dbname = "ordenes_compra";
 
     $conn = new mysqli($servername, $username, $password, $dbname);
 
@@ -299,6 +301,175 @@ function enviar_solicitud_inventario($solicitud_id){
     }
 }
 
+function get_proveedor($po_id, $conn){
+    $query = $conn->query("SELECT o.*, p.codSAP FROM order_items o JOIN proveedores p ON p.id = o.proveedor_id where o.po_id = $po_id LIMIT 1;");
+    if(gettype($query) == "boolean"){
+        echo "";
+    } else {
+            $rows = $query->fetch_array();
+            if(isset($rows)) {
+                return $rows['codSAP'];
+            }
+    }
+}
+
+function create_purchase_order($poId){
+    try {
+
+        $hostSAP = 'sap-bo-srvl-mtdtech.skyinone.net';
+        $puertoSAP = '50000';
+       
+    
+        $companyDBSAP = 'SBO_C184_DB2_PRD';
+    
+        //$companyDBSAP = 'SBO_C184_DB2_TST2';
+      
+        /*
+         if ($_SESSION['userdata']['codSAP'] == '1833')
+         {
+            $companyDBSAP = 'SBO_C184_DB2_TST2';}
+            */
+    
+       
+        $userNameSAP = 'SAPABO\\ef82f11a-65d9-44a3';
+        $passwordSAP = 'Sky0ne2020.';
+    
+    
+    // Configuración de la conexión a la base de datos MySQL
+    $servername = "localhost";
+    $username = "root";
+    $password = "";
+    $dbname = "ordenes_compra";
+
+    $conn = new mysqli($servername, $username, $password, $dbname);
+
+    $proveedor_id = get_proveedor($poId, $conn);
+
+    // Datos de la Purchase Request
+    $sql = "SELECT a.*, u.codSAP FROM po_list a join users u on u.username = a.username where a.id = $poId";
+    //$sql = "SELECT a.*, b.codSAP FROM po_list a inner join supplier_list b on a.supplier_id = b.id where a.id = $poId";
+    
+    $result = $conn->query($sql);
+    
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $poId = $row['id'];
+            $poNo = $row['po_no'];
+            $supplierId = $row['supplier_id'];
+            $supplierCodSAP = $row['codSAP'];// $_SESSION['userdata']['codSAP'];
+            $dateCreated = $row['date_created'];
+            $dateCreatedYMD = date('Y-m-d', strtotime($row['date_created']));
+            $requiredDateYMD = date('Y-m-d', strtotime($row['required_date']));
+            $notes = $row['notes'];
+            $taxPercentage = $row['tax_percentage'];
+            $discountPercentage = $row['discount_percentage'];
+            $owner_code = $row['codSAP'];
+            
+            // Construir la solicitud de compra
+            $purchaseRequest = [
+                'CardCode' => $proveedor_id,
+                'DocStatus' => 'O',
+                'DocDate' => $dateCreatedYMD,
+                'RequriedDate' => $dateCreatedYMD,
+                'DocDueDate' => $dateCreatedYMD,
+                'TaxDate' => $dateCreatedYMD,
+                'ReqType' => 171,
+                'Requester' => $owner_code,
+                'Comments' => $poNo . " " . $notes . "5ta prueba",
+                'DocumentsOwner' => $owner_code,
+                'OwnerCode' => $owner_code,
+                'SalesPersonCode' => 26,
+                'SlpCode' => 26,
+                'DocumentLines' => []
+            ];
+    
+            // Recuperar los items correspondientes de la tabla order_items
+            $sqlItems = "SELECT a.*, b.codSAP, p.codSAP as proveedor_SAP FROM order_items a inner join item_list b on a.item_id = b.id join proveedores p on a.proveedor_id = p.id  WHERE a.po_id = $poId";
+            $resultItems = $conn->query($sqlItems);
+    
+            if ($resultItems->num_rows > 0) {
+                while ($item = $resultItems->fetch_assoc()) {
+
+                // print $item['codSAP'];
+                    $itemCode =  $item['codSAP']; //'S0000002';  // Código de item fijo según el requerimiento
+                    $description = $item['description'];
+                    $quantity = $item['quantity'];
+                    $unitPrice = $item['unit_price'];
+                    $codigo_marca = $item['codigo_marca'];
+                    $codigo_departamento = $item['codigo_departamento'];
+                    $url = $item['url'];
+                    $proveedor_sap = $item['proveedor_SAP']; // Codigo de SAP del proveedor
+    
+                    // Determinar el grupo de IVA
+                    $vatGroup = ($taxPercentage == 0) ? 'C0' : 'C1';
+    
+                    // Construir la línea del documento
+                    $line = [
+                        'ItemCode' => $itemCode,
+                        'UnitPrice' => $unitPrice,
+                        'U_Comentario' => $description,
+                        'U_LP_EnlaceCompra' => $url,
+                        'Quantity' => $quantity,
+                        'TaxCode' => $vatGroup,
+                        'RequiredDate' => $requiredDateYMD,
+                        'CostingCode' => $codigo_marca,
+                        'CostingCode2' => $codigo_departamento,
+                        'LineVendor' => $proveedor_sap
+                        
+                        
+                        //'VatGroup' => $vatGroup,
+                        //'DiscPercent' => $discountPercentage
+                    ];
+    
+                    // Agregar la línea al array de líneas del documento
+                    $purchaseRequest['DocumentLines'][] = $line;
+                }
+            }
+
+
+        }
+
+    } else {
+        echo "No se encontraron registros en la tabla po_list.";
+    }
+
+    echo "Line count: " . count($purchaseRequest['DocumentLines']) . "\n";
+
+        
+    $conn->close();
+
+    // Inicializar el Service Layer y crear la Purchase Request
+
+    $sap = new SAPServiceLayer($hostSAP, $puertoSAP, $companyDBSAP, $userNameSAP, $passwordSAP);
+    $response = $sap->createPurchaseOrder($purchaseRequest);
+
+    $json = json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
+    file_put_contents('purchase_order_output.json', $json);
+
+    //$xresult = json_encode($result);
+
+    //echo var_dump($response);
+    //print $xresult;
+
+    // Obtener el número de la Purchase Request creada
+    if (isset($xresult['DocEntry'])) {
+        return 'Solicitud SAP creada exitosamente. Número de documento: ' . $result['DocNum'] . '|' . $result['DocNum'] . '|' . $result['DocEntry']  ;
+    } else {
+        return 'Error: No se pudo obtener el número del documento.';
+    }
+
+    //require_once(/enviar_correo)
+
+    //enviar_email(['nelvir.mirabal@prensa.com'],'PruebaCompra','Este es un correo de prueba para verificar la funcionalidad.');
+
+    // Cerrar sesión
+    $sap->logout();
+} catch (Exception $e) {
+    return 'Error: ' . $e->getMessage();
+}
+
+}
 
 
 /*
