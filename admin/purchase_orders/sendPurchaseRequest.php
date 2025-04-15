@@ -159,28 +159,6 @@ function enviar_solicitud_inventario($solicitud_id){
         $usernamesap = $config['usernamesap'];
         $passwordsap = $config['passwordsap'];
 
-        /*
-        $hostSAP = 'sap-bo-srvl-mtdtech.skyinone.net';
-        $puertoSAP = '50000';
-    
-       //$companyDBSAP = 'SBO_C184_DB2_TST2';
-         $companyDBSAP = 'SBO_C184_DB2_PRD';
-    
-        
-        if ($_SESSION['userdata']['codSAP'] == '1833')
-        {
-            $companyDBSAP = 'SBO_C184_DB2_TST2';
-        }
-        
-        
-
-    
-        $userNameSAP = 'SAPABO\\ef82f11a-65d9-44a3';
-        $passwordSAP = 'Sky0ne2020.';
-
-        */
-
-
     $conn = new mysqli($servername, $username, $password, $dbname);
 
     // Verifica la conexión a la base de datos
@@ -313,19 +291,32 @@ function get_proveedor($po_id, $conn){
 function create_purchase_order($poId){
     try {
 
+        $config =  require __DIR__ . '/../../configuracion.php';
+        $servername = $config['servername'];
+        $username = $config['username'];
+        $password = $config['password'];
+        $dbname = $config['dbname'];
+        $hostsap = $config['hostsap'];
+        $puertosap = $config['puertosap'];
+        $companydbsap = $config['companydbsap'];
+        $usernamesap = $config['usernamesap'];
+        $passwordsap = $config['passwordsap'];
+
+        
+        /*
         $hostSAP = 'sap-bo-srvl-mtdtech.skyinone.net';
         $puertoSAP = '50000';
        
     
         $companyDBSAP = 'SBO_C184_DB2_PRD';
     
-        //$companyDBSAP = 'SBO_C184_DB2_TST2';
+        $companyDBSAP = 'SBO_C184_DB2_TST2';
       
-        /*
+        
          if ($_SESSION['userdata']['codSAP'] == '1833')
          {
             $companyDBSAP = 'SBO_C184_DB2_TST2';}
-            */
+            
     
        
         $userNameSAP = 'SAPABO\\ef82f11a-65d9-44a3';
@@ -337,6 +328,8 @@ function create_purchase_order($poId){
     $username = "root";
     $password = "";
     $dbname = "ordenes_compra";
+
+    */
 
     $conn = new mysqli($servername, $username, $password, $dbname);
 
@@ -437,7 +430,7 @@ function create_purchase_order($poId){
 
     // Inicializar el Service Layer y crear la Purchase Request
 
-    $sap = new SAPServiceLayer($hostSAP, $puertoSAP, $companyDBSAP, $userNameSAP, $passwordSAP);
+    $sap = new SAPServiceLayer($hostsap, $puertosap, $companydbsap, $usernamesap, $passwordsap);
     $response = $sap->createPurchaseOrder($purchaseRequest);
 
     $json = json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
