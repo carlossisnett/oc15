@@ -7,74 +7,21 @@ function sendPurchaseRequest ($poId){
 try {
 
     $config =  require __DIR__ . '/../../configuracion.php';
+    /*
     $path = realpath(__DIR__ . '/../../secrets.json');
     $secrets_file = file_get_contents($path);
     $secrets = json_decode($secrets_file);
+    */
 
-    if ($secrets === null) {
-        echo "Failed to parse JSON: " . json_last_error_msg();
-    }
-
-    $servername = $secrets->servername;
-    $username = $secrets->username;
-    $password = $secrets->password;
-    $dbname = $secrets->dbname;
+    $servername = $config['servername'];
+    $username = $config['username'];
+    $password = $config['password'];
+    $dbname = $config['dbname'];
     $hostsap = $config['hostsap'];
     $puertosap = $config['puertosap'];
     $companydbsap = $config['companydbsap'];
     $usernamesap = $config['usernamesap'];
     $passwordsap = $config['passwordsap'];
-
-    $myFile = "log2.txt"; 
-    $log_file = fopen($myFile, 'a') or die("can't open file");
-    fwrite($log_file, "username: $usernamesap \n vs username: " . 'SAPABO\\ef82f11a-65d9-44a3');
-    fclose($log_file);
-
-
-
-    //$hostSAP = 'sap-bo-srvl-mtdtech.skyinone.net';
-    //$puertoSAP = '50000';
-
-   //$companyDBSAP = 'SBO_C184_DB2_TST2';
-     //$companyDBSAP = 'SBO_C184_DB2_PRD';
-
-    /*
-    if ($_SESSION['userdata']['codSAP'] == '1833')
-    {
-        $companyDBSAP = 'SBO_C184_DB2_TST2';
-    }
-    */
-    
-
-
-    //$userNameSAP = 'SAPABO\\ef82f11a-65d9-44a3';
-    //$passwordSAP = 'Sky0ne2020.';
-
-    // Datos de configuración
-    //$hostSAP = $secrets->hostSAP;
-    //$puertoSAP = $secrets->puertoSAP;
-
-    //$companyDBSAP = $secrets->companyDBSAP;
-     
-   // $companyDBSAP = 'SBO_C184_DB2_TST2';
-  
-   /*
-     if ($_SESSION['userdata']['codSAP'] == '1833')
-     {
-        $companyDBSAP = 'SBO_C184_DB2_TST2';}
-    */
-   
-    //$userNameSAP = $secrets->userNameSAP;
-    //$passwordSAP = $secrets->passwordSAP;
-
-/*
-// Configuración de la conexión a la base de datos MySQL
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "ordenes_compra";
-
-*/
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
@@ -201,31 +148,38 @@ if ($conn->connect_error) {
 function enviar_solicitud_inventario($solicitud_id){
 
     try {
-        // Datos de configuración
+        $config =  require __DIR__ . '/../../configuracion.php';
+        $servername = $config['servername'];
+        $username = $config['username'];
+        $password = $config['password'];
+        $dbname = $config['dbname'];
+        $hostsap = $config['hostsap'];
+        $puertosap = $config['puertosap'];
+        $companydbsap = $config['companydbsap'];
+        $usernamesap = $config['usernamesap'];
+        $passwordsap = $config['passwordsap'];
+
+        /*
         $hostSAP = 'sap-bo-srvl-mtdtech.skyinone.net';
         $puertoSAP = '50000';
     
        //$companyDBSAP = 'SBO_C184_DB2_TST2';
          $companyDBSAP = 'SBO_C184_DB2_PRD';
     
-        /*
+        
         if ($_SESSION['userdata']['codSAP'] == '1833')
         {
             $companyDBSAP = 'SBO_C184_DB2_TST2';
         }
-        */
+        
         
 
     
         $userNameSAP = 'SAPABO\\ef82f11a-65d9-44a3';
         $passwordSAP = 'Sky0ne2020.';
 
+        */
 
-    // Configuración de la conexión a la base de datos MySQL
-    $servername = "localhost";
-    $username = "root";
-    $password = "";
-    $dbname = "ordenes_compra";
 
     $conn = new mysqli($servername, $username, $password, $dbname);
 
@@ -319,7 +273,7 @@ function enviar_solicitud_inventario($solicitud_id){
         $conn->close();
 
         // Inicializar el Service Layer y crear la Purchase Request
-        $sap = new SAPServiceLayer($hostSAP, $puertoSAP, $companyDBSAP, $userNameSAP, $passwordSAP);
+        $sap = new SAPServiceLayer($hostsap, $puertosap, $companydbsap, $usernamesap, $passwordsap);
         $result = $sap->createPurchaseRequest($purchaseRequest);
 
         $xresult = json_encode($result);
