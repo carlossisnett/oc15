@@ -502,6 +502,15 @@ Class Master extends DBConnection {
 		return $rows;
 	}
 
+	function departamentos_que_faltan_por_aprobar_inventario($po_id){
+		$query = $this->conn->query("SELECT codigo_departamento from inventory_items where po_id = '{$po_id}' and (status = 0 or status = 2 or status is null)");
+		$rows = array(); // Initialize an empty array to store rows
+		while ($row = $query->fetch_assoc()) {
+			$rows[] = $row; // Store each row in an array
+		}
+		return $rows;
+	}
+
 	/*
 	Esta funcion devuelve un array con los departamentos que el usuario puede aprobar, es decir aquellos que tiene en la tabla aprobadores
 	
@@ -554,6 +563,40 @@ Class Master extends DBConnection {
 			//$departamentos_string = "'" . implode("', '", $departamentos_que_usuario_puede_aprobar) . "'";
 
 			$this->conn->query("UPDATE `order_items` 
+								  SET aprobador_user_id = '{$user_id}', 
+									  status = '{$status}', 
+									  hora_aprobacion = '{$hora_aprobacion}' 
+								  WHERE po_id = '{$id}' and codigo_departamento in ({$departamentos_sql})");
+
+			if($this->containsAllElements(
+				array_column($departamentos_por_aprobar, 'codigo_departamento'),
+				array_column($departamentos_que_usuario_puede_aprobar, 'departamento')) == false){
+				return false;
+			} else {
+				return true;
+		}
+
+	}
+
+	function is_solicitud_inventario_ready_to_be_approved($id, $user_id, $status){
+		// if gerente general approves consider it
+
+		if($status == 0 or $status == 2 or $status == 3){
+			return false;
+		}
+
+		$departamentos_por_aprobar = $this->departamentos_que_faltan_por_aprobar_inventario($id);
+			$departamentos_que_usuario_puede_aprobar = $this->departamentos_que_usuario_puede_aprobar($user_id);
+			// Extract only the department values
+			$departamentos = array_column($departamentos_que_usuario_puede_aprobar, 'departamento');
+
+			// Convert to a string formatted for SQL
+			$departamentos_sql = "'" . implode("', '", $departamentos) . "'";
+
+			$hora_aprobacion = date('Y-m-d H:i:s');
+			//$departamentos_string = "'" . implode("', '", $departamentos_que_usuario_puede_aprobar) . "'";
+
+			$this->conn->query("UPDATE `inventory_items` 
 								  SET aprobador_user_id = '{$user_id}', 
 									  status = '{$status}', 
 									  hora_aprobacion = '{$hora_aprobacion}' 
@@ -686,7 +729,7 @@ Class Master extends DBConnection {
 	function notificar_a_aprobadores($po_id){
 		$aprobadores = $this->determinar_aprobadores($po_id);
 		if($aprobadores == false){
-			enviar_email(["desarrollo@prensa.com"], "Solicitud $po_id no tiene aprobador", "Solicitud $po_id no tiene aprobador, por favor asignar uno al departamento que le corresponde y notificarle al aprobador está lista para aprobar", "Desarrollo Prensa");
+			enviar_email(["desarrollo@prensa.com"], "Solicitud $po_id no tiene aprobador", "Solicitud $po_id no tiene aprobador, por favor asignar uno al departamento que le corresponde y notificarle al aprobador que la solicitud está lista para aprobar", "Desarrollo Prensa");
 			return false;
 		}
 		$to = array();
@@ -698,15 +741,102 @@ Class Master extends DBConnection {
 	
 		$po_list_query = $this->conn->query("SELECT * from po_list where id = '{$po_id}' ");
 		$po_list_row = $po_list_query->fetch_assoc();
-		$numero_sap = $po_list_row['SAPDocEntry'];
+		//$numero_sap = $po_list_row['SAPDocEntry'];
 
-		$title = "Solicitud de compra $numero_sap necesita su aprobación";
+		$title = "Solicitud de compra $po_id necesita su aprobación";
 		$url_orden = base_url . "admin/?page=purchase_orders/view_po&id=" . $po_id;
 		$url_todas_ordenes = base_url . "admin/?page=all_purchase_orders";
-		$body = "La solicitud de compra $numero_sap necesita su aprobación. <br> <a href='$url_orden'>Ver Solicitud de Compra $numero_sap</a> <br> <a href='$url_todas_ordenes'>Ver todas las Solicitudes de Compra pendiente por aprobación</a>";
+		$body = "La solicitud de compra $po_id necesita su aprobación. <br> <a href='$url_orden'>Ver Solicitud de Compra $po_id</a> <br> <a href='$url_todas_ordenes'>Ver todas las Solicitudes de Compra pendiente por aprobación</a>";
 		
 		enviar_email($to, $title, $body, "Desarrollo Prensa");
 		return true;
+	}
+
+
+
+
+	function notificar_a_aprobadores_inventario($si_id){
+		$aprobadores = $this->determinar_aprobadores($si_id);
+		if($aprobadores == false){
+			enviar_email(["desarrollo@prensa.com"], "Salida de inventario $si_id no tiene aprobador", "Salida de inventario $si_id no tiene aprobador, por favor asignar uno al departamento que le corresponde y notificarle al aprobador que la solicitud está lista para aprobar", "Desarrollo Prensa");
+			return false;
+		}
+		$to = array();
+		foreach($aprobadores as $key => $value){
+			$user_query = $this->conn->query("SELECT * from users where id = $value ");
+			$user_row = $user_query->fetch_assoc();
+			$to[] = $user_row['email'];
+		}
+	
+		$po_list_query = $this->conn->query("SELECT * from solicitud_de_inventario where id = '{$si_id}' ");
+		$po_list_row = $po_list_query->fetch_assoc();
+		//$numero_sap = $po_list_row['SAPDocEntry'];
+
+		$title = "Salida de inventario $si_id necesita su aprobación";
+		$url_orden = base_url . "admin/?page=inventario/view_si&id=" . $si_id;
+		//$url_todas_ordenes = base_url . "admin/?page=all_purchase_orders";
+		$body = "La Salida de inventario $si_id necesita su aprobación. <br> <a href='$url_orden'>Ver Salida de inventario $si_id</a> <br>";
+		
+		enviar_email($to, $title, $body, "Desarrollo Prensa");
+		return true;
+	}
+
+
+
+	function change_si_status(){
+		extract($_POST);
+
+		
+		$jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
+
+		// Define the path to the external JSON file
+		$filePath = 'si_status_data.json';
+	
+		// Write the JSON data to the file
+		file_put_contents($filePath, $jsonData);
+		
+
+		if($status == 0 or $status == 2 or $status == 3){
+			$save = $this->conn->query("UPDATE `solicitud_de_inventario` set status = '{$status}' where id = '{$id}' ");
+		}
+
+		$approved = $this->is_solicitud_inventario_ready_to_be_approved($id, $user_id, $status);
+
+		// Cuando almacen mueve la salida de inventario a lista por aprobar no se sigue el flujo de aprobacion
+		if($status != 3){
+			$save_2 = $this->conn->query("INSERT INTO `aprobaciones_inventario` (user_id, solicitud_inventario_id, estado) VALUES ('{$user_id}', '{$id}', '{$status}') ");
+			if($approved == true) {
+				$save = $this->conn->query("UPDATE `solicitud_de_inventario` set status = '{$status}' where id = '{$id}' ");
+				//create_purchase_order($id);
+				// cambiar correo que se envia:
+				enviar_email_salida_de_inventario_aprobada($id);
+			};
+			
+			
+			if($save_2){
+				$resp['status'] = 'success';
+				if($approved == true) {
+					$this->settings->set_flashdata('success',"salida de inventario aprobada correctamente.");
+				} elseif ($status == 1  and $approved == false) {
+					$this->settings->set_flashdata('success',"salida de inventario ha sido actualizada correctamente. Falta la aprobación de los otros departamentos.");
+				} elseif ($status = 2 and $approved = false) {
+				$this->settings->set_flashdata('success',"Estado de la salida de inventario actualizado correctamente.");
+				}
+				
+			}
+			else{
+				$resp['status'] = 'failed';
+				$resp['error'] = $this->conn->error;
+			}
+
+	} else{
+		$this->notificar_a_aprobadores_inventario($id);
+		$resp['status'] = 'success';
+		$this->settings->set_flashdata('success',"Estado de la orden de compra actualizado correctamente.");
+	}
+		
+		return json_encode($resp);
+
 	}
 
 	function change_po_status(){

@@ -332,10 +332,68 @@ function detalles_orden_de_compra($id, $conn){
         return $items_table;
 }
 
+function detalles_salida_de_inventario($id, $conn){
+
+    // 2. Consultar la tabla order_items
+    $stmt_items = $conn->prepare("SELECT o.*,i.name, i.description, i.codSAP,concat(i.codSAP,' ',i.description) as nombre_item, concat(ma.codigo_ccosto,' ',ma.nombre_ccosto) as nombre_marca,concat(de.codigo_ccosto,' ',de.nombre_ccosto) as nombre_departamento
+    FROM `inventory_items` o 
+    inner join item_list i on o.item_id = i.id 
+    inner join centro_costo ma on o.codigo_marca = ma.codigo_ccosto
+    inner join centro_costo de on o.codigo_departamento = de.codigo_ccosto
+    where o.`solicitud_id` = ?");
+    $stmt_items->bind_param("i", $id);
+    $stmt_items->execute();
+    $result_items = $stmt_items->get_result();
+
+    if ($result_items->num_rows === 0) {
+        return json_encode(['status' => 'failed', 'err' => 'No se encontraron items para la salida de inventario.']);
+    }
+
+    // 3. Construir la tabla HTML para order_items
+    $items_table = '
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Cantidad</th>
+                <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Artículo</th>
+                <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Marca</th>
+                <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Departamento</th>
+            </tr>
+        </thead>
+        <tbody>';
+
+    while ($item = $result_items->fetch_assoc()) {
+        $quantity = htmlspecialchars($item['quantity']);
+        $item_id = htmlspecialchars($item['nombre_item']);
+        $codigo_marca = htmlspecialchars($item['nombre_marca']);
+        $codigo_departamento = htmlspecialchars($item['nombre_departamento']);
+
+        //echo 'codigo_marca ' . $codigo_marca;
+        //echo 'item_id ' . $item_id;
+
+        $items_table .= "
+            <tr>
+                <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$quantity</td>
+                <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$item_id</td>
+                <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$codigo_marca</td>
+                <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$codigo_departamento</td>
+            </tr>";
+    }
+
+    $items_table .= '
+        </tbody>
+    </table>';
+
+    return $items_table;
+}
+
+/*
+    Esta funcion retorna un array con los emails de aquellos que aprobaron/pueden aprobar la orden de compra
+*/
+
 function determinar_aprobadores($po_id, $conn){
     $query = $conn->query("SELECT codigo_departamento FROM order_items where po_id = $po_id;");
     if(gettype($query) == "boolean"){
-        echo "";
         return false;
     }
    while($row = $query->fetch_assoc()) {
@@ -351,12 +409,40 @@ function determinar_aprobadores($po_id, $conn){
  $lista_aprobadores = array(); // Initialize an empty array to store rows
    
    if($aprobador->num_rows == 0){
-       echo "";
        return false;
    } else if($aprobador->num_rows > 0){
     $lista_aprobadores = $aprobador->fetch_array();
     return $lista_aprobadores;
+    }
 }
+
+/*
+    Esta funcion retorna un array con los emails de aquellos que aprobaron/pueden aprobar la salide de inventario
+*/
+
+function determinar_aprobadores_inventario($si_id, $conn){
+    $query = $conn->query("SELECT codigo_departamento FROM inventory_items where solicitud_id = $si_id;");
+    if(gettype($query) == "boolean"){
+        return false;
+    }
+   while($row = $query->fetch_assoc()) {
+           $departamentos[] = $row['codigo_departamento'];
+       }
+    //echo $rows;
+    //$codigo_departamento = $rows['codigo_departamento'];
+    $codigo_departamento_list = "'" . implode("', '", $departamentos) . "'";
+
+   $aprobador = $conn->query("SELECT u.email FROM aprobadores a join users u on a.user_id = u.id
+ WHERE departamento IN ({$codigo_departamento_list})");
+
+ $lista_aprobadores = array(); // Initialize an empty array to store rows
+   
+   if($aprobador->num_rows == 0){
+       return false;
+   } else if($aprobador->num_rows > 0){
+    $lista_aprobadores = $aprobador->fetch_array();
+    return $lista_aprobadores;
+    }
 }
 
 /*
@@ -375,14 +461,58 @@ function destinatarios_orden_de_compra($id, $conn){
 }
 
 /*
+    Esta funcion retorna un array con los emails de aquellos a los que se les debe enviar la notificacion
+    de que la orden de compra ha sido aprobada
+    Number, Connection -> Array
+*/
+
+function destinatarios_salida_de_inventario($id, $conn){
+    $lista_final = determinar_aprobadores_inventario($id, $conn);
+    $solicitante_email = $conn->query("SELECT email FROM users u join solicitud_de_inventario p on p.username = u.username and p.id = $id;");
+    $lista_final[] = $solicitante_email->fetch_array()['email'];
+    //$lista_final[] = "compras@prensa.com";
+    $lista_final[] = "desarrollo@prensa.com";
+    return $lista_final;
+}
+
+
+
+/*
 Dada una orden de compra aprobada esta funcion retorna un mensaje html de los que la aprobaron
 */
 
 function aprobaciones_orden_de_compra($id, $conn){
-    $query = $conn->query("SELECT  from aprobaciones where orden_compra_id = $id");
-    $destinatarios = array();
+    //$query = $conn->query("SELECT  from aprobaciones where orden_compra_id = $id");
+    //$destinatarios = array();
     $mensaje_final = "";
     $historial = $conn->query("SELECT u.name , a.estado, a.hora_creacion FROM aprobaciones a JOIN users u ON u.id = a.user_id where orden_compra_id = $id and a.estado = 1");
+    if(gettype($historial) == "boolean"){
+        //echo "";
+    } else {
+        if ($historial && $historial->num_rows > 0) {
+            $mensaje_final = $mensaje_final . "Aprobado por: <br>";
+            $mensaje_final = $mensaje_final . "<ul>";
+        
+            while ($row = $historial->fetch_assoc()) {
+                $mensaje_final = $mensaje_final ."<li>" . htmlspecialchars($row['name']) . " " . " el " . date("Y-m-d H:i:s", strtotime($row['hora_creacion'])) . "</li>";
+            }
+        
+            $mensaje_final = $mensaje_final . "</ul>";
+    }
+    return $mensaje_final;
+    }
+
+}
+
+/*
+Dada una salida de inventario aprobada esta funcion retorna un mensaje html de los que la aprobaron
+*/
+
+function aprobaciones_salida_de_inventario($id, $conn){
+    //$query = $conn->query("SELECT  from aprobaciones where orden_compra_id = $id");
+    //$destinatarios = array();
+    $mensaje_final = "";
+    $historial = $conn->query("SELECT u.name , a.estado, a.hora_creacion FROM aprobaciones_inventario a JOIN users u ON u.id = a.user_id where solicitud_inventario_id = $id and a.estado = 1");
     if(gettype($historial) == "boolean"){
         //echo "";
     } else {
@@ -486,6 +616,90 @@ function enviar_email_orden_de_compra_aprobada($id){
     </html>";
 
     enviar_email($destinatarios, "La orden de compra $po_no ha sido aprobada", $body);
+
+}
+
+function enviar_email_salida_de_inventario_aprobada($id){
+    GLOBAL $conn;
+
+    // 1. Consultar la tabla po_list
+    $stmt_po = $conn->prepare("SELECT a.username, a.date_created, a.required_date, a.notes, a.numero_solicitud, b.email,concat(b.firstname,' ',b.lastname) as nombre_solicitante  FROM solicitud_de_inventario a inner join users b on a.username = b.username WHERE a.id = ?");
+    $stmt_po->bind_param("i", $id);
+    $stmt_po->execute();
+    $result_po = $stmt_po->get_result();
+
+    if ($result_po->num_rows === 0) {
+        return json_encode(['status' => 'failed', 'err' => 'No se encontró la salida de inventario.']);
+    }
+
+    $si = $result_po->fetch_assoc();
+    $username = htmlspecialchars($si['username']);
+    $date_created = htmlspecialchars($si['date_created']);
+    $required_date = htmlspecialchars($si['required_date']);
+    $notes = htmlspecialchars($si['notes']);
+    $destinatarios = destinatarios_salida_de_inventario($id, $conn);
+
+    $numero_solicitud = htmlspecialchars($si['numero_solicitud']);
+    $nombre_solicitante = $si['nombre_solicitante'];
+
+    $items_table = detalles_salida_de_inventario($id, $conn);
+
+    $url_orden = base_url . "admin/?page=inventario/view_si&id=" . $id;
+    $link_element = "<a href='$url_orden'>Ver Salida de Inventario $numero_solicitud</a>";
+    $aprobaciones = aprobaciones_salida_de_inventario($id, $conn);
+    
+
+    // 4. Construir el cuerpo del correo en HTML
+    $body = "
+    <html>
+    <head>
+        <style>
+            /* Estilos para hacer la tabla responsive */
+            @media only screen and (max-width: 600px) {
+                table, thead, tbody, th, td, tr { 
+                    display: block; 
+                }
+                thead tr { 
+                    position: absolute;
+                    top: -9999px;
+                    left: -9999px;
+                }
+                tr { margin: 0 0 1rem 0; }
+                td { 
+                    border: none;
+                    position: relative;
+                    padding-left: 50%; 
+                }
+                td:before { 
+                    position: absolute;
+                    top: 0;
+                    left: 6px;
+                    width: 45%; 
+                    padding-right: 10px; 
+                    white-space: nowrap;
+                    font-weight: bold;
+                }
+                td:nth-of-type(1):before { content: 'Cantidad'; }
+                td:nth-of-type(2):before { content: 'Artículo'; }
+                td:nth-of-type(3):before { content: 'Marca'; }
+                td:nth-of-type(4):before { content: 'Departamento'; }
+            }
+        </style>
+    </head>
+    <body>
+        <p> $aprobaciones </p>
+        <p><strong>Usuario del solicitante:</strong> $username</p>
+        <p><strong>Fecha de Creación:</strong> $date_created</p>
+        <p><strong>Fecha Requerida:</strong> $required_date</p>
+        <h3> $link_element </h3>
+        <h3>Detalles de la Salida de Inventario</h3>
+        $items_table
+       
+        <p><strong>Comentarios: </strong>$notes</p>
+    </body>
+    </html>";
+
+    enviar_email($destinatarios, "La salida de inventario $numero_solicitud ha sido aprobada", $body);
 
 }
 
@@ -754,13 +968,13 @@ function enviar_email_solicitud_inventario($id, $numero_sap){
         }
 
         // 3. Construir la tabla HTML para order_items
+        // <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Ubicación</th>
         $items_table = '
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr>
                     <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Cantidad</th>
                     <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Artículo</th>
-                    <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Ubicación</th>
                     <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Marca</th>
                     <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Departamento</th>
                 </tr>
@@ -770,19 +984,19 @@ function enviar_email_solicitud_inventario($id, $numero_sap){
         while ($item = $result_items->fetch_assoc()) {
             $quantity = htmlspecialchars($item['quantity']);
             $item_name = htmlspecialchars($item['nombre_item']);
-            $ubicacion_almacen = htmlspecialchars($item['ubicacion_almacen']);
+            //$ubicacion_almacen = htmlspecialchars($item['ubicacion_almacen']);
             $stock_actual = htmlspecialchars($item['stock_actual']);
             $codigo_marca = htmlspecialchars($item['nombre_marca']);
             $codigo_departamento = htmlspecialchars($item['nombre_departamento']);
     
             //echo 'codigo_marca ' . $codigo_marca;
             //echo 'item_name ' . $item_name;
+            //<td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$ubicacion_almacen</td>
 
             $items_table .= "
                 <tr>
                     <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$quantity</td>
                     <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$item_name</td>
-                    <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$ubicacion_almacen</td>
                     <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$codigo_marca</td>
                     <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$codigo_departamento</td>
                 </tr>";
