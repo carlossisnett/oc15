@@ -338,6 +338,110 @@ Class Master extends DBConnection {
 		return json_encode($resp);
 	}
 
+	function update_inventory_request(){
+		extract($_POST);
+		$data = "";
+
+		
+		
+		 // Encode the $_POST array into JSON
+		 $jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
+
+		 // Define the path to the external JSON file
+		 $filePath = 'data_edicion_inventario.json';
+	 
+		 // Write the JSON data to the file
+		 file_put_contents($filePath, $jsonData);
+		
+		 
+		if(isset($notes) == false){
+			$notes = null;
+		}
+
+		$username = $_SESSION['userdata']['username'];
+
+		$prepared = $this->conn->prepare("UPDATE solicitud_de_inventario 
+			SET required_date = ?, 
+				username = ?, 
+				notes = ?
+			WHERE id = ?");
+
+		$prepared->bind_param("ssss", $required_date, $username, $notes, $id);
+		$prepared->execute();
+
+		
+		$prepared = $this->conn->prepare("SELECT numero_solicitud FROM solicitud_de_inventario where id = ?");
+		$prepared->bind_param("s", $id);
+		$prepared->execute();
+		$result = $prepared->get_result();
+		$row = $result->fetch_assoc();
+		$numero_solicitud = $row['numero_solicitud'];
+		$id = (int)$id;
+		
+		//$supplier_id = (int)$supplier_id;
+
+		#Si se creo la orden de compra entonces proceder a agregar los articulos a ella
+		if(isset($row))
+			for($x = 0; $x < count($item_id); $x++){
+				// Solo modificamos los order item ids que ya existian en la base de datos, es decir no los que son default
+				if($order_item_id[$x] != ""){
+					if($delete[$x] == "false"){ 
+					//$price = (float)$unit_price[$x];
+					$quantity = (float)$qty[$x];
+					$prepared = $this->conn->prepare("UPDATE inventory_items 
+					SET quantity = ?, 
+						solicitud_id = ?, 
+						item_id = ?, 
+						codigo_marca = ?, 
+						codigo_departamento = ?
+					
+					WHERE id = ?");
+				
+					$prepared->bind_param("ddsssd", $quantity, $id, $item_id[$x], $marca_id[$x], $departamento_id[$x], $order_item_id[$x]);
+					$prepared->execute();
+					} else{
+						$prepared = $this->conn->prepare("DELETE FROM inventory_items WHERE id = ?");
+						$prepared->bind_param("i", $order_item_id[$x]);
+						$prepared->execute();
+					}
+				} else{
+					// Crea un nuevo order item
+					//$price = (float)$unit_price[$x];
+					$quantity = (float)$qty[$x];
+					$prepared = $this->conn->prepare("INSERT INTO inventory_items(quantity, solicitud_id, item_id, codigo_marca, codigo_departamento) VALUES (?, ?, ?, ?, ?)");
+					$prepared->bind_param("ddsss", $quantity, $id, $item_id[$x], $marca_id[$x], $departamento_id[$x]);
+					$prepared->execute();
+				}
+			}
+
+			$resp['status'] = 'success';
+			$resp['id'] = $id;
+			$resp['numero_solicitud'] = $numero_solicitud;
+				try {
+					$resultado = enviar_email(["carlos.sisnett@prensa.com"], "Salida de inventario ha sido modificada", "La salida de inventario ha sido modificada con exito.", "desarrollo@prensa.com");
+
+					
+					//if ($po_id != 233)
+					//{$resultado = enviar_email2($po_id, $pos1DocEntry);}
+					
+					//$resultado = enviar_email(['nelvir.mirabal@prensa.com','nelvir.mirabal@prensa.com'], '2','3');
+					
+					//echo $resultado; // Salida: Correo enviado para PO ID: 123 con SAP: SAP456789
+				} catch (Exception $e) {
+					echo "Error al enviar el correo: " . $e->getMessage();
+				}
+
+		
+		/*
+		else{
+			$resp['status'] = 'failed';
+			$resp['err'] = $this->conn->error."[{$sql}]";
+		}
+
+		*/
+		return json_encode($resp);
+	}
+
 
 
 	function save_po(){
@@ -1404,6 +1508,9 @@ switch ($action) {
 		echo $Master->edit_po();
 	break;
 
+	case 'update_inventory_request':
+		echo $Master->update_inventory_request();
+	break;
 	
 	default:
 		// echo $sysset->index();

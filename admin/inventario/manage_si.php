@@ -2,7 +2,7 @@
 
 GLOBAL $conn;
 if(isset($_GET['id']) && $_GET['id'] > 0){
-    $qry = $conn ->query("SELECT * from `po_list` where id = '{$_GET['id']}' ");
+    $qry = $conn ->query("SELECT * from `solicitud_de_inventario` where id = '{$_GET['id']}' ");
     if($qry->num_rows > 0){
         foreach($qry->fetch_assoc() as $k => $v){
             $$k=$v;
@@ -48,7 +48,7 @@ if($qry['codSAP'] == null){
 ?>
 <div class="card card-outline card-info">
 	<div class="card-header">
-		<h3 class="card-title"><?php echo isset($id) ? "Actualizar los detalles de la Salida de inventario": "Nueva Salida de Inventario" ?> </h3>
+		<h3 class="card-title"><?php echo isset($id) ? "Editar Salida de inventario": "Nueva Salida de Inventario" ?> </h3>
 	</div>
 	<div class="card-body">
 		<form action="" id="po-form">
@@ -56,7 +56,7 @@ if($qry['codSAP'] == null){
 			<div class="row">
 				<div class="col-md-6 form-group">
 					<label for="po_no">Salida # <span class="po_err_msg text-danger"></span></label>
-					<input type="text" class="form-control form-control-sm rounded-0" id="po_no" name="po_no" value="<?php echo isset($po_no) ? $po_no : '' ?>" disabled>
+					<input type="text" class="form-control form-control-sm rounded-0" id="numero_solicitud" name="numero_solicitud" value="<?php echo isset($numero_solicitud) ? $numero_solicitud : '' ?>" disabled>
 					 <!--<small><i>Deja este espacio en blanco para generar automáticamente al guardar.</i></small>-->
 				</div>
 				<div class="col-md-6 form-group">
@@ -66,8 +66,7 @@ if($qry['codSAP'] == null){
                 class="form-control form-control-sm rounded-0" 
                 id="required_date" 
                 name="required_date" 
-                value="<?php echo isset($required_date) ? $required_date : date('Y-m-d'); ?>" 
-    			min="<?php echo date('Y-m-d'); ?>"  
+                value="<?php echo isset($required_date) ? $required_date : date('Y-m-d'); ?>"  
 
                 required 
                 title="Fecha en la que requiere el producto o servicio"
@@ -98,15 +97,18 @@ if($qry['codSAP'] == null){
     <?php 
     if(isset($id)):
       $order_items_qry = $conn->query("SELECT o.*,i.name, i.description, i.codSAP,concat(i.codSAP,' ',i.description) as nombre_item, concat(ma.codigo_ccosto,' ',ma.nombre_ccosto) as nombre_marca,concat(de.codigo_ccosto,' ',de.nombre_ccosto) as nombre_departamento
-        FROM `order_items` o 
+        FROM `inventory_items` o 
         INNER JOIN item_list i ON o.item_id = i.id 
         INNER JOIN centro_costo ma ON o.codigo_marca = ma.codigo_ccosto
         INNER JOIN centro_costo de ON o.codigo_departamento = de.codigo_ccosto
-        WHERE o.`po_id` = '$id' ");
+        WHERE o.`solicitud_id` = '$id' ");
       echo $conn->error;
       while($row = $order_items_qry->fetch_assoc()):
+		$order_item_id = $row['id'];
     ?>
     <tr class="po-item" data-id="">
+	<input type="hidden" name="order_item_id[]" value="<?php echo $order_item_id ?>">
+	<input type="hidden" name="delete[]" value="false"> 
       <!--Botón Remover Item-->
       <td class="align-middle p-1 text-center">
         <button class="btn btn-sm btn-danger py-0" type="button" onclick="rem_item($(this))"><i class="fa fa-times"></i></button>
@@ -244,7 +246,13 @@ if($qry['codSAP'] == null){
 </table>
 <script>
 	function rem_item(_this){
+		if(es_editado()){
+			let row = _this.closest('tr'); 
+    		row.find('input[name="delete[]"]').val("true"); // Change value to "true"
+    		row.hide(); // Hide the row
+		} else{
 		_this.closest('tr').remove()
+		}
 	}
 	function calculate(){
 		var _total = 0
@@ -353,6 +361,9 @@ if($qry['codSAP'] == null){
 						//console.log(resp.stock);
 						let cutoff_index = resp.stock.indexOf(".");
 						let shorted_value = resp.stock.substring(0, cutoff_index + 3);
+						if(shorted_value.includes(".00")){
+							shorted_value = shorted_value.replace(".00", "");
+						}
 						tr_element.find("td.inventario input").val(shorted_value);
 
 						//console.log("Cantidad : " + tr_element.find("td.quantity input").val());
@@ -525,8 +536,13 @@ $(document).on("change", "input.item_id", function () {
 			start_loader();
 			const guardarBoton = document.getElementById('guardar_boton');
 			guardarBoton.disabled = true;
+			let function_name = "save_inventory_request";
+			if(es_editado()){
+				function_name = "update_inventory_request";
+			}
+
 			$.ajax({
-				url:_base_url_+"classes/Master.php?f=save_inventory_request",
+				url:_base_url_+"classes/Master.php?f=" + function_name,
 				data: new FormData($(this)[0]),
                 cache: false,
                 contentType: false,
@@ -567,5 +583,14 @@ $(document).on("change", "input.item_id", function () {
 
 	function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function es_editado(){
+	const queryString = window.location.search;
+	if(queryString.includes("edit=true") == true){
+		return true;
+	} else{
+			return false;
+		}
 }
 </script>
