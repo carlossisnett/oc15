@@ -106,7 +106,7 @@
 							<div class="dropdown-menu" role="menu">
 								<a class="dropdown-item" href="?page=inventario/view_si&id=<?php echo $row['id'] ?>"><span class="fa fa-eye text-primary"></span> Ver</a>
 								<div class="dropdown-divider"></div>
-									 <?php if($_SESSION['userdata']['type'] == 1 || $_SESSION['userdata']['type'] == 2): ?>
+									 <?php if($_SESSION['userdata']['type'] == 1 || $_SESSION['userdata']['type'] == 3): ?>
 				                    <a class="dropdown-item" href="?page=inventario/manage_si&id=<?php echo $row['id']?>&edit=true"><span class="fa fa-edit text-primary"></span> Editar</a>
 									<?php endif ?>
 								
@@ -210,7 +210,7 @@
 								  <div class="dropdown-menu" role="menu">
 								  	<a class="dropdown-item" href="?page=inventario/view_si&id=<?php echo $row['id'] ?>"><span class="fa fa-eye text-primary"></span> Ver</a>
 									  <div class="dropdown-divider"></div>
-									 <?php if($_SESSION['userdata']['type'] == 1 || $_SESSION['userdata']['type'] == 2): ?>
+									 <?php if($_SESSION['userdata']['type'] == 1 || $_SESSION['userdata']['type'] == 3): ?>
 				                    <a class="dropdown-item" href="?page=inventario/manage_si&id=<?php echo $row['id']?>&edit=true"><span class="fa fa-edit text-primary"></span> Editar</a>
 									<?php endif ?>
 			
