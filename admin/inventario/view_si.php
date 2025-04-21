@@ -73,6 +73,10 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                 $sup_qry = $conn->query("SELECT * FROM users where username = '{$username}'");
                 //$sup_qry = $conn->query("SELECT * FROM supplier_list where id = '{$supplier_id}'");
                 $supplier = $sup_qry->fetch_array();
+                require_once __DIR__ . "/../view_all.php";
+            $user_id = $_settings->userdata('id');
+            $estado_aprobador = cambiar_estado_para_aprobador($id, $user_id, $conn, $status);
+            $estado_almacen = cambiar_estado_para_almacen($user_id, $conn, $status);
                 ?>
                 <div>
                     <p class="m-0"><?php echo $supplier['name'] ?></p>
@@ -81,18 +85,39 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                 </div>
             </div>
             <div class="col-4 row">
-                <div class="col-4">
+                <div class="col-3">
                     <p  class="m-0"><b># Solicitud:</b></p>
                     <p><b><?php echo $numero_solicitud ?></b></p>
                 </div>
-                <div class="col-4">
+                <div class="col-3">
                     <p  class="m-0"><b># SAP:</b></p>
                     <p><b><?php echo $SAPDocEntry ?></b></p>
                 </div>
-                <div class="col-4">
+                <div class="col-3">
                     <p  class="m-0"><b>Fecha de Creación</b></p>
                     <p><b><?php echo date("Y-m-d",strtotime($date_created)) ?></b></p>
                 </div>
+            
+            </div>
+            <div class="col-4 row">
+                <div class="col-3">
+                <p  class="mb-2"><b> Estado</b></p>
+                <?php
+                if($status == 1){
+                    echo "<span class='py-2 px-4 btn-flat btn-success'>Aprobada</span>";
+                } else if($status == 2){
+                    echo "<span class='py-2 px-4 btn-flat btn-danger'>Rechazada</span>";
+                } else if($status == 3){
+                    echo "<b>Listo para aprobar</b>";
+                } else if ($status == 0) {
+                    echo "<span class='py-2 px-4 btn-flat btn-secondary'>Pendiente</span>";
+                }
+                ?>
+                </div>
+                <?php echo $estado_aprobador; ?>
+                <?php echo $estado_almacen; ?>
+            </div>
+               
             </div>
         </div>
         <div class="row">
@@ -157,27 +182,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                         <label for="notes" class="control-label">Notas</label>
                         <p><?php echo isset($notes) ? $notes : '' ?></p>
                     </div>
-                    <div class="col-6">
-                        <label for="status" class="control-label">Estado</label>
-                        <br>
-                        <?php 
-                        switch($status){
-                            case 1:
-                                echo "<span class='py-2 px-4 btn-flat btn-success'>Aprobada</span>";
-                                break;
-                            case 2:
-                                echo "<span class='py-2 px-4 btn-flat btn-danger'>Negada</span>";
-                                break;
-
-                            case 3:
-                                echo "<span class='py-2 px-4 btn-flat btn-success'>Cerrada</span>";
-                                break;
-                            default:
-                                echo "<span class='py-2 px-4 btn-flat btn-secondary'>Pendiente</span>";
-                                break;
-                        }
-                        ?>
-                    </div>
+                    
                 </div>
             </div>
         </div>
@@ -185,6 +190,59 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 </div>
 
 <script>
+     $('select').on('change', function(e){
+        let proceder = false;
+        if(this.value == 0){
+            proceder = window.confirm("¿Desea cambiar el estado de la solicitud de inventario a Pendiente?");
+        }
+        if(this.value == 1){
+            proceder = window.confirm("¿Desea aprobar la solicitud de inventario?");
+        }
+        if(this.value == 2){
+            proceder = window.confirm("¿Desea rechazar la solicitud de inventario?");
+        }
+        if(this.value == 3){
+            proceder = window.confirm("¿Desea cambiar el estado de la solicitud de inventario a 'Lista para aprobar'?");
+        }
+    if(proceder == true){
+        $.ajax({
+				url:_base_url_+"classes/Master.php?f=" + 'change_si_status',
+				data: {status: this.value, id: <?php echo $_GET['id'] ?>, user_id: <?php echo $user_id ?>},
+                cache: false,
+                contentType: "application/x-www-form-urlencoded",
+                processData: true,
+                method: 'POST',
+                type: 'POST',
+                dataType: 'json',
+				error:err=>{
+					console.log(err)
+					alert_toast("Ocurrió un error",'error');
+					end_loader();
+				},
+				success:function(resp){
+					if(typeof resp =='object' && resp.status == 'success'){
+						location.href = "./?page=inventario/view_si&id="+<?php echo $_GET['id'] ?>;
+					}else if((resp.status == 'failed' || resp.status == 'po_failed') && !!resp.msg){
+                        var el = $('<div>')
+                            el.addClass("alert alert-danger err-msg").text(resp.msg)
+                            _this.prepend(el)
+                            el.show('slow')
+                            $("html, body").animate({ scrollTop: 0 }, "fast");
+                            end_loader()
+							if(resp.status == 'po_failed'){
+								$('[name="po_no"]').addClass('border-danger').focus()
+							}
+                    }else{
+						alert_toast("Ocurrió un error",'error');
+						end_loader();
+                        console.log(resp)
+					}
+				}
+			})
+    }
+});
+
+
 	$(function(){
         $('#print').click(function(e){
             e.preventDefault();

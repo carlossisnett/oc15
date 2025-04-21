@@ -606,8 +606,8 @@ Class Master extends DBConnection {
 		return $rows;
 	}
 
-	function departamentos_que_faltan_por_aprobar_inventario($po_id){
-		$query = $this->conn->query("SELECT codigo_departamento from inventory_items where po_id = '{$po_id}' and (status = 0 or status = 2 or status is null)");
+	function departamentos_que_faltan_por_aprobar_inventario($si_id){
+		$query = $this->conn->query("SELECT codigo_departamento from inventory_items where solicitud_id = '{$si_id}' and (status = 0 or status = 2 or status is null)");
 		$rows = array(); // Initialize an empty array to store rows
 		while ($row = $query->fetch_assoc()) {
 			$rows[] = $row; // Store each row in an array
@@ -1500,6 +1500,9 @@ switch ($action) {
 	break;
 	case 'change_po_status':
 		echo $Master->change_po_status();
+	break;
+	case 'change_si_status':
+		echo $Master->change_si_status();
 	break;
 	case 'update_approver':
 		echo $Master->update_approver();
