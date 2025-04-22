@@ -36,44 +36,6 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 		}*/
 </style>
 
-<style>
-	
-        /* Basic modal styles */
-		/*
-        .modal {
-            display: none; 
-            position: fixed; 
-            z-index: 1000; 
-            left: 0; 
-            top: 0;
-            width: 100%; 
-            height: 100%; 
-            background-color: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            width: 80%;
-            max-width: 400px;
-            text-align: center;
-        }
-        .modal input {
-            width: 100%;
-            padding: 10px;
-            font-size: 18px;
-        }
-        .close {
-            cursor: pointer;
-            color: red;
-            font-size: 20px;
-			align-self: flex-end;
-        }
-		*/
-    </style>
-
 <?php
 $id_usuario = $_settings->userdata('id');
 $qry = $conn->query("SELECT * from `users` where id = '$id_usuario' ");
@@ -127,6 +89,8 @@ if($qry['codSAP'] == null){
 					<input type="text" class="form-control form-control-sm rounded-0" id="po_no" name="po_no" value="<?php echo isset($po_no) ? $po_no : '' ?>" disabled>
 					 <!--<small><i>Deja este espacio en blanco para generar automáticamente al guardar.</i></small>-->
 				</div>
+							</div>
+			<div class="row">
 				<div class="col-md-6 form-group">
             <label for="required_date">Fecha necesaria <span class="text-danger">*</span></label>
             <input 
@@ -278,89 +242,92 @@ if($qry['codSAP'] == null){
 								<option value="2" <?php echo isset($status) && $status == 2 ? 'selected': '' ?>>Negado</option>
 							</select>
 						</div>
-						<div class="col-md-6 form-group">
-    						<label for="ruta_adjunto" class="control-label">
+					</div>
+			<div class="row">
+                <div class="col-md-6">
+				<div class="pdf-container">
+				<label for="ruta_adjunto" class="control-label">
 								Adjuntar archivos (Solo PDF):
 							</label>
-							<div id="contenedor_adjunto_1" style="display: flex; align-items: center; gap: 10px;">
-								<input type="file" id="ruta_adjunto_1" name="ruta_adjunto_1" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
-								
-								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(1)">
-									Borrar 🗑️
-								</button>
-								</div>
+                <?php
+				$number_of_files = 1;
+                    if(isset($ruta_adjunto)){
+                        $files = scandir($ruta_adjunto);
+                        $files = array_diff($files, array('.', '..')); // Remove . and ..
+                        //$only_files = array_filter($files, fn($file) => pathinfo($file, PATHINFO_EXTENSION) === 'pdf'); // Filter only PDFs
+							//echo "<label>Adjuntos</label>";
+							//$number_of_files = 1;
+							foreach ($files as $file) {
+								echo '<div style="display: flex; align-items: center; gap: 10px;">
+									<a id="link_adjunto_' . $number_of_files . '" href="' . $ruta_adjunto . '/' . $file . '" target="_blank">' . $file . '</a>
+									<input hidden="true" type="file"  id="ruta_adjunto_' . $number_of_files . '" name="ruta_adjunto_' . $number_of_files . '" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
+									<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(' . $number_of_files . ')">
+										Borrar 🗑️
+									</button>
+								</div><br>';
 
-							<div id="contenedor_adjunto_2" style="display: flex; align-items: center; gap: 10px;" hidden="true">
-								<input type="file" id="ruta_adjunto_2" name="ruta_adjunto_2" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
-								
-								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(2)">
-									Borrar 🗑️
-								</button>
-								</div>
+								$number_of_files++;
+							}
+						
+                    }
+                        ?>
+                    
+				
+				
+						
+						
+							<?php 
 
-								<div id="contenedor_adjunto_3" style="display: flex; align-items: center; gap: 10px;" hidden="true">
-								<input type="file" id="ruta_adjunto_3" name="ruta_adjunto_3" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
+							if($number_of_files == 1) {
+								$i = 1;
+								echo '
+									<div id="contenedor_adjunto_' . $i . '" style="display: flex; align-items: center; gap: 10px;">
+									<input type="file" id="ruta_adjunto_' . $i . '" name="ruta_adjunto_' . $i . '" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
+									<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(' . $i . ')">
+										Borrar 🗑️
+									</button>
+									</div>
+									';
 								
-								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(3)">
-									Borrar 🗑️
-								</button>
-								</div>
-
-								<div id="contenedor_adjunto_4" style="display: flex; align-items: center; gap: 10px;" hidden="true">
-								<input type="file" id="ruta_adjunto_4" name="ruta_adjunto_4" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
+								for($i = 2; $i <= 10; $i++){
+									echo '
+									<div id="contenedor_adjunto_' . $i . '" style="display: flex; align-items: center; gap: 10px;" hidden="true">
+									<input type="file" id="ruta_adjunto_' . $i . '" name="ruta_adjunto_' . $i . '" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
+									<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(' . $i . ')">
+										Borrar 🗑️
+									</button>
+									</div>
+									';
+								}
+									
+							} else {
+								//$i = 1;
 								
-								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(4)">
-									Borrar 🗑️
-								</button>
-								</div>
-
-								<div id="contenedor_adjunto_5" style="display: flex; align-items: center; gap: 10px;" hidden="true">
-								<input type="file" id="ruta_adjunto_5" name="ruta_adjunto_5" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
-								
-								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(5)">
-									Borrar 🗑️
-								</button>
-								</div>
-
-								<div id="contenedor_adjunto_6" style="display: flex; align-items: center; gap: 10px;" hidden="true">
-								<input type="file" id="ruta_adjunto_6" name="ruta_adjunto_6" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
-								
-								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(6)">
-									Borrar 🗑️
-								</button>
-								</div>
-
-								<div id="contenedor_adjunto_7" style="display: flex; align-items: center; gap: 10px;" hidden="true">
-								<input type="file" id="ruta_adjunto_7" name="ruta_adjunto_7" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
-								
-								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(7)">
-									Borrar 🗑️
-								</button>
-								</div>
-
-								<div id="contenedor_adjunto_8" style="display: flex; align-items: center; gap: 10px;" hidden="true">
-								<input type="file" id="ruta_adjunto_8" name="ruta_adjunto_8" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
-								
-								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(8)">
-									Borrar 🗑️
-								</button>
-								</div>
-
-								<div id="contenedor_adjunto_9" style="display: flex; align-items: center; gap: 10px;" hidden="true">
-								<input type="file" id="ruta_adjunto_9" name="ruta_adjunto_9" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
-								
-								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(9)">
-									Borrar 🗑️
-								</button>
-								</div>
-
-								<div id="contenedor_adjunto_10" style="display: flex; align-items: center; gap: 10px;" hidden="true">
-								<input type="file" id="ruta_adjunto_10" name="ruta_adjunto_10" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
-								
-								<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(10)">
-									Borrar 🗑️
-								</button>
-								</div>
+								/*if(isset($number_of_files) == false){
+								echo '
+									<div id="contenedor_adjunto_' . $i . '" style="display: flex; align-items: center; gap: 10px;">
+									<input type="file" id="ruta_adjunto_' . $i . '" name="ruta_adjunto_' . $i . '" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
+									<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(' . $i . ')">
+										Borrar 🗑️
+									</button>
+									</div>
+									';
+							}*/
+									for($i = $number_of_files; $i <= 10; $i++){
+										echo '
+										<div id="contenedor_adjunto_' . $i . '" style="display: flex; align-items: center; gap: 10px;" hidden="true">
+										<input type="file" id="ruta_adjunto_' . $i . '" name="ruta_adjunto_' . $i . '" accept="application/pdf" class="form-control form-control-file" style="flex: 1; height: 40px;">
+										<button class="btn btn-flat btn-default boton-borrar" style="height: 40px; display: flex; align-items: center; justify-content: center;" onclick="erase_adjunto(' . $i . ')">
+											Borrar 🗑️
+										</button>
+										</div>
+										';
+									}
+								}
+						
+							?>
+							</div>
+							
 							<div> <button id="otro_adjunto" class="btn btn-flat btn-default"> Agregar otro adjunto </button> </div>
 						</div>
 					</div>
@@ -639,7 +606,7 @@ change: function (event, ui) {
 
 }
 
-let adjunto = 2;
+let adjunto = <?php echo($number_of_files + 1);?>;
 
 document.getElementById("otro_adjunto").addEventListener("click", function(event){
   event.preventDefault()
@@ -666,7 +633,13 @@ deleteButtons.forEach(button => {
 
 function erase_adjunto(id){
 	let adjunto_element = document.getElementById('ruta_adjunto_' + id.toString());
-	adjunto_element.value = "";
+	let link_adjunto = document.getElementById('link_adjunto_' + id.toString());
+	if(link_adjunto != null){
+		link_adjunto.hidden = true;
+		adjunto_element.hidden = false;
+	} else{
+		adjunto_element.value = "";
+	}
 }
 
 function es_duplicado(){
