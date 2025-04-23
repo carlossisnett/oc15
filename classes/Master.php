@@ -156,6 +156,28 @@ Class Master extends DBConnection {
 		return json_encode($stock);
 	}
 
+	/*
+		Esta funcion retorna el nombre del proveedor de la orden de compra.
+		Integer -> String
+		Si no encuentra un proveedor, retorna un string vacio, de lo contrario retorna el nombre del proveedor
+	*/
+
+	function obtener_proveedor($po_id){
+		$query = $this->conn->query("SELECT o.*, p.name FROM order_items o JOIN proveedores p ON p.id = o.proveedor_id where o.po_id = '$po_id' LIMIT 1;");
+                    if(gettype($query) == "boolean"){
+                        return "";
+                    } else {
+                    $rows = $query->fetch_array();
+                    if(isset($rows)) {
+                    $proveedor_id = $rows['proveedor_id'];
+                    $name_proveedor = $rows['name'];
+                    } else {
+                        $name_proveedor = "";
+                    }
+                }
+		return $name_proveedor;
+	}
+
 	
 	/*
 	Esta funcion existe para solo buscar los items que son de inventario, es decir a diferencia de la funcion anterior no busca items que son servicios
@@ -531,8 +553,9 @@ Class Master extends DBConnection {
 			$this->guardar_adjunto($po_no);
 
 			if($this->es_pedido($id) == true){
-				$this->conn->query("UPDATE `po_list` set pedido = 1 where id = '{$id}' ");
-				enviar_email3($id);
+				$this->conn->query("UPDATE `po_list` set pedido = 1, status = 3 where id = '{$id}' ");
+				$this->notificar_a_aprobadores($id);
+				//enviar_email3($id);
 				$this->settings->set_flashdata('success',"Orden de compra guardada correctamente");
 			}
 
@@ -579,7 +602,7 @@ Class Master extends DBConnection {
 
 	function es_pedido($po_id){
 		$departamentos = $this->departamentos_que_faltan_por_aprobar($po_id);
-		$codes_to_check = ["CB000001151515151515"];
+		$codes_to_check = ["CB000002"];
 
 		foreach ($codes_to_check as $code) {
 			if (in_array($code, array_column($departamentos, 'codigo_departamento'))) {
@@ -842,15 +865,28 @@ Class Master extends DBConnection {
 			$user_row = $user_query->fetch_assoc();
 			$to[] = $user_row['email'];
 		}
+
+		
 	
 		$po_list_query = $this->conn->query("SELECT * from po_list where id = '{$po_id}' ");
 		$po_list_row = $po_list_query->fetch_assoc();
+		$date_created = $po_list_row['date_created'];
+		$proveedor = $this->obtener_proveedor($po_id);
+		$username = $po_list_row['username'];
+
+		$solicitante_query = $this->conn->query("SELECT * from users where username = '{$username}'");
+		$solicitante_row = $solicitante_query->fetch_assoc();
+		$firstname = $solicitante_row['firstname'];
+		$lastname = $solicitante_row['lastname'];
+		$nombre_completo = $firstname . " " . $lastname;
+
 		//$numero_sap = $po_list_row['SAPDocEntry'];
 
-		$title = "Solicitud de compra $po_id necesita su aprobación";
+		$title = "Solicitud de compra N° $po_id necesita su aprobación - $nombre_completo";
 		$url_orden = base_url . "admin/?page=purchase_orders/view_po&id=" . $po_id;
 		$url_todas_ordenes = base_url . "admin/?page=all_purchase_orders";
-		$body = "La solicitud de compra $po_id necesita su aprobación. <br> <a href='$url_orden'>Ver Solicitud de Compra $po_id</a> <br> <a href='$url_todas_ordenes'>Ver todas las Solicitudes de Compra pendiente por aprobación</a>";
+		$todas_solicitudes = "<a href='$url_todas_ordenes'>Ver todas las Solicitudes de Compra pendiente por aprobación</a>";
+		$body = "La solicitud de compra N° $po_id hecha por $nombre_completo necesita su aprobación. <br> Proveedor: $proveedor <br> <a href='$url_orden'>Ver Solicitud de Compra</a> <br>";
 		
 		enviar_email($to, $title, $body, "Desarrollo Prensa");
 		return true;
