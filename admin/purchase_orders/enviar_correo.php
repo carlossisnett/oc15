@@ -455,14 +455,14 @@ function destinatarios_orden_de_compra($id, $conn){
     $lista_final = determinar_aprobadores($id, $conn);
     $solicitante_email = $conn->query("SELECT email FROM users u join po_list p on p.username = u.username and p.id = $id;");
     $lista_final[] = $solicitante_email->fetch_array()['email'];
-    //$lista_final[] = "compras@prensa.com";
+    $lista_final[] = "compras@prensa.com";
     $lista_final[] = "desarrollo@prensa.com";
     return $lista_final;
 }
 
 /*
     Esta funcion retorna un array con los emails de aquellos a los que se les debe enviar la notificacion
-    de que la orden de compra ha sido aprobada
+    de que la salida de inventario ha sido aprobada
     Number, Connection -> Array
 */
 
@@ -470,7 +470,7 @@ function destinatarios_salida_de_inventario($id, $conn){
     $lista_final = determinar_aprobadores_inventario($id, $conn);
     $solicitante_email = $conn->query("SELECT email FROM users u join solicitud_de_inventario p on p.username = u.username and p.id = $id;");
     $lista_final[] = $solicitante_email->fetch_array()['email'];
-    //$lista_final[] = "compras@prensa.com";
+    $lista_final[] = "almacen@prensa.com";
     $lista_final[] = "desarrollo@prensa.com";
     return $lista_final;
 }

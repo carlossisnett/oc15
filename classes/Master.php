@@ -336,7 +336,7 @@ Class Master extends DBConnection {
 			$resp['po_no'] = $po_no;
 				$this->guardar_adjunto($po_no);
 				try {
-					$resultado = enviar_email(["carlos.sisnett@prensa.com"], "Orden de compra ha sido modificada", "Orden de compra ha sido modificada con exito.", "desarrollo@prensa.com");
+					$resultado = enviar_email(["carlos.sisnett@prensa.com"], "Orden de compra $po_no ha sido modificada", "Orden de compra ha sido modificada con exito.", "desarrollo@prensa.com");
 
 					
 					//if ($po_id != 233)
@@ -555,7 +555,7 @@ Class Master extends DBConnection {
 			if($this->es_pedido($id) == true){
 				$this->conn->query("UPDATE `po_list` set pedido = 1, status = 3 where id = '{$id}' ");
 				$this->notificar_a_aprobadores($id);
-				//enviar_email3($id);
+				enviar_email3($id);
 				$this->settings->set_flashdata('success',"Orden de compra guardada correctamente");
 			}
 
@@ -601,8 +601,13 @@ Class Master extends DBConnection {
 	*/
 
 	function es_pedido($po_id){
+		/*
+		return $this->puede_aprobar_sr_planells($this->departamentos_que_faltan_por_aprobar($po_id));
+		*/
 		$departamentos = $this->departamentos_que_faltan_por_aprobar($po_id);
-		$codes_to_check = ["CB000002"];
+		# Desarrollo de sistemas, Desarrollo multimedia, Gerencia de tecnologia, ingenieria, seguridad y servidores, soporte tecnico, division comercial
+		//$codes_to_check = ["CC120001", "CC120002", "CC120003", "CC120004", "CC120005", "CC120006", "CC130001"];
+		$codes_to_check = ["CC120303030303"];
 
 		foreach ($codes_to_check as $code) {
 			if (in_array($code, array_column($departamentos, 'codigo_departamento'))) {
@@ -610,7 +615,11 @@ Class Master extends DBConnection {
 			}
 		}
 		return false;
+	}
 
+	function puede_aprobar_sr_planells($departamentos_por_aprobar){
+		$user_id = 47;
+		return $this->puede_este_usuario_aprobar_estos_departamentos($user_id, $departamentos_por_aprobar);
 	}
 
 	/*
@@ -752,6 +761,10 @@ Class Master extends DBConnection {
 			return false;
 		}
 	}
+
+	/*
+	Retorna true si el usuario puede aprobar todos los departamentos recibidos, false si no puede
+	*/
 
 	function puede_este_usuario_aprobar_estos_departamentos($user_id, $departamentos){
 		foreach($departamentos as $key => $value){
@@ -1003,7 +1016,8 @@ Class Master extends DBConnection {
 			$save_2 = $this->conn->query("INSERT INTO `aprobaciones` (user_id, orden_compra_id, estado) VALUES ('{$user_id}', '{$id}', '{$status}') ");
 			if($approved == true) {
 				$save = $this->conn->query("UPDATE `po_list` set status = '{$status}' where id = '{$id}' ");
-				//create_purchase_order($id);
+				$response = create_purchase_order($id);
+				$this->conn->query("UPDATE `po_list` set SAPDocEntry = '{$response['DocEntry']}', SAPDocNum = '{$response['DocNum']}' where id = '{$id}' ");
 				// cambiar correo que se envia:
 				enviar_email_orden_de_compra_aprobada($id);
 			};
@@ -1020,6 +1034,7 @@ Class Master extends DBConnection {
 				}
 				
 			}
+			// poner lo siguiente en comentarios para que no falle a la hora de aprobar:
 			else{
 				$resp['status'] = 'failed';
 				$resp['error'] = $this->conn->error;
