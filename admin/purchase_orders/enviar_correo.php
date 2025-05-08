@@ -561,7 +561,7 @@ function enviar_email_orden_de_compra_aprobada($id){
     $items_table = detalles_orden_de_compra($id, $conn);
 
     $url_orden = base_url . "admin/?page=purchase_orders/view_po&id=" . $id;
-    $link_element = "<a href='$url_orden'>Ver Solicitud de Compra $po_no</a>";
+    $link_element = "<a href='$url_orden'>Ver Pedido de Compra $po_no</a>";
     $aprobaciones = aprobaciones_orden_de_compra($id, $conn);
     
 
@@ -608,7 +608,7 @@ function enviar_email_orden_de_compra_aprobada($id){
         <p><strong>Fecha de Creación:</strong> $date_created</p>
         <p><strong>Fecha Requerida:</strong> $required_date</p>
         <h3> $link_element </h3>
-        <h3>Detalles de la Solicitud de Compra</h3>
+        <h3>Detalles del Pedido de Compra</h3>
         $items_table
        
         <p><strong>Comentarios: </strong>$notes</p>

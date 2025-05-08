@@ -597,29 +597,46 @@ Class Master extends DBConnection {
 	}
 
 	/*
+	Integer -> Array
+	Retorna la lista de los departamentos de una solicitud de compra
+	*/
+
+	function departamentos_de_orden_de_compra($po_id){
+		$query = $this->conn->query("SELECT codigo_departamento from order_items where po_id = '{$po_id}'");
+		$rows = array(); // Initialize an empty array to store rows
+		while ($row = $query->fetch_assoc()) {
+			$rows[] = $row["codigo_departamento"]; // Store each row in an array
+		}
+		return $rows;
+	}
+
+	/*
 		Retorna true si el departamento de la orden de compra esta en la lista de codes_to_check, false si no lo está
 	*/
 
 	function es_pedido($po_id){
-		/*
-		return $this->puede_aprobar_sr_planells($this->departamentos_que_faltan_por_aprobar($po_id));
-		*/
-		$departamentos = $this->departamentos_que_faltan_por_aprobar($po_id);
+	
+		$departamentos_de_solicitud = $this->departamentos_de_orden_de_compra($po_id);
 		# Desarrollo de sistemas, Desarrollo multimedia, Gerencia de tecnologia, ingenieria, seguridad y servidores, soporte tecnico, division comercial
 		//$codes_to_check = ["CC120001", "CC120002", "CC120003", "CC120004", "CC120005", "CC120006", "CC130001"];
-		$codes_to_check = ["CC120303030303"];
+		//$codes_to_check = ["CC120303030303"];
+		$departamentos_que_usuario = array_column($this->departamentos_que_usuario_puede_aprobar(27), "departamento");
+		$departamentos_usuario_2 = array_column($this->departamentos_que_usuario_puede_aprobar(133), "departamento");
 
-		foreach ($codes_to_check as $code) {
-			if (in_array($code, array_column($departamentos, 'codigo_departamento'))) {
+		$todos_los_departamentos_gerentes = array_merge($departamentos_que_usuario, $departamentos_usuario_2);
+
+		foreach ($departamentos_de_solicitud as $code) {
+			if (in_array($code, $todos_los_departamentos_gerentes)) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	function puede_aprobar_sr_planells($departamentos_por_aprobar){
-		$user_id = 47;
-		return $this->puede_este_usuario_aprobar_estos_departamentos($user_id, $departamentos_por_aprobar);
+	function pueden_aprobar_estos_gerentes($departamentos_por_aprobar){
+		$sr_planells = $this->puede_este_usuario_aprobar_estos_departamentos(47, $departamentos_por_aprobar);
+		$sra_planells = $this->puede_este_usuario_aprobar_estos_departamentos(8, $departamentos_por_aprobar);
+		return $sr_planells || $sra_planells;
 	}
 
 	/*
@@ -768,7 +785,7 @@ Class Master extends DBConnection {
 
 	function puede_este_usuario_aprobar_estos_departamentos($user_id, $departamentos){
 		foreach($departamentos as $key => $value){
-			if(puede_este_usuario_aprobar_este_departamento($user_id, $value) == false){
+			if($this->puede_este_usuario_aprobar_este_departamento($user_id, $value) == false){
 				return false;
 			}
 		}
@@ -1025,6 +1042,7 @@ Class Master extends DBConnection {
 			
 			if($save_2){
 				$resp['status'] = 'success';
+				$resp['id'] = $id;
 				if($approved == true) {
 					$this->settings->set_flashdata('success',"Orden de compra aprobada correctamente.");
 				} elseif ($status == 1  and $approved == false) {
@@ -1034,7 +1052,6 @@ Class Master extends DBConnection {
 				}
 				
 			}
-			// poner lo siguiente en comentarios para que no falle a la hora de aprobar:
 			else{
 				$resp['status'] = 'failed';
 				$resp['error'] = $this->conn->error;

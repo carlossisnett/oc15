@@ -1,6 +1,7 @@
 <?php
 
 require_once 'sap_service_layer.php';
+require_once 'enviar_correo.php';
 
 function sendPurchaseRequest ($poId){
 
@@ -35,10 +36,12 @@ if ($conn->connect_error) {
 
 
     // Datos de la Purchase Request
-    $sql = "SELECT a.*, u.codSAP FROM po_list a join users u on u.username = a.username where a.id = $poId";
+    $sql = "SELECT a.*, u.codSAP, u.firstname, u.lastname FROM po_list a join users u on u.username = a.username where a.id = $poId";
     //$sql = "SELECT a.*, b.codSAP FROM po_list a inner join supplier_list b on a.supplier_id = b.id where a.id = $poId";
     
     $result = $conn->query($sql);
+    $first_name = "";
+    $last_name = "";
     
     if ($result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
@@ -51,8 +54,10 @@ if ($conn->connect_error) {
             $requiredDateYMD = date('Y-m-d', strtotime($row['required_date']));
             $notes = $row['notes'];
             $taxPercentage = $row['tax_percentage'];
-            $discountPercentage = $row['discount_percentage'];
-               
+            $discountPercentage = isset($row['discount_percentage']) ? $row['discount_percentage'] : 0;
+            $discount_amount = isset($row['discount_amount']) ? $row['discount_amount'] : 0;
+            $first_name = $row['firstname'];
+            $last_name = $row['lastname'];               
             // Construir la solicitud de compra
             $purchaseRequest = [
 
@@ -65,7 +70,9 @@ if ($conn->connect_error) {
                 'Requester' => $supplierCodSAP,
                 'Comments' => $poNo . " " . $notes,
                 'U_HNL_C_TIPO_DOC' => 'SOLICITUDCOMPRA',
-                'DocumentLines' => []
+                'DocumentLines' => [],
+                'TotalDiscount' => $discount_amount,
+                //'DiscountPercent' => $discountPercentage,
             ];
     
             // Recuperar los items correspondientes de la tabla order_items
@@ -122,15 +129,21 @@ if ($conn->connect_error) {
     $sap = new SAPServiceLayer($hostsap, $puertosap, $companydbsap, $usernamesap, $passwordsap);
     $result = $sap->createPurchaseRequest($purchaseRequest);
 
+    $json = json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
+    file_put_contents('purchase_request_output_1_1.json', $json);
+
     $xresult = json_encode($result);
 
     //print $xresult;
 
     // Obtener el número de la Purchase Request creada
+    $mensaje = "Error: No se pudo obtener el número del documento de SAP. Solicitud: $poId hecha por $first_name $last_name no pudo ser enviada a SAP. Por favor reenviar.";
     if (isset($result['DocEntry'])) {
         return 'Solicitud SAP creada exitosamente. Número de documento: ' . $result['DocNum'] . '|' . $result['DocNum'] . '|' . $result['DocEntry']  ;
     } else {
-        return 'Error: No se pudo obtener el número del documento.';
+        enviar_email(['desarrollo@prensa.com'],"Hubo un error al enviar solicitud de compra $poId a SAP",$mensaje);
+        return 'Error: No se pudo obtener el número del documento de SAP.';
     }
 
     //require_once(/enviar_correo)
@@ -139,8 +152,7 @@ if ($conn->connect_error) {
    
     // Cerrar sesión
     $sap->logout();
-} catch (Exception $e) 
-{
+} catch (Exception $e) {
     return 'Error: ' . $e->getMessage();
 }
 }
@@ -288,6 +300,11 @@ function get_proveedor($po_id, $conn){
     }
 }
 
+/*
+Integer ->  ____
+Crea un pedido de SAP cuando la solicitud de compra ya ha sido aprobada
+*/
+
 function create_purchase_order($poId){
     try {
 
@@ -351,8 +368,9 @@ function create_purchase_order($poId){
             $dateCreatedYMD = date('Y-m-d', strtotime($row['date_created']));
             $requiredDateYMD = date('Y-m-d', strtotime($row['required_date']));
             $notes = $row['notes'];
-            $taxPercentage = $row['tax_percentage'];
-            $discountPercentage = $row['discount_percentage'];
+            $taxPercentage = isset($row['tax_percentage']) ? $row['tax_percentage'] : 0;
+            $discountPercentage = isset($row['discount_percentage']) ? $row['discount_percentage'] : 0;
+            $discount_amount = isset($row['discount_amount']) ? $row['discount_amount'] : 0;
             $owner_code = $row['codSAP'];
             
             // Construir la solicitud de compra
@@ -370,7 +388,9 @@ function create_purchase_order($poId){
                 'OwnerCode' => $owner_code,
                 'SalesPersonCode' => 26,
                 'SlpCode' => 26,
-                'DocumentLines' => []
+                'DocumentLines' => [],
+                'TotalDiscount' => $discount_amount,
+                'DiscountPercent' => $discountPercentage,
             ];
     
             // Recuperar los items correspondientes de la tabla order_items
@@ -423,7 +443,7 @@ function create_purchase_order($poId){
         echo "No se encontraron registros en la tabla po_list.";
     }
 
-    echo "Line count: " . count($purchaseRequest['DocumentLines']) . "\n";
+    //echo "Line count: " . count($purchaseRequest['DocumentLines']) . "\n";
 
         
     $conn->close();
@@ -442,9 +462,9 @@ function create_purchase_order($poId){
     //echo var_dump($response);
     //print $xresult;
 
-    // Obtener el número de la Purchase Request creada
-    if (isset($xresult['DocEntry'])) {
-        return 'Solicitud SAP creada exitosamente. Número de documento: ' . $result['DocNum'] . '|' . $result['DocNum'] . '|' . $result['DocEntry']  ;
+    // Obtener el número de la Purchase Order creada
+    if (isset($response['DocEntry'])) {
+        return $response;
     } else {
         return 'Error: No se pudo obtener el número del documento.';
     }
