@@ -91,7 +91,14 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                 </div>
                 <div class="col-3">
                     <p  class="m-0"><b># SAP:</b></p>
-                    <p><b><?php echo $SAPDocEntry ?></b></p>
+                    <?php
+                    if($SAPDocEntry == null){
+                        echo "<a href='' onclick='enviar_a_sap()'> Reenviar a SAP </a>";
+                    } else {
+                        echo "<p><b> $SAPDocEntry </b></p>";
+                    }
+                    
+                    ?>
                 </div>
                 <div class="col-3">
                     <p  class="m-0"><b>Fecha de Creación</b></p>
@@ -190,6 +197,47 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 </div>
 
 <script>
+    function enviar_a_sap(){
+    $.ajax({
+				url:_base_url_+"classes/Master.php?f=" + 'enviar_solicitud_de_inventario_a_sap',
+				data: {solicitud_id: <?php echo $_GET['id'] ?>, user_id: <?php echo $user_id ?>},
+                cache: false,
+                contentType: "application/x-www-form-urlencoded",
+                processData: true,
+                method: 'POST',
+                type: 'POST',
+                dataType: 'json',
+				error:err=>{
+					console.log(err)
+					alert_toast("Ocurrió un error",'error');
+					end_loader();
+				},
+				success:function(resp){
+					if(typeof resp =='object' && resp.status == 'success'){
+                        alert_toast("",'success');
+                        end_loader();
+                        setTimeout(() => {
+                            location.href = "./?page=purchase_orders/view_si&id="+<?php echo $_GET['id'] ?>;
+                        }, 2000);
+					}else if((resp.status == 'failed' || resp.status == 'po_failed') && !!resp.msg){
+                        var el = $('<div>')
+                            el.addClass("alert alert-danger err-msg").text(resp.msg)
+                            _this.prepend(el)
+                            el.show('slow')
+                            $("html, body").animate({ scrollTop: 0 }, "fast");
+                            end_loader()
+							if(resp.status == 'po_failed'){
+								$('[name="po_no"]').addClass('border-danger').focus()
+							}
+                    }else{
+						alert_toast("Ocurrió un error",'error');
+						end_loader();
+                        console.log(resp)
+					}
+				}
+			})
+}
+
      $('select').on('change', function(e){
         let proceder = false;
         if(this.value == 0){

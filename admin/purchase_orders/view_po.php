@@ -88,7 +88,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                 <div class="col-3">
                     <p  class="mb-2"><b># SAP:</b></p>
                     <?php
-                    if($SAPDocEntry == null){
+                    if($SAPDocEntry == null && $pedido == false){
                         echo "<a href='' onclick='enviar_a_sap()'> Reenviar a SAP </a>";
                     } else {
                         echo "<p><b> $SAPDocEntry </b></p>";
