@@ -895,6 +895,7 @@ Class Master extends DBConnection {
 			$user_row = $user_query->fetch_assoc();
 			$to[] = $user_row['email'];
 		}
+		$to[] = "desarrollo@prensa.com";
 
 		
 	
@@ -1380,6 +1381,79 @@ Class Master extends DBConnection {
 		
 	}
 
+	function enviar_solicitud_de_inventario_a_sap(){
+		extract($_POST);
+		$data = "";
+
+		
+		 // Encode the $_POST array into JSON
+		 $jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
+
+		 // Define the path to the external JSON file
+		 $filePath = 'post_data.json';
+	 
+		 // Write the JSON data to the file
+		 file_put_contents($filePath, $jsonData);
+
+		 try{
+			$ResultRequestSAP = enviar_solicitud_inventario($solicitud_id);
+			$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
+			$pos0Msj = $ArrayResultRequestSAP[0];
+			$pos1DocEntry = $ArrayResultRequestSAP[1];
+			$pos2DocNum = $ArrayResultRequestSAP[2];
+			$this->settings->set_flashdata('success',"Salida de inventario guardada correctamente $pos0Msj");
+			$this->conn->query("update `solicitud_de_inventario` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$solicitud_id}'");
+
+		 }
+		 catch (Exception $e) {
+			$resp['status'] = 'failed';
+			$resp['err'] = $e->getMessage();
+			$this->settings->set_flashdata('failed',"Error al enviar la solicitud de inventario a SAP. ".$e->getMessage());
+			return json_encode($resp);
+		 }
+		 $resp['status'] = 'success';
+		 $resp['msg'] = "Salida de inventario enviada correctamente $pos0Msj";
+		
+		return json_encode($resp);
+	}
+
+	function enviar_solicitud_de_compra_a_sap(){
+		extract($_POST);
+		$data = "";
+
+		
+		 // Encode the $_POST array into JSON
+		 $jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
+
+		 // Define the path to the external JSON file
+		 $filePath = 'post_data.json';
+	 
+		 // Write the JSON data to the file
+		 file_put_contents($filePath, $jsonData);
+
+		 try{
+				$ResultRequestSAP = sendPurchaseRequest($id);
+				$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
+				$pos0Msj = $ArrayResultRequestSAP[0];
+				$pos1DocEntry = $ArrayResultRequestSAP[1];
+				$pos2DocNum = $ArrayResultRequestSAP[2];
+				$this->settings->set_flashdata('success',"Solicitud de compra enviada correctamente a SAP: $pos1DocEntry");
+				$this->conn->query("update `po_list` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$id}'");
+
+		 }
+		 catch (Exception $e) {
+			$resp['status'] = 'failed';
+			$resp['err'] = $e->getMessage();
+			$this->settings->set_flashdata('failed',"Error al enviar la solicitud de compra a SAP. ".$e->getMessage());
+			return json_encode($resp);
+		 }
+		 $resp['status'] = 'success';
+		 $resp['msg'] = "Orden de compra enviada correctamente $pos0Msj";
+		 $resp['id'] = $id;
+
+		 return json_encode($resp);
+	}
+
 
 
 function guardar_adjunto($po_no){
@@ -1581,6 +1655,14 @@ switch ($action) {
 
 	case 'update_inventory_request':
 		echo $Master->update_inventory_request();
+	break;
+
+	case 'enviar_solicitud_de_inventario_a_sap':
+		echo $Master->enviar_solicitud_de_inventario_a_sap();
+	break;
+
+	case 'enviar_solicitud_de_compra_a_sap':
+		echo $Master->enviar_solicitud_de_compra_a_sap();
 	break;
 	
 	default:
