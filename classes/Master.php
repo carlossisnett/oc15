@@ -1454,6 +1454,35 @@ Class Master extends DBConnection {
 		 return json_encode($resp);
 	}
 
+	function enviar_pedido_a_sap(){
+		extract($_POST);
+		$data = "";
+
+		 // Encode the $_POST array into JSON
+		 $jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
+
+		 // Define the path to the external JSON file
+		 $filePath = 'post_data.json';
+	 
+		 // Write the JSON data to the file
+		 file_put_contents($filePath, $jsonData);
+
+		 try{
+			$response = create_purchase_order($id);
+			$this->conn->query("UPDATE `po_list` set SAPDocEntry = '{$response['DocEntry']}', SAPDocNum = '{$response['DocNum']}' where id = '{$id}' ");
+			$resp['status'] = 'success';
+			$resp['msg'] = "Orden de compra enviada correctamente a SAP: {$response['DocEntry']}";
+			$this->settings->set_flashdata('success',"Orden de compra enviada correctamente a SAP: {$response['DocEntry']}");
+
+		 }catch (Exception $e) {
+			$resp['status'] = 'failed';
+			$resp['err'] = $e->getMessage();
+			$this->settings->set_flashdata('failed',"Error al enviar la Pedido de compra a SAP. ".$e->getMessage());
+			return json_encode($resp);
+		 }
+		 return json_encode($resp);
+	}
+
 
 
 function guardar_adjunto($po_no){
@@ -1663,6 +1692,10 @@ switch ($action) {
 
 	case 'enviar_solicitud_de_compra_a_sap':
 		echo $Master->enviar_solicitud_de_compra_a_sap();
+	break;
+
+	case 'enviar_pedido_a_sap':
+		echo $Master->enviar_pedido_a_sap();
 	break;
 	
 	default:

@@ -88,8 +88,12 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                 <div class="col-3">
                     <p  class="mb-2"><b># SAP:</b></p>
                     <?php
+                    
                     if($SAPDocEntry == null && $pedido == false){
-                        echo "<a href='' onclick='enviar_a_sap()'> Reenviar a SAP </a>";
+                        echo "<a href='' onclick='enviar_solicitud_a_sap()'> Reenviar a SAP </a>";
+                        // Solo podemos enviar pedidos a SAP si el estado es 1 (Aprobada):
+                    } elseif($SAPDocEntry == null && $pedido == true && $status == 1){
+                        echo "<a href='' onclick='enviar_pedido_a_sap()'> Reenviar a SAP </a>";
                     } else {
                         echo "<p><b> $SAPDocEntry </b></p>";
                     }
@@ -332,9 +336,50 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 	</tr>
 </table>
 <script>
-function enviar_a_sap(){
+function enviar_solicitud_a_sap(){
     $.ajax({
 				url:_base_url_+"classes/Master.php?f=" + 'enviar_solicitud_de_compra_a_sap',
+				data: {id: <?php echo $_GET['id'] ?>, user_id: <?php echo $user_id ?>},
+                cache: false,
+                contentType: "application/x-www-form-urlencoded",
+                processData: true,
+                method: 'POST',
+                type: 'POST',
+                dataType: 'json',
+				error:err=>{
+					console.log(err)
+					alert_toast("Ocurrió un error",'error');
+					end_loader();
+				},
+				success:function(resp){
+					if(typeof resp =='object' && resp.status == 'success'){
+                        alert_toast("",'success');
+                        end_loader();
+                        setTimeout(() => {
+                            location.href = "./?page=purchase_orders/view_po&id="+<?php echo $_GET['id'] ?>;
+                        }, 2000);
+					}else if((resp.status == 'failed' || resp.status == 'po_failed') && !!resp.msg){
+                        var el = $('<div>')
+                            el.addClass("alert alert-danger err-msg").text(resp.msg)
+                            _this.prepend(el)
+                            el.show('slow')
+                            $("html, body").animate({ scrollTop: 0 }, "fast");
+                            end_loader()
+							if(resp.status == 'po_failed'){
+								$('[name="po_no"]').addClass('border-danger').focus()
+							}
+                    }else{
+						alert_toast("Ocurrió un error",'error');
+						end_loader();
+                        console.log(resp)
+					}
+				}
+			})
+}
+
+function enviar_pedido_a_sap(){
+    $.ajax({
+				url:_base_url_+"classes/Master.php?f=" + 'enviar_pedido_a_sap',
 				data: {id: <?php echo $_GET['id'] ?>, user_id: <?php echo $user_id ?>},
                 cache: false,
                 contentType: "application/x-www-form-urlencoded",
