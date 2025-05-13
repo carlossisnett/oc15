@@ -138,11 +138,14 @@ if ($conn->connect_error) {
     //print $xresult;
 
     // Obtener el número de la Purchase Request creada
-    $mensaje = "Error: No se pudo obtener el número del documento de SAP. Solicitud: $poId hecha por $first_name $last_name no pudo ser enviada a SAP. Por favor reenviar.";
+    $url_orden = base_url . "admin/?page=purchase_orders/view_po&id=" . $poId;
+    $link_element = "<a href='$url_orden'>Ver Solicitud de Compra $poId</a>";
+    $mensaje = "Error: La solicitud $poId hecha por $first_name $last_name no pudo ser enviada a SAP. $link_element";
+    
     if (isset($result['DocEntry'])) {
-        return 'Solicitud SAP creada exitosamente. Número de documento: ' . $result['DocNum'] . '|' . $result['DocNum'] . '|' . $result['DocEntry']  ;
+        return 'Solicitud SAP creada exitosamente. Número de documento: ' . $result['DocNum'] . '|' . $result['DocNum'] . '|' . $result['DocEntry'];
     } else {
-        enviar_email(['desarrollo@prensa.com'],"Hubo un error al enviar solicitud de compra $poId a SAP",$mensaje);
+        enviar_email(['desarrollo@prensa.com', 'compras@prensa.com'],"Hubo un error al enviar solicitud de compra $poId a SAP por favor reenviar",$mensaje);
         return 'Error: No se pudo obtener el número del documento de SAP.';
     }
 
@@ -183,7 +186,7 @@ function enviar_solicitud_inventario($solicitud_id){
 
 
         // Datos de la Purchase Request
-        $sql = "SELECT a.* FROM solicitud_de_inventario a where a.id = $solicitud_id";
+        $sql = "SELECT a.*, u.firstname, u.lastname FROM solicitud_de_inventario a join users u on u.username = a.username where a.id = $solicitud_id";
         //$sql = "SELECT a.*, b.codSAP FROM solicitud_de_inventario a inner join supplier_list b on a.supplier_id = b.id where a.id = $solicitud_id";
         
         $result = $conn->query($sql);
@@ -198,6 +201,8 @@ function enviar_solicitud_inventario($solicitud_id){
                 $dateCreatedYMD = date('Y-m-d', strtotime($row['date_created']));
                 $requiredDateYMD = date('Y-m-d', strtotime($row['required_date']));
                 $notes = $row['notes'];
+                $first_name = $row['firstname'];
+                $last_name = $row['lastname'];  
                 //$taxPercentage = $row['tax_percentage'];
                 //$discountPercentage = $row['discount_percentage'];
                 
@@ -271,9 +276,15 @@ function enviar_solicitud_inventario($solicitud_id){
         //print $xresult;
 
         // Obtener el número de la Purchase Request creada
+
+        // Obtener el número de la Purchase Request creada
+        $url_orden = base_url . "admin/?page=inventario/view_si&id=" . $solicitud_id;
+        $link_element = "<a href='$url_orden'>Ver Salida de Inventario $solicitud_id para reenviar</a>";
+        $mensaje = "Error: La solicitud $solicitud_id hecha por $first_name $last_name no pudo ser enviada a SAP. $link_element";
         if (isset($result['DocEntry'])) {
-            return 'Solicitud SAP creada exitosamente. Número de documento: ' . $result['DocNum'] . '|' . $result['DocNum'] . '|' . $result['DocEntry']  ;
+            return 'Solicitud SAP creada exitosamente. Número de documento: ' . $result['DocNum'] . '|' . $result['DocNum'] . '|' . $result['DocEntry'];
         } else {
+            enviar_email(['desarrollo@prensa.com', 'compras@prensa.com'],"Hubo un error al enviar solicitud de inventario $solicitud_id a SAP por favor reenviar",$mensaje);
             return 'Error: No se pudo obtener el número del documento.';
         }
 
@@ -353,7 +364,7 @@ function create_purchase_order($poId){
     $proveedor_id = get_proveedor($poId, $conn);
 
     // Datos de la Purchase Request
-    $sql = "SELECT a.*, u.codSAP FROM po_list a join users u on u.username = a.username where a.id = $poId";
+    $sql = "SELECT a.*, u.codSAP, u.firstname, u.lastname FROM po_list a join users u on u.username = a.username where a.id = $poId";
     //$sql = "SELECT a.*, b.codSAP FROM po_list a inner join supplier_list b on a.supplier_id = b.id where a.id = $poId";
     
     $result = $conn->query($sql);
@@ -372,6 +383,8 @@ function create_purchase_order($poId){
             $discountPercentage = isset($row['discount_percentage']) ? $row['discount_percentage'] : 0;
             $discount_amount = isset($row['discount_amount']) ? $row['discount_amount'] : 0;
             $owner_code = $row['codSAP'];
+            $first_name = $row['firstname'];
+            $last_name = $row['lastname'];
             
             // Construir la solicitud de compra
             $purchaseRequest = [
@@ -463,9 +476,13 @@ function create_purchase_order($poId){
     //print $xresult;
 
     // Obtener el número de la Purchase Order creada
+    $url_orden = base_url . "admin/?page=purchase_orders/view_po&id=" . $poId;
+    $link_element = "<a href='$url_orden'>Ver Pedido de Compra $poId para reenviar</a>";
+    $mensaje = "Error: El pedido de compra $poId hecha por $first_name $last_name no pudo ser enviada a SAP. $link_element";
     if (isset($response['DocEntry'])) {
         return $response;
     } else {
+        enviar_email(['desarrollo@prensa.com', 'compras@prensa.com'],"Hubo un error al enviar Pedido de compra $poId a SAP por favor reenviar",$mensaje);
         return 'Error: No se pudo obtener el número del documento.';
     }
 

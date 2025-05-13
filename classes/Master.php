@@ -464,7 +464,34 @@ Class Master extends DBConnection {
 		return json_encode($resp);
 	}
 
+	/*
+	Esta funcion verifica si se crearon las lineas de la solicitud de compra. Si tiene al menos 1 linea retorna true, de lo contrario retorna false
+	*/
 
+	function hay_lineas($id){
+		$query = $this->conn->query("SELECT * FROM order_items where po_id = '{$id}'");
+		$rows = array(); // Initialize an empty array to store rows
+		while ($row = $query->fetch_assoc()) {
+			$rows[] = $row; // Store each row in an array
+		}
+		if(count($rows) > 0){
+			return true;
+		} else{
+			return false;
+		}
+	}
+
+	function calcular_porcentaje_descuento($total, $sub_total){
+		$porcentaje_descuento = (1 - ($total/$sub_total) ) * 100;
+		return $porcentaje_descuento;
+	}
+
+	function log_message($message){
+		$myFile = "log.txt"; 
+		$log_file = fopen($myFile, 'a') or die("can't open file");
+		fwrite($log_file, $message);
+		fclose($log_file);
+	}
 
 	function save_po(){
 		extract($_POST);
@@ -499,6 +526,9 @@ Class Master extends DBConnection {
 
 		if(isset($discount_amount) == false){
 			$discount_amount = 0;
+		} else {
+			$discount_percentage = $this->calcular_porcentaje_descuento($total, $sub_total);
+			$this->log_message("discount percentage: $discount_percentage");
 		}
 		if(isset($discount_percentage) == false){
 			$discount_percentage = 0;
@@ -519,6 +549,9 @@ Class Master extends DBConnection {
 		if(isset($ruta_adjunto) == false){
 			$ruta_adjunto = null;
 		}
+
+
+		// Calcular porcentaje de descuento aqui en su propia funcion
 
 
 		$username = $_SESSION['userdata']['username'];
@@ -546,6 +579,14 @@ Class Master extends DBConnection {
 				$prepared->bind_param("dsdissssi", $quantity, $description[$x], $price, $id, $item_id[$x], $marca_id[$x], $departamento_id[$x], $url[$x], $supplier_id);
 				$prepared->execute();
 			}
+				
+			if($this->hay_lineas($id) == false){
+				$resp['status'] = 'failed';
+				$resp['msg'] = "No se puede guardar la orden de compra porque no tiene líneas.";
+				$this->settings->set_flashdata('failed',"Hubo un problema al insertar las líneas de la solicitud de compra, por favor crear una nueva.");
+				return json_encode($resp);
+			}
+
 			$resp['status'] = 'success';
 			$resp['id'] = $id;
 			$resp['po_no'] = $po_no;
@@ -620,8 +661,14 @@ Class Master extends DBConnection {
 		# Desarrollo de sistemas, Desarrollo multimedia, Gerencia de tecnologia, ingenieria, seguridad y servidores, soporte tecnico, division comercial
 		//$codes_to_check = ["CC120001", "CC120002", "CC120003", "CC120004", "CC120005", "CC120006", "CC130001"];
 		//$codes_to_check = ["CC120303030303"];
+		// 26 = usuario de Basilio Fernandez
+		// 27 = usuario de Juan Planells
+		// 133 = usuario de Anette Planells
+		// 115 = usuario de Soodabeh Salence
 		$departamentos_que_usuario = array_column($this->departamentos_que_usuario_puede_aprobar(27), "departamento");
 		$departamentos_usuario_2 = array_column($this->departamentos_que_usuario_puede_aprobar(133), "departamento");
+		$departamentos_que_usuario_3 = array_column($this->departamentos_que_usuario_puede_aprobar(115), "departamento");
+		$departamentos_que_usuario_4 = array_column($this->departamentos_que_usuario_puede_aprobar(26), "departamento");
 
 		$todos_los_departamentos_gerentes = array_merge($departamentos_que_usuario, $departamentos_usuario_2);
 
@@ -1358,9 +1405,6 @@ Class Master extends DBConnection {
 				$pos2DocNum = $ArrayResultRequestSAP[2];
 				$this->settings->set_flashdata('success',"Salida de inventario guardada correctamente $pos0Msj");
 				$this->conn->query("update `solicitud_de_inventario` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$solicitud_id}'");
-				#echo $Master->guardar_adjunto($pos2DocNum);
-				//enviar_correo();
-				//$this->guardar_adjunto($pos1DocEntry);
 				try {
 					$resultado = enviar_email_solicitud_inventario($solicitud_id, $pos1DocEntry);
 					//$resultado = enviar_email(['nelvir.mirabal@prensa.com','nelvir.mirabal@prensa.com'], '2','3');
