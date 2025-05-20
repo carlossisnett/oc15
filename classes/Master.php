@@ -481,8 +481,8 @@ Class Master extends DBConnection {
 		}
 	}
 
-	function calcular_porcentaje_descuento($total, $sub_total){
-		$porcentaje_descuento = (1 - ($total/$sub_total) ) * 100;
+	function calcular_porcentaje_descuento($discount_amount, $sub_total){
+		$porcentaje_descuento = ($discount_amount/$sub_total) * 100;
 		return $porcentaje_descuento;
 	}
 
@@ -524,12 +524,15 @@ Class Master extends DBConnection {
 				break;
 			}
 
+
+		if(is_numeric($discount_amount) == true and ($discount_amount > 0) == true){
+			$discount_percentage = $this->calcular_porcentaje_descuento($discount_amount, $sub_total);
+		}
+
 		if(isset($discount_amount) == false){
 			$discount_amount = 0;
-		} else {
-			$discount_percentage = $this->calcular_porcentaje_descuento($total, $sub_total);
-			$this->log_message("discount percentage: $discount_percentage");
 		}
+
 		if(isset($discount_percentage) == false){
 			$discount_percentage = 0;
 		}
@@ -670,7 +673,7 @@ Class Master extends DBConnection {
 		$departamentos_que_usuario_3 = array_column($this->departamentos_que_usuario_puede_aprobar(115), "departamento");
 		$departamentos_que_usuario_4 = array_column($this->departamentos_que_usuario_puede_aprobar(26), "departamento");
 
-		$todos_los_departamentos_gerentes = array_merge($departamentos_que_usuario, $departamentos_usuario_2);
+		$todos_los_departamentos_gerentes = array_merge($departamentos_que_usuario, $departamentos_usuario_2, $departamentos_que_usuario_3, $departamentos_que_usuario_4);
 
 		foreach ($departamentos_de_solicitud as $code) {
 			if (in_array($code, $todos_los_departamentos_gerentes)) {
@@ -1648,6 +1651,23 @@ function guardar_adjunto($po_no){
 		}
 		return json_encode($resp);
 	}
+
+	function update_approver_vacation(){
+		extract($_POST);
+		$departamentos_usuario = $this->departamentos_que_usuario_puede_aprobar($gerente_id);
+		$departamentos = array_column($departamentos_usuario, 'departamento');
+		foreach($departamentos as $key => $value){
+			$save = $this->conn->query("INSERT INTO `aprobadores` (`user_id`,`departamento`) VALUES ('{$user_id}','{$value}') ");
+		}
+		if($save){
+			$resp['status'] = 'success';
+			$this->settings->set_flashdata('success',"Aprobador guardado correctamente.");
+		}else{
+			$resp['status'] = 'failed';
+			$resp['error'] = $this->conn->error;
+		}
+		return json_encode($resp);
+	}
 	
 	function delete_img(){
 		extract($_POST);
@@ -1740,6 +1760,10 @@ switch ($action) {
 
 	case 'enviar_pedido_a_sap':
 		echo $Master->enviar_pedido_a_sap();
+	break;
+
+	case 'update_approver_vacation':
+		echo $Master->update_approver_vacation();
 	break;
 	
 	default:
