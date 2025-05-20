@@ -668,12 +668,14 @@ Class Master extends DBConnection {
 		// 27 = usuario de Juan Planells
 		// 133 = usuario de Anette Planells
 		// 115 = usuario de Soodabeh Salence
+		// 90 = usuario de Ramon Ali
 		$departamentos_que_usuario = array_column($this->departamentos_que_usuario_puede_aprobar(27), "departamento");
 		$departamentos_usuario_2 = array_column($this->departamentos_que_usuario_puede_aprobar(133), "departamento");
 		$departamentos_que_usuario_3 = array_column($this->departamentos_que_usuario_puede_aprobar(115), "departamento");
 		$departamentos_que_usuario_4 = array_column($this->departamentos_que_usuario_puede_aprobar(26), "departamento");
+		$departamentos_que_usuario_5 = array_column($this->departamentos_que_usuario_puede_aprobar(90), "departamento");
 
-		$todos_los_departamentos_gerentes = array_merge($departamentos_que_usuario, $departamentos_usuario_2, $departamentos_que_usuario_3, $departamentos_que_usuario_4);
+		$todos_los_departamentos_gerentes = array_merge($departamentos_que_usuario, $departamentos_usuario_2, $departamentos_que_usuario_3, $departamentos_que_usuario_4, $departamentos_que_usuario_5);
 
 		foreach ($departamentos_de_solicitud as $code) {
 			if (in_array($code, $todos_los_departamentos_gerentes)) {
