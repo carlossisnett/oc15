@@ -122,7 +122,7 @@ if($qry['codSAP'] == null){
 							<tr class="bg-navy disabled">
 								<th class="px-1 py-1 text-center"></th>
 								<th class="px-1 py-1 text-center">Cantidad</th>
-								<th class="px-1 py-1 text-center">Nombre del Artículo</th>
+								<th class="px-1 py-1 text-center">Búsqueda del Artículo</th>
 								<th class="px-1 py-1 text-center">Descripción (opcional)</th>
 								<th class="px-1 py-1 text-center">Marca</th>
 								<th class="px-1 py-1 text-center">Departamento</th>
@@ -157,12 +157,12 @@ if($qry['codSAP'] == null){
 								</td>
 								<!--Campo Cantidad-->
 								<td class="align-middle p-0 text-center">
-									<input type="number" class="text-center w-100 border-0" step="any" name="qty[]" value="<?php echo $row['quantity'] ?>"/>
+									<input type="number" min="0.01" class="text-center w-100 border-0" step="any" name="qty[]" value="<?php echo $row['quantity'] ?>" required/>
 								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
 									<input type="hidden" name="item_id[]" value="<?php echo $row['item_id'] ?>">
-									<input type="text" class="text-center w-100 border-0 item_id" value="<?php echo $row['nombre_item'] ?>" required/>
+									<input type="text" placeholder="Escriba el nombre o el código del artículo para buscar" class="text-center w-100 border-0 item_id" value="<?php echo $row['nombre_item'] ?>" required/>
 								</td>
 
 								<td class="align-middle p-1">
@@ -196,7 +196,7 @@ if($qry['codSAP'] == null){
 									<input type="text" class="text-center w-100 border-0" name="url[]" value="<?php echo isset($row['url']) ? ($row['url']) : "" ?>" />
 								</td>
 								<td class="align-middle p-1">
-									<input type="number" step="any" class="text-right w-100 border-0" name="unit_price[]"  value="<?php echo ($row['unit_price']) ?>"/>
+									<input type="number" step="any" min="0.01" class="text-right w-100 border-0" name="unit_price[]"  value="<?php echo ($row['unit_price']) ?>" required/>
 								</td>
 								<td class="align-middle p-1 text-right total-price"><?php echo number_format($row['quantity'] * $row['unit_price']) ?></td>
 							</tr>
@@ -206,7 +206,9 @@ if($qry['codSAP'] == null){
 							<tr class="bg-lightblue">
 								<tr>
 									<th class="p-1 text-right" colspan="8"><span><button class="btn btn btn-sm btn-flat btn-primary py-0 mx-1" type="button" id="add_row">Agregar Fila</button></span> Sub Total</th>
-									<th class="p-1 text-right" id="sub_total">0</th>
+									<th class="p-1 text-right">
+									<input type="text" name="sub_total" id="sub_total" class="w-100 border-0 text-right" readonly>
+									</th>
 								</tr>
 								<tr>
 									<th class="p-1 text-right" colspan="8">Descuento (%)
@@ -375,12 +377,12 @@ if($qry['codSAP'] == null){
 								
 								<!--Campo Cantidad-->
 								<td class="align-middle p-0 text-center">
-									<input type="number" class="text-center w-100 border-0" step="any" name="qty[]"/>
+									<input type="number" min="0.01" class="text-center w-100 border-0" step="any" name="qty[]" required/>
 								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
 									<input type="hidden" name="item_id[]">
-									<input type="text" class="text-left w-100 border-0 item_id" required/>
+									<input type="text" placeholder="Escriba el nombre o el código del artículo para buscar" class="text-left w-100 border-0 item_id" required/>
 								</td>
 
 								<td class="align-middle p-1">
@@ -414,7 +416,7 @@ if($qry['codSAP'] == null){
 									<input type="text" name="url[]" class="text-left w-100 border-0" />
 								</td>
 								<td class="align-middle p-1">
-									<input type="number" step="any" class="text-right w-100 border-0" name="unit_price[]">
+									<input type="number" step="any" min="0.01" class="text-right w-100 border-0" name="unit_price[]" required>
 								</td>
 								<td class="align-middle p-1 text-right total-price">0</td>
 							</tr>
@@ -458,7 +460,7 @@ if($qry['codSAP'] == null){
 		}
 		var tax_amount = Math.round((_total - discount_amount) * (tax_perc))/100;
 		$('[name="tax_amount"]').val(parseFloat(tax_amount).toLocaleString("en-US"))
-		$('#sub_total').text(parseFloat(_total).toLocaleString("en-US"))
+		$('#sub_total').val(parseFloat(_total).toLocaleString("en-US"))
 		$('[name="total"]').val(parseFloat(_total - discount_amount + tax_amount).toLocaleString("en-US"))
 	}
 
@@ -741,8 +743,8 @@ var proceder_sin_adjunto = false;
 			let adjunto_8 = document.getElementById('ruta_adjunto_8');
 			let adjunto_9 = document.getElementById('ruta_adjunto_9');
 			let adjunto_10 = document.getElementById('ruta_adjunto_10');
-			if(proceder_sin_adjunto == false && adjunto_1.value == "" && adjunto_2.value == "" && adjunto_3.value == "" && adjunto_4.value == "" && adjunto_5.value == "" && adjunto_6.value == "" && adjunto_7.value == "" && adjunto_8.value == "" && adjunto_9.value == "" && adjunto_10.value == ""){
-					proceder_sin_adjunto = window.confirm("No has adjuntado ningún archivo. ¿Deseas continuar sin adjuntar archivos?");
+			if(es_editado() == false && proceder_sin_adjunto == false && adjunto_1.value == "" && adjunto_2.value == "" && adjunto_3.value == "" && adjunto_4.value == "" && adjunto_5.value == "" && adjunto_6.value == "" && adjunto_7.value == "" && adjunto_8.value == "" && adjunto_9.value == "" && adjunto_10.value == ""){
+					window.confirm("Por favor adjunte un archivo para guardar la solicitud");
 					// Si el usuario responde afirmativo entonces proceder_sin_adjunto = true y se procede con el resto de la funcion
 					if(proceder_sin_adjunto == false){
 						return;
