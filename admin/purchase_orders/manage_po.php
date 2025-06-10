@@ -161,7 +161,7 @@ if($qry['codSAP'] == null){
 								</td>
 								<!--Campo oculto item_id-->
 								<td class="align-middle p-1">
-									<input type="hidden" name="item_id[]" value="<?php echo $row['item_id'] ?>">
+									<input type="hidden" name="item_id[]" value="<?php echo $row['item_id'] ?>" required>
 									<input type="text" placeholder="Escriba el nombre o el código del artículo para buscar" class="text-center w-100 border-0 item_id" value="<?php echo $row['nombre_item'] ?>" required/>
 								</td>
 
@@ -535,6 +535,7 @@ if($qry['codSAP'] == null){
 				_item.find('input[name="item_id[]"]').val(ui.item.id)
 				_item.find('.item-description').text(ui.item.description)
 				_item.find('.item_id').data('selected', true); // Marca como válido
+				_item.find('.item_id').css('background-color', 'white');
 			},
         change: function (event, ui) {
             if (!ui.item) {
@@ -542,6 +543,8 @@ if($qry['codSAP'] == null){
                 _item.find('input[name="item_id[]"]').val("");
                 _item.find('.item-description').text("");
                 _item.find('.item_id').data('selected', false); // Marca como inválido
+				_item.find('.item_id').css('background-color', 'yellow');
+				_item.find('.item_id').val("");
                 alert("Por favor, selecciona un artículo válido de la lista.");
             }
         }
