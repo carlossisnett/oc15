@@ -264,34 +264,34 @@ Class Master extends DBConnection {
 			$ruta_adjunto = null;
 		}
 
+		$prepared = $this->conn->prepare("SELECT po_no, username FROM po_list where id = ?");
+		$prepared->bind_param("s", $id);
+		$prepared->execute();
+		$result = $prepared->get_result();
+		$row = $result->fetch_assoc();
+		$po_no = $row['po_no'];
+		//$username = $row['username'];
 
-		$username = $_SESSION['userdata']['username'];
+
+		//$username = $_SESSION['userdata']['username'];
 
 		$prepared = $this->conn->prepare("UPDATE po_list 
 			SET required_date = ?, 
-				username = ?, 
 				discount_percentage = ?, 
 				discount_amount = ?, 
 				tax_percentage = ?, 
 				tax_amount = ?, 
 				notes = ?, 
 				sub_total = ?, 
-				total = ?, 
-				ruta_adjunto = ? 
+				total = ?
 			WHERE id = ?");
 
-		$prepared->bind_param("ssddddsddss", $required_date, $username, $discount_percentage, $discount_amount, $tax_percentage, $tax_amount, $notes, $sub_total, $total, $ruta_adjunto, $id);
+		$prepared->bind_param("sddddsdds", $required_date, $discount_percentage, $discount_amount, $tax_percentage, $tax_amount, $notes, $sub_total, $total, $id);
 		$prepared->execute();
 
 		
-		$prepared = $this->conn->prepare("SELECT po_no FROM po_list where id = ?");
-		$prepared->bind_param("s", $id);
-		$prepared->execute();
-		$result = $prepared->get_result();
-		$row = $result->fetch_assoc();
-		$po_no = $row['po_no'];
-		$id = (int)$id;
 		
+		$id = (int)$id;
 		$supplier_id = (int)$supplier_id;
 
 		#Si se creo la orden de compra entonces proceder a agregar los articulos a ella
@@ -334,7 +334,7 @@ Class Master extends DBConnection {
 			$resp['status'] = 'success';
 			$resp['id'] = $id;
 			$resp['po_no'] = $po_no;
-				$this->guardar_adjunto($po_no);
+				//$this->guardar_adjunto($po_no);
 				try {
 					$resultado = enviar_email(["carlos.sisnett@prensa.com"], "Orden de compra $po_no ha sido modificada", "Orden de compra ha sido modificada con exito.", "desarrollo@prensa.com");
 
@@ -661,9 +661,6 @@ Class Master extends DBConnection {
 	function es_pedido($po_id){
 	
 		$departamentos_de_solicitud = $this->departamentos_de_orden_de_compra($po_id);
-		# Desarrollo de sistemas, Desarrollo multimedia, Gerencia de tecnologia, ingenieria, seguridad y servidores, soporte tecnico, division comercial
-		//$codes_to_check = ["CC120001", "CC120002", "CC120003", "CC120004", "CC120005", "CC120006", "CC130001"];
-		//$codes_to_check = ["CC120303030303"];
 		// 26 = usuario de Basilio Fernandez
 		// 27 = usuario de Juan Planells
 		// 133 = usuario de Anette Planells
@@ -674,8 +671,9 @@ Class Master extends DBConnection {
 		$departamentos_que_usuario_3 = array_column($this->departamentos_que_usuario_puede_aprobar(115), "departamento");
 		$departamentos_que_usuario_4 = array_column($this->departamentos_que_usuario_puede_aprobar(26), "departamento");
 		$departamentos_que_usuario_5 = array_column($this->departamentos_que_usuario_puede_aprobar(90), "departamento");
+		$departamentos_que_usuario_6 = array_column($this->departamentos_que_usuario_puede_aprobar(47), "departamento");
 
-		$todos_los_departamentos_gerentes = array_merge($departamentos_que_usuario, $departamentos_usuario_2, $departamentos_que_usuario_3, $departamentos_que_usuario_4, $departamentos_que_usuario_5);
+		$todos_los_departamentos_gerentes = array_merge($departamentos_que_usuario, $departamentos_usuario_2, $departamentos_que_usuario_3, $departamentos_que_usuario_4, $departamentos_que_usuario_5, $departamentos_que_usuario_6);
 
 		foreach ($departamentos_de_solicitud as $code) {
 			if (in_array($code, $todos_los_departamentos_gerentes)) {
@@ -913,19 +911,32 @@ Class Master extends DBConnection {
 		//echo $rows;
 		//$codigo_departamento = $rows['codigo_departamento'];
 		$codigo_departamento_list = "'" . implode("', '", $departamentos) . "'";
+
+		$aprobadores = array();
+		foreach($departamentos as $departamento){
+			$query_2 = $this->conn->query("SELECT user_id FROM aprobadores where departamento = '{$departamento}'");
+			while ($row = $query_2->fetch_assoc()) {
+				$aprobadores[] = $row['user_id'];
+			}
+		}
+
+		return array_unique($aprobadores);
+
+		/*
 	
 	   $aprobador = $this->conn->query("SELECT user_id FROM aprobadores 
-	 WHERE departamento IN ({$codigo_departamento_list})");
+	 	WHERE departamento IN ({$codigo_departamento_list})");
 
-	 $lista_aprobadores = array(); // Initialize an empty array to store rows
+	 	$lista_aprobadores = array(); // Initialize an empty array to store rows
 	   
-	   if($aprobador->num_rows == 0){
-		   echo "";
-		   return false;
-	   } else if($aprobador->num_rows > 0){
-		$lista_aprobadores = $aprobador->fetch_array();
-		return $lista_aprobadores;
-	}
+		if($aprobador->num_rows == 0){
+			echo "";
+			return false;
+		} else if($aprobador->num_rows > 0){
+			$lista_aprobadores = $aprobador->fetch_array();
+			return $lista_aprobadores;
+		}
+			*/
 }
 
 	/*
@@ -972,7 +983,6 @@ Class Master extends DBConnection {
 		$body = "La solicitud de compra N° $po_id hecha por $nombre_completo necesita su aprobación. <br> Proveedor: $proveedor <br> <a href='$url_orden'>Ver Solicitud de Compra</a> <br>";
 		
 		enviar_email($to, $title, $body, "Desarrollo Prensa");
-		return true;
 	}
 
 
