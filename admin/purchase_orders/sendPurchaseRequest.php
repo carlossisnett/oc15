@@ -186,7 +186,7 @@ function enviar_solicitud_inventario($solicitud_id){
 
 
         // Datos de la Purchase Request
-        $sql = "SELECT a.*, u.firstname, u.lastname FROM solicitud_de_inventario a join users u on u.username = a.username where a.id = $solicitud_id";
+        $sql = "SELECT a.*, u.codSAP, u.firstname, u.lastname FROM solicitud_de_inventario a join users u on u.username = a.username where a.id = $solicitud_id";
         //$sql = "SELECT a.*, b.codSAP FROM solicitud_de_inventario a inner join supplier_list b on a.supplier_id = b.id where a.id = $solicitud_id";
         
         $result = $conn->query($sql);
@@ -196,7 +196,7 @@ function enviar_solicitud_inventario($solicitud_id){
                 $solicitud_id = $row['id'];
                 $numero_solicitud = $row['numero_solicitud'];
                 $supplierId = $row['supplier_id'];
-                $supplierCodSAP = $_SESSION['userdata']['codSAP'];//$row['codSAP'];
+                $supplierCodSAP = $row['codSAP']; //$_SESSION['userdata']['codSAP'];
                 $dateCreated = $row['date_created'];
                 $dateCreatedYMD = date('Y-m-d', strtotime($row['date_created']));
                 $requiredDateYMD = date('Y-m-d', strtotime($row['required_date']));
@@ -396,7 +396,7 @@ function create_purchase_order($poId){
                 'TaxDate' => $dateCreatedYMD,
                 'ReqType' => 171,
                 'Requester' => $owner_code,
-                'Comments' => $poNo . " " . $notes . "5ta prueba",
+                'Comments' => $poNo . " " . $notes,
                 'DocumentsOwner' => $owner_code,
                 'OwnerCode' => $owner_code,
                 'SalesPersonCode' => 26,
@@ -476,7 +476,8 @@ function create_purchase_order($poId){
     //print $xresult;
 
     // Obtener el número de la Purchase Order creada
-    $url_orden = base_url . "admin/?page=purchase_orders/view_po&id=" . $poId;
+    $base_url = "http://10.0.1.170/finanzas/compras/ordenes_compra/";
+    $url_orden = $base_url . "admin/?page=purchase_orders/view_po&id=" . $poId;
     $link_element = "<a href='$url_orden'>Ver Pedido de Compra $poId para reenviar</a>";
     $mensaje = "Error: El pedido de compra $poId hecha por $first_name $last_name no pudo ser enviada a SAP. $link_element";
     if (isset($response['DocEntry'])) {
