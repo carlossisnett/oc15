@@ -19,6 +19,7 @@
 	$ids = array();
 	$rows_to_display = array();
 	$username = $_SESSION['userdata']['username'];
+	$user_id = $_settings->userdata('id');
 	
 	if ($result && $result->num_rows > 0) {
 		while ($row = $result->fetch_assoc()) {
@@ -81,7 +82,7 @@
 						<td class="text-center"><?php echo $row['proveedor_name']; ?></td>
 						<td><?php echo $row['username']; ?></td> <!-- Could replace with real name if needed -->
 						<td class="text-right"><?php echo special_format($row['total_amount']); ?></td>
-						<td>
+						<td id="status_<?php echo $row['id']; ?>" class="status">
 							<?php
 							switch ($row['status']) {
 								case '1':
@@ -109,6 +110,14 @@
 								<div class="dropdown-divider"></div>
 									 <?php if($_SESSION['userdata']['type'] == 1 || $_SESSION['userdata']['type'] == 2): ?>
 				                    <a class="dropdown-item" href="?page=purchase_orders/manage_po&id=<?php echo $row['id']?>&edit=true"><span class="fa fa-edit text-primary"></span> Editar</a>
+									<div class="dropdown-divider"></div>
+									<?php endif ?>
+									<?php if($_SESSION['userdata']['type'] == 1): ?>
+				                    <a id="aprobar_<?php echo $row['id'] ?>" class="dropdown-item cambiar_estado_aprobar" href="#"><span class="fa fa-check text-success"></span> Aprobar</a>
+									<div class="dropdown-divider"></div>
+									<?php endif ?>
+									<?php if($_SESSION['userdata']['type'] == 1): ?>
+				                    <a id="rechazar_<?php echo $row['id'] ?>" class="dropdown-item cambiar_estado_aprobar" href="#"><span class="fa fa-ban text-danger"></span> Rechazar</a>
 									<?php endif ?>
 								<div class="dropdown-divider"></div>
 								<a class="dropdown-item" href="?page=purchase_orders/manage_po&id=<?php echo $row['id'] ?>&duplicate=true"><span class="fa fa-copy text-warning"></span> Duplicar</a>
@@ -232,6 +241,70 @@
 	</div>
 </div>
 <script>
+$(document).ready(function(){
+	$('.cambiar_estado_aprobar').on('click',function(e){
+	e.preventDefault();
+	let id = $(this).attr('id');
+	console.log(id);
+	let proceder = false;
+	let status = id.split('_')[0];
+	let real_id = id.split('_')[1];
+	let status_number = 0;
+	  if(status == "aprobar"){
+            proceder = window.confirm("¿Desea aprobar la solicitud de compra?");
+			status_number = 1;
+        }
+        if(status == "rechazar"){
+            proceder = window.confirm("¿Desea rechazar la solicitud de compra?");
+			status_number = 2;
+        }
+    if(proceder == true){
+		console.log("proceder = true");
+		  $.ajax({
+				url:_base_url_+"classes/Master.php?f=" + 'change_po_status',
+				data: {status: status_number, id: real_id, user_id: <?php echo $user_id ?>},
+                cache: false,
+                contentType: "application/x-www-form-urlencoded",
+                processData: true,
+                method: 'POST',
+                type: 'POST',
+                dataType: 'json',
+				error:err=>{
+					console.log(err)
+					alert_toast("Ocurrió un error",'error');
+					end_loader();
+				},
+				success:function(resp){
+					if(typeof resp =='object' && resp.status == 'success'){
+						alert_toast("Estado cambiado correctamente.",'success');
+						if(status == 'aprobar'){
+							$("#status_"+real_id).html('<span class="badge badge-success">Aprobado</span>')
+						} else{
+							$("#status_"+real_id).html('<span class="badge badge-danger">Rechazado</span>')
+						}
+						
+					}else if((resp.status == 'failed' || resp.status == 'po_failed') && !!resp.msg){
+                        var el = $('<div>')
+                            el.addClass("alert alert-danger err-msg").text(resp.msg)
+                            _this.prepend(el)
+                            el.show('slow')
+                            $("html, body").animate({ scrollTop: 0 }, "fast");
+                            end_loader()
+							if(resp.status == 'po_failed'){
+								$('[name="po_no"]').addClass('border-danger').focus()
+							}
+                    }else{
+						alert_toast("Ocurrió un error",'error');
+						end_loader();
+                        console.log(resp)
+					}
+				}
+			})
+    }
+
+})
+
+})
 	$(document).ready(function(){
 		$('.delete_data').click(function(){
 			_conf("¿Estás seguro de eliminar esta orden de forma permanente?","delete_rent",[$(this).attr('data-id')])
