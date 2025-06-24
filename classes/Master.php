@@ -666,12 +666,14 @@ Class Master extends DBConnection {
 		// 133 = usuario de Anette Planells
 		// 115 = usuario de Soodabeh Salence
 		// 90 = usuario de Ramon Ali
+		// 414 = usuario de Karol Saman
+
 		$departamentos_que_usuario = array_column($this->departamentos_que_usuario_puede_aprobar(27), "departamento");
 		$departamentos_usuario_2 = array_column($this->departamentos_que_usuario_puede_aprobar(133), "departamento");
 		$departamentos_que_usuario_3 = array_column($this->departamentos_que_usuario_puede_aprobar(115), "departamento");
 		$departamentos_que_usuario_4 = array_column($this->departamentos_que_usuario_puede_aprobar(26), "departamento");
 		$departamentos_que_usuario_5 = array_column($this->departamentos_que_usuario_puede_aprobar(90), "departamento");
-		$departamentos_que_usuario_6 = array_column($this->departamentos_que_usuario_puede_aprobar(47), "departamento");
+		$departamentos_que_usuario_6 = array_column($this->departamentos_que_usuario_puede_aprobar(414), "departamento");
 
 		$todos_los_departamentos_gerentes = array_merge($departamentos_que_usuario, $departamentos_usuario_2, $departamentos_que_usuario_3, $departamentos_que_usuario_4, $departamentos_que_usuario_5, $departamentos_que_usuario_6);
 
