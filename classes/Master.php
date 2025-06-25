@@ -659,6 +659,9 @@ Class Master extends DBConnection {
 	*/
 
 	function es_pedido($po_id){
+		return true;
+
+		/*
 	
 		$departamentos_de_solicitud = $this->departamentos_de_orden_de_compra($po_id);
 		// 26 = usuario de Basilio Fernandez
@@ -683,6 +686,9 @@ Class Master extends DBConnection {
 			}
 		}
 		return false;
+
+		*/
+		
 	}
 
 	function pueden_aprobar_estos_gerentes($departamentos_por_aprobar){
@@ -717,13 +723,26 @@ Class Master extends DBConnection {
 	}
 
 	/*
-	Esta funcion devuelve un array con los departamentos que el usuario puede aprobar, es decir aquellos que tiene en la tabla aprobadores
+	Esta funcion devuelve un array con los departamentos que el usuario puede aprobar, es decir aquellos que tiene el usuario en la tabla aprobadores
 	
-	Number -> Array
+	Number, String -> Array
+	A la hora de aprobar solo el usuario del gerente general (sr planells) y de la sra planells puede aprobar cualquier departamento.
+	A la hora de pasar departamentos a otro usuario se usa $tipo = "vacaciones" para que solo se pasen los departamentos del usuario que esta en la tabla aprobadores y
+	no se pasen todos los departamentos en el caso que el sr o la sra planells se vayan de vacaciones
+	133 = sra planells
+	27 = sr planells
 	*/
 
-	function departamentos_que_usuario_puede_aprobar($user_id){
-		$query = $this->conn->query("SELECT departamento from aprobadores where user_id = '{$user_id}'");
+	function departamentos_que_usuario_puede_aprobar($user_id, $tipo){
+
+		$query = "";
+		if($tipo == "aprobacion" and ($user_id == 27 || $user_id == 133)){
+			// El sr y la sra planells pueden aprobar todos los departamentos
+			$query = $this->conn->query("SELECT departamento from aprobadores");
+		} else {
+			$query = $this->conn->query("SELECT departamento from aprobadores where user_id = '{$user_id}'");
+		}
+
 		$rows = array(); // Initialize an empty array to store rows
 		while ($row = $query->fetch_assoc()) {
 			$rows[] = $row; // Store each row in an array
@@ -757,7 +776,7 @@ Class Master extends DBConnection {
 		}
 
 		$departamentos_por_aprobar = $this->departamentos_que_faltan_por_aprobar($id);
-			$departamentos_que_usuario_puede_aprobar = $this->departamentos_que_usuario_puede_aprobar($user_id);
+			$departamentos_que_usuario_puede_aprobar = $this->departamentos_que_usuario_puede_aprobar($user_id, "aprobacion");
 			// Extract only the department values
 			$departamentos = array_column($departamentos_que_usuario_puede_aprobar, 'departamento');
 
@@ -791,7 +810,7 @@ Class Master extends DBConnection {
 		}
 
 		$departamentos_por_aprobar = $this->departamentos_que_faltan_por_aprobar_inventario($id);
-			$departamentos_que_usuario_puede_aprobar = $this->departamentos_que_usuario_puede_aprobar($user_id);
+			$departamentos_que_usuario_puede_aprobar = $this->departamentos_que_usuario_puede_aprobar($user_id, "aprobacion");
 			// Extract only the department values
 			$departamentos = array_column($departamentos_que_usuario_puede_aprobar, 'departamento');
 
@@ -1668,7 +1687,7 @@ function guardar_adjunto($po_no){
 
 	function update_approver_vacation(){
 		extract($_POST);
-		$departamentos_usuario = $this->departamentos_que_usuario_puede_aprobar($gerente_id);
+		$departamentos_usuario = $this->departamentos_que_usuario_puede_aprobar($gerente_id, "vacaciones");
 		$departamentos = array_column($departamentos_usuario, 'departamento');
 		foreach($departamentos as $key => $value){
 			$save = $this->conn->query("INSERT INTO `aprobadores` (`user_id`,`departamento`) VALUES ('{$user_id}','{$value}') ");
