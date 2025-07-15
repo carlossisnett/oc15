@@ -718,9 +718,10 @@ Class Master extends DBConnection {
 		$departamentos_de_solicitud = $this->departamentos_de_salida_de_inventario($si_id);
 
 		$departamentos_que_usuario = array_column($this->departamentos_que_usuario_puede_aprobar(115, "aprobacion"), "departamento");
-		//$departamentos_usuario_2 = array_column($this->departamentos_que_usuario_puede_aprobar(8, "aprobacion"), "departamento");
+		$departamentos_usuario_2 = array_column($this->departamentos_que_usuario_puede_aprobar(8, "aprobacion"), "departamento");
+		$departamentos_usuario_3 = array_column($this->departamentos_que_usuario_puede_aprobar(47, "aprobacion"), "departamento");
 
-		$todos_los_departamentos_gerentes = array_merge($departamentos_que_usuario);
+		$todos_los_departamentos_gerentes = array_merge($departamentos_que_usuario, $departamentos_usuario_2, $departamentos_usuario_3);
 
 		foreach ($departamentos_de_solicitud as $code) {
 			if (in_array($code, $todos_los_departamentos_gerentes)) {
@@ -1000,6 +1001,36 @@ Class Master extends DBConnection {
 			*/
 }
 
+/*
+	String -> Array || Boolean
+	Dada el id de una orden de compra esta funcion retorna el ids de los aprobadores que pueden aprobar la orden de compra, si no hay aprobador retorna false
+	*/
+
+	function determinar_aprobadores_inventario($si_id){
+		$query = $this->conn->query("SELECT codigo_departamento FROM inventory_items where solicitud_id = $si_id;");
+		if(gettype($query) == "boolean"){
+			echo "";
+			return false;
+		}
+	   while($row = $query->fetch_assoc()) {
+			   $departamentos[] = $row['codigo_departamento'];
+		   }
+		//echo $rows;
+		//$codigo_departamento = $rows['codigo_departamento'];
+		$codigo_departamento_list = "'" . implode("', '", $departamentos) . "'";
+
+		$aprobadores = array();
+		foreach($departamentos as $departamento){
+			$query_2 = $this->conn->query("SELECT user_id FROM aprobadores where departamento = '{$departamento}'");
+			while ($row = $query_2->fetch_assoc()) {
+				$aprobadores[] = $row['user_id'];
+			}
+		}
+
+		return array_unique($aprobadores);
+
+	}
+
 	/*
 	Esta funcion le envia un email a los aprobadores cuando una solicitud ya esta lista para aprobar (estado 3)
 	String -> Boolean
@@ -1050,7 +1081,7 @@ Class Master extends DBConnection {
 
 
 	function notificar_a_aprobadores_inventario($si_id){
-		$aprobadores = $this->determinar_aprobadores($si_id);
+		$aprobadores = $this->determinar_aprobadores_inventario($si_id);
 		if($aprobadores == false){
 			enviar_email(["desarrollo@prensa.com"], "Salida de inventario $si_id no tiene aprobador", "Salida de inventario $si_id no tiene aprobador, por favor asignar uno al departamento que le corresponde y notificarle al aprobador que la solicitud está lista para aprobar", "Desarrollo Prensa");
 			return false;
@@ -1059,8 +1090,10 @@ Class Master extends DBConnection {
 		foreach($aprobadores as $key => $value){
 			$user_query = $this->conn->query("SELECT * from users where id = $value ");
 			$user_row = $user_query->fetch_assoc();
-			$to[] = $user_row['email'];
+			$to[] = $user_row['email']; 
 		}
+
+		$to[] = "desarrollo@prensa.com";
 	
 		$po_list_query = $this->conn->query("SELECT * from solicitud_de_inventario where id = '{$si_id}' ");
 		$po_list_row = $po_list_query->fetch_assoc();
@@ -1757,7 +1790,36 @@ function guardar_adjunto($po_no){
 
 	function update_approver(){
 		extract($_POST);
-		$save = $this->conn->query("INSERT INTO `aprobadores` (`user_id`,`departamento`) VALUES ('{$user_id}','{$departamento_id}') ");
+		
+		 // Encode the $_POST array into JSON
+		 $jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
+
+		 // Define the path to the external JSON file
+		 $filePath = 'post_data.json';
+	 
+		 // Write the JSON data to the file
+		 file_put_contents($filePath, $jsonData);
+
+		if(isset($exclusivo_compras) == false){
+			$exclusivo_compras = false;
+		}
+
+
+		if($exclusivo_compras == "on"){
+			$exclusivo_compras = true;
+		}
+
+		if(isset($exclusivo_inventario) == false){
+			$exclusivo_inventario = false;
+		}
+
+		if($exclusivo_inventario == "on"){
+			$exclusivo_inventario = true;
+		}
+
+		
+		
+		$save = $this->conn->query("INSERT INTO `aprobadores` (`user_id`,`departamento`, `exclusivo_compras`, `exclusivo_inventario`) VALUES ('{$user_id}','{$departamento_id}', '{$exclusivo_compras}', '{$exclusivo_inventario}') ");
 		if($save){
 			$resp['status'] = 'success';
 			$this->settings->set_flashdata('success',"Aprobador guardado correctamente.");
