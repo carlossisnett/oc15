@@ -85,6 +85,9 @@
 										case '2':
 											echo '<span class="badge badge-danger">Rechazado</span>';
 											break;
+										case '3':
+											echo '<b> Listo para aprobar </b>';
+											break;
 										default:
 											echo '<span class="badge badge-secondary">Pendiente</span>';
 											break;
@@ -100,7 +103,8 @@
 								  	<a class="dropdown-item" href="?page=purchase_orders/view_po&id=<?php echo $row['id'] ?>"><span class="fa fa-eye text-primary"></span> Ver</a>
 				                    <!-- Botón Editar/Duplicar/Eliminar deshabilitado temporalmente -->
 									<div class="dropdown-divider"></div>
-									 <?php if($_SESSION['userdata']['type'] == 1 || $_SESSION['userdata']['type'] == 2): ?>
+
+									 <?php if(isset($_SESSION['userdata']['type'])): ?>
 				                    <a class="dropdown-item" href="?page=purchase_orders/manage_po&id=<?php echo $row['id']?>&edit=true"><span class="fa fa-edit text-primary"></span> Editar</a>
 									<?php endif ?>
 				                    <div class="dropdown-divider"></div>

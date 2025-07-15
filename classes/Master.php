@@ -130,6 +130,8 @@ Class Master extends DBConnection {
 
 	}
 	function search_items(){
+
+		//file_put_contents('log.txt', 'called search_items' . PHP_EOL, FILE_APPEND);
 		extract($_POST);
 		//$qry = $this->conn->query("SELECT * FROM item_list where `name` LIKE '%{$q}%'");
 		$qry = $this->conn->query("SELECT id,codSAP, concat(codSAP, ' ' , `description`) as `description` FROM item_list where `description` LIKE '%{$q}%'");
@@ -384,11 +386,12 @@ Class Master extends DBConnection {
 
 		$prepared = $this->conn->prepare("UPDATE solicitud_de_inventario 
 			SET required_date = ?, 
-				username = ?, 
-				notes = ?
+				notes = ?,
+				notes_almacen = ?,
+				estado_almacen = ?
 			WHERE id = ?");
 
-		$prepared->bind_param("ssss", $required_date, $username, $notes, $id);
+		$prepared->bind_param("sssss", $required_date, $notes, $notes_almacen, $estado_almacen, $id);
 		$prepared->execute();
 
 		
@@ -439,8 +442,8 @@ Class Master extends DBConnection {
 			$resp['status'] = 'success';
 			$resp['id'] = $id;
 			$resp['numero_solicitud'] = $numero_solicitud;
-				try {
-					$resultado = enviar_email(["carlos.sisnett@prensa.com"], "Salida de inventario ha sido modificada", "La salida de inventario ha sido modificada con exito.", "desarrollo@prensa.com");
+			$usuario_actualizador = $username;
+			enviar_email_salida_de_mercancia_actualizacion($id, $usuario_actualizador, $estado_almacen);
 
 					
 					//if ($po_id != 233)
@@ -449,10 +452,11 @@ Class Master extends DBConnection {
 					//$resultado = enviar_email(['nelvir.mirabal@prensa.com','nelvir.mirabal@prensa.com'], '2','3');
 					
 					//echo $resultado; // Salida: Correo enviado para PO ID: 123 con SAP: SAP456789
+					/*
 				} catch (Exception $e) {
 					echo "Error al enviar el correo: " . $e->getMessage();
 				}
-
+*/
 		
 		/*
 		else{
@@ -689,6 +693,42 @@ Class Master extends DBConnection {
 
 		*/
 		
+	}
+
+		/*
+	Integer -> Array
+	Retorna la lista de los departamentos de una salida de inventario
+	*/
+
+	function departamentos_de_salida_de_inventario($si_id){
+		$query = $this->conn->query("SELECT codigo_departamento from inventory_items where solicitud_id = '{$si_id}'");
+		$rows = array(); // Initialize an empty array to store rows
+		while ($row = $query->fetch_assoc()) {
+			$rows[] = $row["codigo_departamento"]; // Store each row in an array
+		}
+		return $rows;
+	}
+
+	function es_salida_de_mercancia($si_id){
+		// 47 = usuario de Carlos Sisnett
+		// 8 = usuario de Nelvir Mirabal
+		// 26 = usuario de Basilio Fernandez
+		// 115 = usuario de Soodabeh Salence
+
+		$departamentos_de_solicitud = $this->departamentos_de_salida_de_inventario($si_id);
+
+		$departamentos_que_usuario = array_column($this->departamentos_que_usuario_puede_aprobar(115, "aprobacion"), "departamento");
+		//$departamentos_usuario_2 = array_column($this->departamentos_que_usuario_puede_aprobar(8, "aprobacion"), "departamento");
+
+		$todos_los_departamentos_gerentes = array_merge($departamentos_que_usuario);
+
+		foreach ($departamentos_de_solicitud as $code) {
+			if (in_array($code, $todos_los_departamentos_gerentes)) {
+				return true;
+			}
+		}
+		return false;
+
 	}
 
 	function pueden_aprobar_estos_gerentes($departamentos_por_aprobar){
@@ -1028,7 +1068,8 @@ Class Master extends DBConnection {
 
 		$title = "Salida de inventario $si_id necesita su aprobación";
 		$url_orden = base_url . "admin/?page=inventario/view_si&id=" . $si_id;
-		//$url_todas_ordenes = base_url . "admin/?page=all_purchase_orders";
+		$url_todas_ordenes = base_url . "admin/?page=all_inventario";
+		$todas_solicitudes = "<a href='$url_todas_ordenes'>Ver todas las Salidas de Inventario pendientes por aprobación</a>";
 		$body = "La Salida de inventario $si_id necesita su aprobación. <br> <a href='$url_orden'>Ver Salida de inventario $si_id</a> <br>";
 		
 		enviar_email($to, $title, $body, "Desarrollo Prensa");
@@ -1061,8 +1102,9 @@ Class Master extends DBConnection {
 			$save_2 = $this->conn->query("INSERT INTO `aprobaciones_inventario` (user_id, solicitud_inventario_id, estado) VALUES ('{$user_id}', '{$id}', '{$status}') ");
 			if($approved == true) {
 				$save = $this->conn->query("UPDATE `solicitud_de_inventario` set status = '{$status}' where id = '{$id}' ");
-				//create_purchase_order($id);
-				// cambiar correo que se envia:
+				// Para que inventario pueda hacer modificaciones si es necesario antes de mandar a SAP,  no se envia a SAP hasta que ellos lo hagan manualmente
+				//$response = crear_salida_de_mercancia($id);
+				//$this->conn->query("UPDATE `solicitud_de_inventario` set SAPDocEntry = '{$response['DocEntry']}', SAPDocNum = '{$response['DocNum']}' where id = '{$id}' ");
 				enviar_email_salida_de_inventario_aprobada($id);
 			};
 			
@@ -1432,22 +1474,29 @@ Class Master extends DBConnection {
 				$save = $this->conn->query("INSERT INTO `inventory_items` (`solicitud_id`,`item_id`,`quantity`,codigo_marca,codigo_departamento) VALUES {$data} ");
 				//echo "INSERT INTO `inventory_items` (`solicitud_id`,`item_id`,`unit`,`unit_price`,`quantity`) VALUES {$data} ";
 			}
-			if(empty($id))
-			{
-				$ResultRequestSAP = enviar_solicitud_inventario($solicitud_id);
-				$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
-				$pos0Msj = $ArrayResultRequestSAP[0];
-				$pos1DocEntry = $ArrayResultRequestSAP[1];
-				$pos2DocNum = $ArrayResultRequestSAP[2];
-				$this->settings->set_flashdata('success',"Salida de inventario guardada correctamente $pos0Msj");
-				$this->conn->query("update `solicitud_de_inventario` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$solicitud_id}'");
-				try {
-					$resultado = enviar_email_solicitud_inventario($solicitud_id, $pos1DocEntry);
-					//$resultado = enviar_email(['nelvir.mirabal@prensa.com','nelvir.mirabal@prensa.com'], '2','3');
-					
-					//echo $resultado; // Salida: Correo enviado para PO ID: 123 con SAP: SAP456789
-				} catch (Exception $e) {
-					echo "Error al enviar el correo: " . $e->getMessage();
+			if(empty($id)){
+				if($this->es_salida_de_mercancia($solicitud_id)){
+					$this->conn->query("update `solicitud_de_inventario` set status = 3, salida_de_mercancia = 1 where id = '{$solicitud_id}'");
+					enviar_email_salida_de_mercancia($solicitud_id); // notifica a almacen que se ha creado la salida de mercancia
+					$this->notificar_a_aprobadores_inventario($solicitud_id); // notifica a los aprobadores que tienen una nueva salida por aprobar
+					$this->settings->set_flashdata('success',"Salida de inventario guardada correctamente");
+				} else{
+
+					$ResultRequestSAP = enviar_solicitud_inventario($solicitud_id);
+					$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
+					$pos0Msj = $ArrayResultRequestSAP[0];
+					$pos1DocEntry = $ArrayResultRequestSAP[1];
+					$pos2DocNum = $ArrayResultRequestSAP[2];
+					$this->settings->set_flashdata('success',"Salida de inventario guardada correctamente $pos0Msj");
+					$this->conn->query("update `solicitud_de_inventario` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$solicitud_id}'");
+					try {
+						$resultado = enviar_email_solicitud_inventario($solicitud_id, $pos1DocEntry);
+						//$resultado = enviar_email(['nelvir.mirabal@prensa.com','nelvir.mirabal@prensa.com'], '2','3');
+						
+						//echo $resultado; // Salida: Correo enviado para PO ID: 123 con SAP: SAP456789
+					} catch (Exception $e) {
+						echo "Error al enviar el correo: " . $e->getMessage();
+					}
 				}
 			}
 			else
@@ -1496,6 +1545,40 @@ Class Master extends DBConnection {
 		
 		return json_encode($resp);
 	}
+
+
+
+	function enviar_salida_de_mercancia_a_sap(){
+		extract($_POST);
+		$data = "";
+
+		
+		 // Encode the $_POST array into JSON
+		 $jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
+
+		 // Define the path to the external JSON file
+		 $filePath = 'post_data.json';
+	 
+		 // Write the JSON data to the file
+		 file_put_contents($filePath, $jsonData);
+
+		 try{
+			$response = crear_salida_de_mercancia($solicitud_id);
+			$this->conn->query("UPDATE `solicitud_de_inventario` set SAPDocEntry = '{$response['DocEntry']}', SAPDocNum = '{$response['DocNum']}', estado_almacen = 4 where id = '{$solicitud_id}' ");
+			$this->settings->set_flashdata('success',"Salida de inventario enviada correctamente");
+		 }
+		 catch (Exception $e) {
+			$resp['status'] = 'failed';
+			$resp['err'] = $e->getMessage();
+			$this->settings->set_flashdata('failed',"Error al enviar la solicitud de inventario a SAP. ".$e->getMessage());
+			return json_encode($resp);
+		 }
+		 $resp['status'] = 'success';
+		 $resp['msg'] = "Salida de inventario enviada correctamente";
+		
+		return json_encode($resp);
+	}
+
 
 	function enviar_solicitud_de_compra_a_sap(){
 		extract($_POST);
@@ -1785,6 +1868,10 @@ switch ($action) {
 
 	case 'enviar_solicitud_de_inventario_a_sap':
 		echo $Master->enviar_solicitud_de_inventario_a_sap();
+	break; 
+
+	case 'enviar_salida_de_mercancia_a_sap':
+		echo $Master->enviar_salida_de_mercancia_a_sap();
 	break;
 
 	case 'enviar_solicitud_de_compra_a_sap':

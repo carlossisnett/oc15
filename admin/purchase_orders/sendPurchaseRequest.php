@@ -273,12 +273,24 @@ function enviar_solicitud_inventario($solicitud_id){
 
         $xresult = json_encode($result);
 
+        $jsonData = json_encode($result, JSON_PRETTY_PRINT);
+
+        // Save to a file
+        file_put_contents('solicitud_inventario_result.json', $jsonData);
+
+
+
         //print $xresult;
 
         // Obtener el número de la Purchase Request creada
 
         // Obtener el número de la Purchase Request creada
-        $url_orden = base_url . "admin/?page=inventario/view_si&id=" . $solicitud_id;
+        if(defined('base_url')){
+            $url_orden = base_url . "admin/?page=inventario/view_si&id=" . $solicitud_id;
+        } else {
+            $url_orden = "http://10.0.1.170/finanzas/compras/ordenes_compra/" . "admin/?page=inventario/view_si&id=" . $solicitud_id;
+        }
+        
         $link_element = "<a href='$url_orden'>Ver Salida de Inventario $solicitud_id para reenviar</a>";
         $mensaje = "Error: La solicitud $solicitud_id hecha por $first_name $last_name no pudo ser enviada a SAP. $link_element";
         if (isset($result['DocEntry'])) {
@@ -292,6 +304,155 @@ function enviar_solicitud_inventario($solicitud_id){
     
         //enviar_email(['nelvir.mirabal@prensa.com'],'PruebaCompra','Este es un correo de prueba para verificar la funcionalidad.');
     
+        // Cerrar sesión
+        $sap->logout();
+    } catch (Exception $e) {
+        return 'Error: ' . $e->getMessage();
+    }
+}
+
+function crear_salida_de_mercancia($solicitud_id){
+    
+    try {
+        $config =  require __DIR__ . '/../../configuracion.php';
+        $servername = $config['servername'];
+        $username = $config['username'];
+        $password = $config['password'];
+        $dbname = $config['dbname'];
+        $hostsap = $config['hostsap'];
+        $puertosap = $config['puertosap'];
+        $companydbsap = $config['companydbsap'];
+        $usernamesap = $config['usernamesap'];
+        $passwordsap = $config['passwordsap'];
+
+    $conn = new mysqli($servername, $username, $password, $dbname);
+
+    // Verifica la conexión a la base de datos
+    if ($conn->connect_error) {
+        die("Conexión fallida: " . $conn->connect_error);
+    }
+
+    //$data = settings->userdata();
+    //print_r($data);
+
+
+        // Datos de la Purchase Request
+        $sql = "SELECT a.*, u.codSAP, u.firstname, u.lastname FROM solicitud_de_inventario a join users u on u.username = a.username where a.id = $solicitud_id";
+        //$sql = "SELECT a.*, b.codSAP FROM solicitud_de_inventario a inner join supplier_list b on a.supplier_id = b.id where a.id = $solicitud_id";
+        
+        $result = $conn->query($sql);
+        
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                $solicitud_id = $row['id'];
+                $numero_solicitud = $row['numero_solicitud'];
+                $supplierId = $row['supplier_id'];
+                $supplierCodSAP = $row['codSAP']; //$_SESSION['userdata']['codSAP'];
+                $dateCreated = $row['date_created'];
+                $dateCreatedYMD = date('Y-m-d', strtotime($row['date_created']));
+                $requiredDateYMD = date('Y-m-d', strtotime($row['required_date']));
+                $notes = $row['notes'];
+                $first_name = $row['firstname'];
+                $last_name = $row['lastname'];  
+                //$taxPercentage = $row['tax_percentage'];
+                //$discountPercentage = $row['discount_percentage'];
+                
+                // Construir la solicitud de compra
+                $purchaseRequest = [
+
+                    'DocStatus' => 'O',
+                    'DocDate' => $dateCreatedYMD,
+                    'RequriedDate' => $dateCreatedYMD,
+                    'DocDueDate' => $dateCreatedYMD,
+                    'TaxDate' => $dateCreatedYMD,
+                    'ReqType' => 171,
+                    'Requester' => $supplierCodSAP,
+                    'Comments' => $numero_solicitud . " " . $notes,
+                    'U_HNL_C_TIPO_DOC' => 'SALIDAINVENTARIO',
+                    'DocumentLines' => [],
+                    'Reference2' => $solicitud_id
+                ];
+        
+                // Recuperar los items correspondientes de la tabla inventory_items
+                $sqlItems = "SELECT a.*, b.codSAP FROM inventory_items a inner join item_list b on a.item_id = b.id WHERE a.solicitud_id = $solicitud_id";
+                $resultItems = $conn->query($sqlItems);
+        
+                if ($resultItems->num_rows > 0) {
+                    while ($item = $resultItems->fetch_assoc()) {
+
+                    // print $item['codSAP'];
+                        $itemCode =  $item['codSAP']; //'S0000002';  // Código de item fijo según el requerimiento
+                        //$description = 'ALQUILER DE AUTOS';
+                        $quantity = $item['quantity'];
+                        //$unitPrice = $item['unit_price'];
+                        $codigo_marca = $item['codigo_marca'];
+                        $codigo_departamento = $item['codigo_departamento'];
+        
+                        // Determinar el grupo de IVA
+                        //$vatGroup = ($taxPercentage == 0) ? 'C0' : 'C1';
+        
+                        // Construir la línea del documento
+                        $line = [
+                            'ItemCode' => $itemCode,
+                            //'UnitPrice' => $unitPrice,
+                            //'Dscription' => $description,
+                            'Quantity' => $quantity,
+                            //'TaxCode' => $vatGroup,
+                            'RequiredDate' => $requiredDateYMD,
+                            'CostingCode' => $codigo_marca,
+                            'CostingCode2' => $codigo_departamento
+                            //'VatGroup' => $vatGroup,
+                            //'DiscPercent' => $discountPercentage
+                        ];
+        
+                        // Agregar la línea al array de líneas del documento
+                        $purchaseRequest['DocumentLines'][] = $line;
+                    }
+                }
+
+
+            }
+
+        } else {
+            echo "No se encontraron registros en la tabla solicitud_de_inventario.";
+        }
+            
+        $conn->close();
+
+        // Inicializar el Service Layer y crear la Purchase Request
+        $sap = new SAPServiceLayer($hostsap, $puertosap, $companydbsap, $usernamesap, $passwordsap);
+        $result = $sap->create_inventory_exit($purchaseRequest);
+
+        $xresult = json_encode($result);
+
+        $jsonData = json_encode($result, JSON_PRETTY_PRINT);
+
+        // Save to a file
+        file_put_contents('salida_de_mercancia_result.json', $jsonData);
+
+
+
+        //print $xresult;
+
+        // Obtener el número de la Purchase Request creada
+        if(defined('base_url')){
+            $url_orden = base_url . "admin/?page=inventario/view_si&id=" . $solicitud_id;
+        } else {
+            $url_orden = "http://10.0.1.170/finanzas/compras/ordenes_compra/" . "admin/?page=inventario/view_si&id=" . $solicitud_id;
+        }
+        
+        $link_element = "<a href='$url_orden'>Ver Salida de Inventario $solicitud_id para reenviar</a>";
+        $mensaje = "Error: La solicitud $solicitud_id hecha por $first_name $last_name no pudo ser enviada a SAP. $link_element";
+        if (isset($result['DocEntry'])) {
+            return $result;
+        } else {
+            enviar_email(['desarrollo@prensa.com', 'compras@prensa.com'],"Hubo un error al enviar solicitud de inventario $solicitud_id a SAP por favor reenviar",$mensaje);
+            return 'Error: No se pudo obtener el número del documento.';
+        }
+
+        //require_once(/enviar_correo)
+        //enviar_email(['nelvir.mirabal@prensa.com'],'PruebaCompra','Este es un correo de prueba para verificar la funcionalidad.');
+
         // Cerrar sesión
         $sap->logout();
     } catch (Exception $e) {

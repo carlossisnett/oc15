@@ -151,16 +151,21 @@ if($qry['codSAP'] == null){
 </table>
 					<div class="row">
 						<div class="col-md-6">
-							<label for="notes" class="control-label">Notas</label>
+							<label for="notes" class="control-label">Notas del Solicitante</label>
 							<textarea name="notes" id="notes" cols="10" rows="4" class="form-control rounded-0"><?php echo isset($notes) ? $notes : '' ?></textarea>
 						</div>
 						<div class="col-md-6">
-							<label for="status" class="control-label">Estado</label>
-							<select name="status" id="status" class="form-control form-control-sm rounded-0" disabled>
-								<option value="0" <?php echo isset($status) && $status == 0 ? 'selected': '' ?>>Pendiente</option>
-								<option value="1" <?php echo isset($status) && $status == 1 ? 'selected': '' ?>>Aprobado</option>
-								<option value="2" <?php echo isset($status) && $status == 2 ? 'selected': '' ?>>Negado</option>
+							<label for="status" class="control-label">Estado de Almacen</label>
+							<select name="estado_almacen" id="estado_almacen" class="form-control form-control-sm rounded-0" <?php echo $_settings->userdata('type') == 3 ? '' : 'disabled' ?>>
+								<option value="0" <?php echo isset($estado_almacen) && $estado_almacen == 0 ? 'selected': '' ?>>Pendiente</option>
+								<option value="1" <?php echo isset($estado_almacen) && $estado_almacen == 1 ? 'selected': '' ?>>Entregado</option>
+								<option value="2" <?php echo isset($estado_almacen) && $estado_almacen == 2 ? 'selected': '' ?>>Rechazado</option>
+								<option value="2" <?php echo isset($estado_almacen) && $estado_almacen == 3 ? 'selected': '' ?>>Listo para Entregar</option>
 							</select>
+						</div>
+						<div class="col-md-6" <?php echo $_settings->userdata('type') == 3 ? '' : 'hidden' ?>>
+							<label for="notes_almacen" class="control-label">Notas de Almacen</label>
+							<textarea name="notes_almacen" id="notes_almacen" cols="10" rows="4" class="form-control rounded-0"><?php echo isset($notes_almacen) ? $notes_almacen : '' ?></textarea>
 						</div>
 						<div class="col-md-6 form-group" hidden>
     						<label for="ruta_adjunto" class="control-label">Adjuntar archivo:</label>
@@ -338,6 +343,7 @@ if($qry['codSAP'] == null){
 		if(cantidad > inventory){
 			alert("La cantidad solicitada no puede ser mayor al inventario disponible");
 			cantidad_element.css('background-color', 'yellow');
+			cantidad_element.val("");
 			//cantidad_element.val("");
 		} else if(cantidad == 0){
 			alert("La cantidad solicitada no puede ser cero");
@@ -592,5 +598,17 @@ function es_editado(){
 	} else{
 			return false;
 		}
+}
+
+<?php
+$user_type = $_settings->userdata('type');
+if($user_type == null){
+	$user_type = 0;
+}
+?>
+
+if(es_editado() && <?php echo $user_type ?> == 3){
+	const notes = document.getElementById("notes");
+	notes.disabled = true;
 }
 </script>

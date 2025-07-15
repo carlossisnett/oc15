@@ -17,20 +17,22 @@
 				<colgroup>
 						<col width="10%">
 						<col width="10%">
-						<col width="20%"> 
+						<col width="15%"> 
 						<col width="10%">
-						<col width="20%">
 						<col width="15%">
+						<col width="15%">
+						<col width="10%">
 						<col width="15%">
 				</colgroup>
 				<thead>
 					<tr class="">
-						<th>#</th>
+						<th>ID referencia</th>
 						<th>Fecha Creación</th>
 						<th># Salida de Inventario</th>
 						<th># SAP</th>
 						<th>Solicitante</th>
 						<th>Estado</th>
+						<th>Estado en Almacen</th>
 						<th>Acción</th>
 					</tr>
 				</thead>
@@ -47,7 +49,7 @@
 						while($row = $qry->fetch_assoc()):
 					?>
 						<tr>
-							<td class="text-center"><?php echo $i++; ?></td>
+							<td class="text-center"><?php echo $row['id']; ?></td>
 							<td class=""><?php echo date("M d,Y H:i",strtotime($row['date_created'])) ; ?></td>
 							<td class=""><?php echo $row['numero_solicitud'] ?></td>
 							<td class="text-center"><?php echo $row['SAPDocEntry'] ?></td>
@@ -62,11 +64,33 @@
 										case '2':
 											echo '<span class="badge badge-danger">Rechazado</span>';
 											break;
+										case '3':
+											echo '<b> Listo para aprobar </b>';
+											break;
 										default:
 											echo '<span class="badge badge-secondary">Pendiente</span>';
 											break;
 									}
 								?>
+							</td>
+							<td>
+								<?php
+									switch ($row['estado_almacen']) {
+										
+										case '1':
+											echo '<span class="badge badge-success">Entregado</span>';
+											break;
+										case '2':
+											echo '<span class="badge badge-danger">Rechazado</span>';
+											break;
+										case '3':
+											echo '<b> Listo para entregar </b>';
+											break;
+										default:
+											echo "";
+											break;
+									}
+									?>
 							</td>
 							<td align="center">
 								 <button type="button" class="btn btn-flat btn-default btn-sm dropdown-toggle dropdown-icon" data-toggle="dropdown">

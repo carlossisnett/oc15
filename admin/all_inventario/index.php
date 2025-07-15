@@ -7,7 +7,7 @@
 	<div class="card-header">
 		<h3 class="card-title">Salidas de inventario</h3>
 		<div class="card-tools">
-			<a href="?page=purchase_orders/manage_si" class="btn btn-flat btn-primary"><span class="fas fa-plus"></span>  Crear Nuevo</a>
+			<a href="?page=inventario/manage_si" class="btn btn-flat btn-primary"><span class="fas fa-plus"></span>  Crear Nuevo</a>
 		</div>
 	</div>
 	<div class="card-body">
@@ -19,6 +19,7 @@
 	$ids = array();
 	$rows_to_display = array();
 	$username = $_SESSION['userdata']['username'];
+	$user_id = $_SESSION['userdata']['id'];
 	
 	if ($result && $result->num_rows > 0) {
 		while ($row = $result->fetch_assoc()) {
@@ -44,15 +45,17 @@
 					<col width="10%">
 					<col width="10%">
 					<col width="10%">
+					<col width="10%">
 				</colgroup>
 				<thead>
 					<tr>
-						<th>#</th>
+						<th>ID referencia</th>
 						<th>Fecha Creación</th>
-						<th># Solicitud de Compra</th>
+						<th># Salida de Inventario</th>
 						<th># SAP</th>
 						<th>Solicitante</th>
 						<th>Estado</th>
+						<th>Estado en Almacen</th>
 						<th>Acción</th>
 					</tr>
 				</thead>
@@ -75,12 +78,12 @@
 						*/
 					?>
 					<tr>
-						<td class="text-center"><?php echo $i++; ?></td>
+						<td class="text-center"><?php echo $row['id']; ?></td>
 						<td><?php echo date("M d,Y H:i", strtotime($row['date_created'])); ?></td>
 						<td><?php echo $row['numero_solicitud']; ?></td>
 						<td class="text-center"><?php echo $row['SAPDocEntry']; ?></td>
 						<td><?php echo $row['username']; ?></td> <!-- Could replace with real name if needed -->
-						<td>
+						<td id="status_<?php echo $row['id']; ?>" class="status">
 							<?php
 							switch ($row['status']) {
 								case '1':
@@ -98,6 +101,29 @@
 							}
 							?>
 						</td>
+						<td>
+							
+						<?php
+							switch ($row['estado_almacen']) {
+								case '1':
+									echo '<span class="badge badge-success">Entregado</span>';
+									break;
+								case '2':
+									echo '<span class="badge badge-danger">Rechazado</span>';
+									break;
+								case '3':
+									echo '<b> Listo para entregar </b>';
+									break;
+								case '4':
+											echo '<b> Enviado a SAP </b>';
+											break;
+								default:
+									echo "";
+									break;
+								}
+							?>
+					
+					</td>
 						<td align="center">
 							<button type="button" class="btn btn-flat btn-default btn-sm dropdown-toggle dropdown-icon" data-toggle="dropdown">
 								Acción
@@ -108,6 +134,14 @@
 								<div class="dropdown-divider"></div>
 									 <?php if($_SESSION['userdata']['type'] == 1 || $_SESSION['userdata']['type'] == 3): ?>
 				                    <a class="dropdown-item" href="?page=inventario/manage_si&id=<?php echo $row['id']?>&edit=true"><span class="fa fa-edit text-primary"></span> Editar</a>
+									<?php endif ?>
+									<div class="dropdown-divider"></div>
+									<?php if($_SESSION['userdata']['type'] == 1): ?>
+				                    <a id="aprobar_<?php echo $row['id'] ?>" class="dropdown-item cambiar_estado_aprobar" href="#"><span class="fa fa-check text-success"></span> Aprobar</a>
+									<div class="dropdown-divider"></div>
+									<?php endif ?>
+									<?php if($_SESSION['userdata']['type'] == 1): ?>
+				                    <a id="rechazar_<?php echo $row['id'] ?>" class="dropdown-item cambiar_estado_aprobar" href="#"><span class="fa fa-ban text-danger"></span> Rechazar</a>
 									<?php endif ?>
 								
 							</div>
@@ -135,15 +169,17 @@
 						<col width="10%">
 						<col width="10%">
 						<col width="10%">
+						<col width="10%">
 				</colgroup>
 				<thead>
 					<tr class="">
-						<th>#</th>
+						<th>ID referencia</th>
 						<th>Fecha Creación</th>
 						<th># Salida de Inventario</th>
 						<th># SAP</th>
 						<th>Solicitante</th>
 						<th>Estado</th>
+						<th>Estado en Almacen</th>
 						<th>Acción</th>
 					</tr>
 				</thead>
@@ -179,7 +215,7 @@
 							*/
 					?>
 						<tr>
-							<td class="text-center"><?php echo $i++; ?></td>
+							<td class="text-center"><?php echo $row['id']; ?></td>
 							<td class=""><?php echo date("M d,Y H:i",strtotime($row['date_created'])) ; ?></td>
 							<td class=""><?php echo $row['numero_solicitud'] ?></td>
 							<td class="text-center"><?php echo $row['SAPDocEntry'] ?></td>
@@ -201,6 +237,27 @@
 											break;
 									}
 								?>
+							</td>
+							<td>
+								<?php
+									switch ($row['estado_almacen']) {
+										case '1':
+											echo '<span class="badge badge-success">Entregado</span>';
+											break;
+										case '2':
+											echo '<span class="badge badge-danger">Rechazado</span>';
+											break;
+										case '3':
+											echo '<b> Listo para entregar </b>';
+											break;
+										case '4':
+											echo '<b> Enviado a SAP </b>';
+											break;
+										default:
+											echo '';
+											break;
+										}
+									?>
 							</td>
 							<td align="center">
 								 <button type="button" class="btn btn-flat btn-default btn-sm dropdown-toggle dropdown-icon" data-toggle="dropdown">
@@ -228,61 +285,69 @@
 	</div>
 </div>
 <script>
-	$(document).ready(function(){
-		$('.delete_data').click(function(){
-			_conf("¿Estás seguro de eliminar esta orden de forma permanente?","delete_rent",[$(this).attr('data-id')])
-		})
-		$('.view_details').click(function(){
-			uni_modal("Reservaton Details","purchase_orders/view_details.php?id="+$(this).attr('data-id'),'mid-large')
-		})
-		$('.renew_data').click(function(){
-			_conf("Are you sure to renew this rent data?","renew_rent",[$(this).attr('data-id')]);
-		})
-		$('.table th,.table td').addClass('px-1 py-0 align-middle')
-		$('.table').dataTable();
-	})
-	function delete_rent($id){
-		start_loader();
-		$.ajax({
-			url:_base_url_+"classes/Master.php?f=delete_rent",
-			method:"POST",
-			data:{id: $id},
-			dataType:"json",
-			error:err=>{
-				console.log(err)
-				alert_toast("An error occured.",'error');
-				end_loader();
-			},
-			success:function(resp){
-				if(typeof resp== 'object' && resp.status == 'success'){
-					location.reload();
-				}else{
-					alert_toast("An error occured.",'error');
+$(document).ready(function(){
+	$('.cambiar_estado_aprobar').on('click',function(e){
+	e.preventDefault();
+	let id = $(this).attr('id');
+	let _this = $(this);
+	console.log(id);
+	let proceder = false;
+	let status = id.split('_')[0];
+	let real_id = id.split('_')[1];
+	let status_number = 0;
+	  if(status == "aprobar"){
+            proceder = window.confirm("¿Desea aprobar la salida de inventario?");
+			status_number = 1;
+        }
+        if(status == "rechazar"){
+            proceder = window.confirm("¿Desea rechazar la salida de inventario?");
+			status_number = 2;
+        }
+    if(proceder == true){
+		console.log("proceder = true");
+		  $.ajax({
+				url:_base_url_+"classes/Master.php?f=" + 'change_si_status',
+				data: {status: status_number, id: real_id, user_id: <?php echo $user_id ?>},
+                cache: false,
+                contentType: "application/x-www-form-urlencoded",
+                processData: true,
+                method: 'POST',
+                type: 'POST',
+                dataType: 'json',
+				error:err=>{
+					console.log(err)
+					alert_toast("Ocurrió un error",'error');
 					end_loader();
+				},
+				success:function(resp){
+					if(typeof resp =='object' && resp.status == 'success'){
+						alert_toast("Estado cambiado correctamente.",'success');
+						if(status == 'aprobar'){
+							$("#status_"+real_id).html('<span class="badge badge-success">Aprobado</span>')
+						} else{
+							$("#status_"+real_id).html('<span class="badge badge-danger">Rechazado</span>')
+						}
+						
+					}else if((resp.status == 'failed' || resp.status == 'po_failed') && !!resp.msg){
+                        var el = $('<div>')
+                            el.addClass("alert alert-danger err-msg").text(resp.msg)
+                            _this.prepend(el)
+                            el.show('slow')
+                            $("html, body").animate({ scrollTop: 0 }, "fast");
+                            end_loader()
+							if(resp.status == 'po_failed'){
+								$('[name="po_no"]').addClass('border-danger').focus()
+							}
+                    }else{
+						alert_toast("Ocurrió un error",'error');
+						end_loader();
+                        console.log(resp)
+					}
 				}
-			}
-		})
-	}
-	function renew_rent($id){
-		start_loader();
-		$.ajax({
-			url:_base_url_+"classes/Master.php?f=renew_rent",
-			method:"POST",
-			data:{id: $id},
-			dataType:"json",
-			error:err=>{
-				console.log(err)
-				alert_toast("An error occured.",'error');
-				end_loader();
-			},
-			success:function(resp){
-				if(typeof resp== 'object' && resp.status == 'success'){
-					location.reload();
-				}else{
-					alert_toast("An error occured.",'error');
-					end_loader();
-				}
-			}
-		})
-	}
+			})
+    }
+
+})
+
+})
 </script>

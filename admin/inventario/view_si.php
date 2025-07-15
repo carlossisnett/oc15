@@ -76,7 +76,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                 require_once __DIR__ . "/../view_all.php";
             $user_id = $_settings->userdata('id');
             $estado_aprobador = cambiar_estado_para_aprobador($id, $user_id, $conn, $status);
-            $estado_almacen = cambiar_estado_para_almacen($user_id, $conn, $status);
+            //$estado_almacen = cambiar_estado_para_almacen($user_id, $conn, $estado_almacen);
                 ?>
                 <div>
                     <p class="m-0"><?php echo $supplier['name'] ?></p>
@@ -92,7 +92,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                 <div class="col-3">
                     <p  class="m-0"><b># SAP:</b></p>
                     <?php
-                    if($SAPDocEntry == null){
+                    if($SAPDocEntry == null and $salida_de_mercancia != 1){
                         echo "<a href='' onclick='enviar_a_sap()'> Reenviar a SAP </a>";
                     } else {
                         echo "<p><b> $SAPDocEntry </b></p>";
@@ -100,6 +100,14 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                     
                     ?>
                 </div>
+                
+                    <?php
+                    if($salida_de_mercancia == 1 and $_settings->userdata('type') == 3){
+                        echo '<div class="col-3">';
+                        echo "<a href='' onclick='enviar_mercancia_a_sap()'>Enviar a SAP Salida de Mercancia</a>";
+                        echo '</div>';
+                    }
+                    ?>
                 <div class="col-3">
                     <p  class="m-0"><b>Fecha de Creación</b></p>
                     <p><b><?php echo date("Y-m-d",strtotime($date_created)) ?></b></p>
@@ -122,11 +130,45 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                 ?>
                 </div>
                 <?php echo $estado_aprobador; ?>
-                <?php echo $estado_almacen; ?>
+                <?php //echo $estado_almacen; ?>
             </div>
                
             </div>
         </div>
+
+         <?php
+
+         function describir_estado($status){
+    switch($status){
+        case 0:
+            return "Cambió el estado de la solicitud a <b>Pendiente</b>";
+            break;
+        case 1:
+            return "<b>Aprobó </b> la solicitud";
+            break;
+        case 2:
+            return "<b>Rechazó</b> la solicitud";
+            break;
+    }
+}
+                    
+                    $historial = $conn->query("SELECT u.name , a.estado, a.hora_creacion FROM aprobaciones_inventario a JOIN users u ON u.id = a.user_id where solicitud_inventario_id = '{$_GET['id']}'");
+                    if(gettype($historial) == "boolean"){
+                        echo "";
+                    } else {
+                        if ($historial && $historial->num_rows > 0) {
+                            echo "Historial de la solicitud de inventario <br>";
+                            echo "<ul>";
+                        
+                            while ($row = $historial->fetch_assoc()) {
+                                echo "<li>" . htmlspecialchars($row['name']) . " " . describir_estado($row['estado']) . " el " . date("Y-m-d H:i:s", strtotime($row['hora_creacion'])) . "</li>";
+                            }
+                        
+                            echo "</ul>";
+                    echo "</ul>";
+                    }
+                }
+                    ?>
         <div class="row">
             <div class="col-md-12">
                 <table class="table table-striped table-bordered" id="item-list">
@@ -186,10 +228,16 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                 </table>
                 <div class="row">
                     <div class="col-6">
-                        <label for="notes" class="control-label">Notas</label>
+                        <label for="notes" class="control-label">Notas del Solicitante</label>
                         <p><?php echo isset($notes) ? $notes : '' ?></p>
                     </div>
                     
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <label for="notes_almacen" class="control-label">Notas de Almacen</label>
+                        <p><?php echo isset($notes_almacen) ? $notes_almacen : '' ?></p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -217,7 +265,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                         alert_toast("",'success');
                         end_loader();
                         setTimeout(() => {
-                            location.href = "./?page=purchase_orders/view_si&id="+<?php echo $_GET['id'] ?>;
+                            location.href = "./?page=inventario/view_si&id="+<?php echo $_GET['id'] ?>;
                         }, 2000);
 					}else if((resp.status == 'failed' || resp.status == 'po_failed') && !!resp.msg){
                         var el = $('<div>')
@@ -238,19 +286,60 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 			})
 }
 
-     $('select').on('change', function(e){
+    function enviar_mercancia_a_sap(){
+    $.ajax({
+				url:_base_url_+"classes/Master.php?f=" + 'enviar_salida_de_mercancia_a_sap',
+				data: {solicitud_id: <?php echo $_GET['id'] ?>, user_id: <?php echo $user_id ?>},
+                cache: false,
+                contentType: "application/x-www-form-urlencoded",
+                processData: true,
+                method: 'POST',
+                type: 'POST',
+                dataType: 'json',
+				error:err=>{
+					console.log(err)
+					alert_toast("Ocurrió un error",'error');
+					end_loader();
+				},
+				success:function(resp){
+					if(typeof resp =='object' && resp.status == 'success'){
+                        alert_toast("",'success');
+                        end_loader();
+                        setTimeout(() => {
+                            location.href = "./?page=inventario/view_si&id="+<?php echo $_GET['id'] ?>;
+                        }, 2000);
+					}else if((resp.status == 'failed' || resp.status == 'po_failed') && !!resp.msg){
+                        var el = $('<div>')
+                            el.addClass("alert alert-danger err-msg").text(resp.msg)
+                            _this.prepend(el)
+                            el.show('slow')
+                            $("html, body").animate({ scrollTop: 0 }, "fast");
+                            end_loader()
+							if(resp.status == 'po_failed'){
+								$('[name="po_no"]').addClass('border-danger').focus()
+							}
+                    }else{
+						alert_toast("Ocurrió un error",'error');
+						end_loader();
+                        console.log(resp)
+					}
+				}
+			})
+}
+
+ $('select').on('change', function(e){
         let proceder = false;
         if(this.value == 0){
-            proceder = window.confirm("¿Desea cambiar el estado de la solicitud de inventario a Pendiente?");
+            proceder = window.confirm("¿Desea cambiar el estado de la salida de inventario a Pendiente?");
         }
         if(this.value == 1){
-            proceder = window.confirm("¿Desea aprobar la solicitud de inventario?");
+            proceder = window.confirm("¿Desea aprobar la salida de inventario?");
         }
         if(this.value == 2){
-            proceder = window.confirm("¿Desea rechazar la solicitud de inventario?");
+            proceder = window.confirm("¿Desea rechazar la salida de inventario?");
         }
         if(this.value == 3){
-            proceder = window.confirm("¿Desea cambiar el estado de la solicitud de inventario a 'Lista para aprobar'?");
+            proceder = window.confirm("¿Desea cambiar el estado de la salida de inventario a 'Lista para entregar'?");
         }
     if(proceder == true){
         $.ajax({
@@ -289,6 +378,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 			})
     }
 });
+
 
 
 	$(function(){

@@ -77,23 +77,34 @@ function cambiar_estado_para_almacen($user_id, $conn, $status){
         if($user_type == 3){
 
             $option_0 = '<option value="0">Pendiente</option>';
-            $option_3 = '<option value="3">Listo para aprobar </option>';
+            $option_1 = "<option value='1'>Entregado </option>";
+            $option_2 = '<option value="2">Rechazado</option>';
+            $option_3 = '<option value="3">Listo para Entregar </option>';
 
             switch($status){
                   case 0:
                        $option_0 = '<option value="0" selected>Pendiente</option>';
                        break;
+                  case 1:
+                       $option_1 = "<option value='1' selected>Entregado </option>";
+                       break;
+                  case 2:
+                       $option_2 = '<option value="2" selected>Rechazado</option>';
+                       break;
+                
                   case 3:
-                       $option_3 = '<option value="3" selected>Listo para aprobar </option>';
+                       $option_3 = '<option value="3" selected>Listo para Entregar </option>';
                        break;
             }
             
                    return "<div class=\"col-3\">
-                         <p class=\"mb-2\"><b>Cambiar estado</b></p>
+                         <p class=\"mb-2\"><b>Cambiar estado de Almacen</b></p>
                          <form id=\"change_po_status\" method=\"post\">
                          <div class=\"d-flex gap-2\">
                          <select class=\"form-select\" aria-label=\"Default select example\">
                              $option_0
+                             $option_1
+                             $option_2
                              $option_3
                          </select>
                          </div>

@@ -46,9 +46,22 @@ class SAPServiceLayer
         return $this->sendRequest('POST', $createUrl, json_encode($purchaseRequestData));
     }
 
+    public function getPurchaseRequest($purchaseRequestData){
+        $base_url = $this->serviceLayerUrl;
+        $requests_url = "/PurchaseRequests?\$filter=";
+        $query = urlencode("DocEntry eq 26631");
+        $url = $base_url . $requests_url . $query;
+        return $this->sendRequest('GET', $url, null);
+    }
+
     public function createPurchaseOrder($purchaseOrderData){
         $createUrl = "{$this->serviceLayerUrl}/PurchaseOrders";
         return $this->sendRequest('POST', $createUrl, json_encode($purchaseOrderData));
+    }
+
+    public function create_inventory_exit($Data){
+        $createUrl = "{$this->serviceLayerUrl}/InventoryGenExits";
+        return $this->sendRequest('POST', $createUrl, json_encode($Data));
     }
 
     // Función genérica para enviar solicitudes al Service Layer
