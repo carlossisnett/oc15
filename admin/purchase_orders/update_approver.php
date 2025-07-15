@@ -84,10 +84,76 @@ ORDER BY
 </ul>
     
 
+
+<form id="approver-vacation-frm" action="" method="post">
+<h4> Seleccione el usuario que aprobará las solicitudes del gerente que se va de vacaciones </h4>
+<select name="user_id" class="custom-select custom-select-sm rounded-0 select2" required>
+								<option value="" selected disabled>-- Escoge el usuario que va a aprobar --</option >
+                                <?php
+                  $marcas_query = $conn->query("SELECT id, concat(firstname, ' ', lastname) as `name` FROM users order by `name`");
+                  while($row_2 = $marcas_query->fetch_assoc()):
+                  ?>
+                <option value="<?php  echo $row_2['id']  ?>"> <?php  echo($row_2['name']);?> </option>
+                <?php  endwhile;  ?>
+                </select>
+									</select>
+
+
+<select name="gerente_id" class="custom-select custom-select-sm rounded-0 select2" required>
+                <option value="" selected disabled>-- Escoge el gerente que se va de vacaciones --</option >
+                  <?php
+                  $marcas_query = $conn->query("SELECT id, concat(firstname, ' ', lastname) as `name` FROM users order by `name`");
+                  while($row_2 = $marcas_query->fetch_assoc()):
+                  ?>
+                <option value="<?php  echo $row_2['id']  ?>"> <?php  echo($row_2['name']);?> </option>
+                <?php  endwhile;  ?>
+                </select>
+<button type="submit" class="btn btn-danger btn-block" style="font-size: 16px;">Enviar</button>
+
+</form>
+
 </body>
 
 <script>
-$('#approver-frm').submit(function(e){
+$('#approver-vacation-frm').submit(function(e){
+    e.preventDefault()
+    $.ajax({
+				url:_base_url_+"classes/Master.php?f=update_approver_vacation",
+				data: new FormData($(this)[0]),
+                cache: false,
+                contentType: false,
+                processData: false,
+                method: 'POST',
+                type: 'POST',
+                dataType: 'json',
+				error:err=>{
+					console.log(err)
+					alert_toast("Ocurrió un error",'error');
+			
+				},
+				success:function(resp){
+					if(typeof resp =='object' && resp.status == 'success'){
+						alert_toast("Aprobador actualizado correctamente.",'success');
+					}else if((resp.status == 'failed' || resp.status == 'po_failed') && !!resp.msg){
+                        var el = $('<div>')
+                            el.addClass("alert alert-danger err-msg").text(resp.msg)
+                            _this.prepend(el)
+                            el.show('slow')
+                            $("html, body").animate({ scrollTop: 0 }, "fast");
+                            end_loader()
+							if(resp.status == 'po_failed'){
+								$('[name="po_no"]').addClass('border-danger').focus()
+							}
+                    }else{
+						alert_toast("Ocurrió un error",'error');
+					
+                        console.log(resp)
+					}
+				}
+			})
+  })
+
+  $('#approver-frm').submit(function(e){
     e.preventDefault()
     $.ajax({
 				url:_base_url_+"classes/Master.php?f=update_approver",
