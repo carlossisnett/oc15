@@ -976,7 +976,7 @@ Class Master extends DBConnection {
 
 		$aprobadores = array();
 		foreach($departamentos as $departamento){
-			$query_2 = $this->conn->query("SELECT user_id FROM aprobadores where departamento = '{$departamento}'");
+			$query_2 = $this->conn->query("SELECT user_id FROM aprobadores where departamento = '{$departamento}' and exclusivo_inventario <> 1");
 			while ($row = $query_2->fetch_assoc()) {
 				$aprobadores[] = $row['user_id'];
 			}
@@ -1021,7 +1021,7 @@ Class Master extends DBConnection {
 
 		$aprobadores = array();
 		foreach($departamentos as $departamento){
-			$query_2 = $this->conn->query("SELECT user_id FROM aprobadores where departamento = '{$departamento}'");
+			$query_2 = $this->conn->query("SELECT user_id FROM aprobadores where departamento = '{$departamento}' and exclusivo_compras <> 1");
 			while ($row = $query_2->fetch_assoc()) {
 				$aprobadores[] = $row['user_id'];
 			}

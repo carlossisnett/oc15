@@ -13,7 +13,7 @@
 	<div class="card-body">
 
 	<?php
-	require_once "view_functions.php";
+	require_once "./views/view_functions.php";
 	$query = "SELECT * FROM `po_list` WHERE status = 3";
 	$result = $conn->query($query);
 	$ids = array();
@@ -23,7 +23,7 @@
 	
 	if ($result && $result->num_rows > 0) {
 		while ($row = $result->fetch_assoc()) {
-			if (puede_aprobar($_SESSION['userdata']['id'], $row['id'], $conn)) {
+			if (puede_aprobar_compras($_SESSION['userdata']['id'], $row['id'], $conn)) {
 				$ids[] = $row['id'];
 				$rows_to_display[] = $row; // save full row for table later
 			}

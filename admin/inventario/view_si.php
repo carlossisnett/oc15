@@ -73,9 +73,9 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                 $sup_qry = $conn->query("SELECT * FROM users where username = '{$username}'");
                 //$sup_qry = $conn->query("SELECT * FROM supplier_list where id = '{$supplier_id}'");
                 $supplier = $sup_qry->fetch_array();
-                require_once __DIR__ . "/../view_all.php";
+                require_once __DIR__ . "/../views/view_functions.php";
             $user_id = $_settings->userdata('id');
-            $estado_aprobador = cambiar_estado_para_aprobador($id, $user_id, $conn, $status);
+            $estado_aprobador = cambiar_estado_para_aprobador_inventario($id, $user_id, $conn, $status);
             //$estado_almacen = cambiar_estado_para_almacen($user_id, $conn, $estado_almacen);
                 ?>
                 <div>
@@ -137,20 +137,6 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
         </div>
 
          <?php
-
-         function describir_estado($status){
-    switch($status){
-        case 0:
-            return "Cambió el estado de la solicitud a <b>Pendiente</b>";
-            break;
-        case 1:
-            return "<b>Aprobó </b> la solicitud";
-            break;
-        case 2:
-            return "<b>Rechazó</b> la solicitud";
-            break;
-    }
-}
                     
                     $historial = $conn->query("SELECT u.name , a.estado, a.hora_creacion FROM aprobaciones_inventario a JOIN users u ON u.id = a.user_id where solicitud_inventario_id = '{$_GET['id']}'");
                     if(gettype($historial) == "boolean"){

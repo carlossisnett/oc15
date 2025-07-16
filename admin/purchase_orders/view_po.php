@@ -140,9 +140,9 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                
             </div>
             <?php 
-            require_once "view_functions.php";
+            require_once __DIR__ . '/../views/view_functions.php';
             $user_id = $_settings->userdata('id');
-            cambiar_estado_para_aprobador($id, $user_id, $conn, $status);
+            cambiar_estado_para_aprobador_compras($id, $user_id, $conn, $status);
             cambiar_estado_para_compras($id, $user_id, $conn, $status);
             ?>
             </div>

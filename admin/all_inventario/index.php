@@ -13,7 +13,7 @@
 	<div class="card-body">
 
 	<?php
-	require_once "view_functions.php";
+	require_once "./views/view_functions.php";
 	$query = "SELECT * FROM `solicitud_de_inventario` WHERE status = 3";
 	$result = $conn->query($query);
 	$ids = array();
@@ -23,7 +23,7 @@
 	
 	if ($result && $result->num_rows > 0) {
 		while ($row = $result->fetch_assoc()) {
-			if (puede_aprobar($_SESSION['userdata']['id'], $row['id'], $conn)) {
+			if (puede_aprobar_inventario($_SESSION['userdata']['id'], $row['id'], $conn)) {
 				$ids[] = $row['id'];
 				$rows_to_display[] = $row; // save full row for table later
 			}
@@ -136,11 +136,11 @@
 				                    <a class="dropdown-item" href="?page=inventario/manage_si&id=<?php echo $row['id']?>&edit=true"><span class="fa fa-edit text-primary"></span> Editar</a>
 									<?php endif ?>
 									<div class="dropdown-divider"></div>
-									<?php if($_SESSION['userdata']['type'] == 1): ?>
+									<?php if($_SESSION['userdata']['type'] == 1 || $_SESSION['userdata']['type'] == 3): ?>
 				                    <a id="aprobar_<?php echo $row['id'] ?>" class="dropdown-item cambiar_estado_aprobar" href="#"><span class="fa fa-check text-success"></span> Aprobar</a>
 									<div class="dropdown-divider"></div>
 									<?php endif ?>
-									<?php if($_SESSION['userdata']['type'] == 1): ?>
+									<?php if($_SESSION['userdata']['type'] == 1 || $_SESSION['userdata']['type'] == 3): ?>
 				                    <a id="rechazar_<?php echo $row['id'] ?>" class="dropdown-item cambiar_estado_aprobar" href="#"><span class="fa fa-ban text-danger"></span> Rechazar</a>
 									<?php endif ?>
 								
@@ -156,9 +156,24 @@
 
 	<br>
 	<br>
-	<h4> Todas las Salidas de Inventario</h4>
+
+<button id="boton_pendientes" type="button" class="btn btn-success">Pendientes</button>
+<button id="boton_historial" type="button" class="btn btn-outline-secondary">Historial</button>
+
+<?php
+// Estas son las solicitudes que almacen todavia tiene que atender:
+render_solicitud_inventario_table($conn);
+?>
+
+<br>
+<br>
+
+	
+	<?php
+	render_historial_inventario($conn);
+	?>
 	<br>
-		<div class="container-fluid">
+		<div class="container-fluid" hidden>
         <div class="container-fluid">
 			<table class="table table-hover table-striped">
 				<colgroup>
@@ -215,7 +230,15 @@
 							*/
 					?>
 						<tr>
-							<td class="text-center"><?php echo $row['id']; ?></td>
+							<?php
+							$id_solicitud = $row['id'];
+							if ($row['salida_de_mercancia']) {
+								echo '<td class="text-center"><b>' . $id_solicitud . '</b></td>';
+							} else {
+								echo '<td class="text-center">' . $id_solicitud . '</td>';
+							}
+							?>
+							
 							<td class=""><?php echo date("M d,Y H:i",strtotime($row['date_created'])) ; ?></td>
 							<td class=""><?php echo $row['numero_solicitud'] ?></td>
 							<td class="text-center"><?php echo $row['SAPDocEntry'] ?></td>
@@ -281,10 +304,38 @@
 				</tbody>
 			</table>
 		</div>
+
 		</div>
 	</div>
 </div>
 <script>
+document.addEventListener("DOMContentLoaded", function() {
+    const btnPendientes = document.getElementById("boton_pendientes");
+    const btnHistorial = document.getElementById("boton_historial");
+    const divPendientes = document.getElementById("solicitudes_pendientes");
+    const divHistorial = document.getElementById("historial_inventario");
+	divHistorial.style.display = "none";
+
+    btnPendientes.addEventListener("click", function() {
+        divPendientes.style.display = "block";
+        divHistorial.style.display = "none";
+        btnPendientes.classList.remove("btn-outline-secondary");
+        btnPendientes.classList.add("btn-success");
+        btnHistorial.classList.remove("btn-success");
+        btnHistorial.classList.add("btn-outline-secondary");
+    });
+
+    btnHistorial.addEventListener("click", function() {
+        divPendientes.style.display = "none";
+        divHistorial.style.display = "block";
+        btnHistorial.classList.remove("btn-outline-secondary");
+        btnHistorial.classList.add("btn-success");
+        btnPendientes.classList.remove("btn-success");
+        btnPendientes.classList.add("btn-outline-secondary");
+    });
+});
+
+
 $(document).ready(function(){
 	$('.cambiar_estado_aprobar').on('click',function(e){
 	e.preventDefault();

@@ -52,6 +52,10 @@ GLOBAL $conn;
                 <option value="<?php  echo $row_2['id']  ?>"> <?php  echo($row_2['name']);?> </option>
                 <?php  endwhile;  ?>
                 </select>
+                <label> Aprobará ordenes de compra solamente </label>
+                <input type="checkbox" name="exclusivo_compras" /> <br>
+                <label> Aprobará salidas de inventario solamente </label>
+                <input type="checkbox" name="exclusivo_inventario" />
 <button type="submit" class="btn btn-danger btn-block" style="font-size: 16px;">Enviar</button>
 
 </form>
