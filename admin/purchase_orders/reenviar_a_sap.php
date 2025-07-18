@@ -51,11 +51,11 @@ if ($conn->connect_error) {
         
         try {
             $ResultRequestSAP = sendPurchaseRequest($poId);
-					$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
-					$pos0Msj = $ArrayResultRequestSAP[0];
-					$pos1DocEntry = $ArrayResultRequestSAP[1];
-					$pos2DocNum = $ArrayResultRequestSAP[2];
-                    $conn->query("update `po_list` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$poId}'");
+				$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
+				$pos0Msj = $ArrayResultRequestSAP[0];
+				$pos1DocEntry = $ArrayResultRequestSAP[1];
+				$pos2DocNum = $ArrayResultRequestSAP[2];
+                $conn->query("update `po_list` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$poId}'");
             enviar_email(["desarrollo@prensa.com"], "Orden $poId reenviada a SAP", "Orden $poId reenviada a SAP", "Desarrollo Prensa");
             actualizar_reenvios_po($poId, $conn);
         }
@@ -67,7 +67,7 @@ if ($conn->connect_error) {
                 
     }
 
-    $sql = "SELECT si.*, u.username FROM solicitud_de_inventario si join users u on si.username = u.username WHERE si.SAPDocEntry IS NULL and u.username <> 'carlos.sisnett' AND date_created >= '2025-06-10 00:00:00';";
+    $sql = "SELECT si.*, u.username FROM solicitud_de_inventario si join users u on si.username = u.username WHERE si.SAPDocEntry IS NULL and u.username <> 'carlos.sisnett' AND date_created >= '2025-06-10 00:00:00' and salida_de_mercancia IS NULL;";
 
      $result = $conn->query($sql);
 
@@ -82,13 +82,12 @@ if ($conn->connect_error) {
         //$codSAP = $row['codSAP'];
        // $firstname = $row['firstname'];
         
-        echo($id);
 
         if($reenvios > 3){
             continue;
         }
 
-        
+        echo($id);
         try {
             $ResultRequestSAP = enviar_solicitud_inventario($id);
 				$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
