@@ -598,6 +598,8 @@ Class Master extends DBConnection {
 			$resp['id'] = $id;
 			$resp['po_no'] = $po_no;
 
+			//echo 'post_max_size: ' . ini_get('post_max_size') . "upload_max_filesize:" . ini_get('upload_max_filesize');
+
 			$this->guardar_adjunto($po_no);
 
 			if($this->es_pedido($id) == true){
@@ -714,14 +716,17 @@ Class Master extends DBConnection {
 		// 8 = usuario de Nelvir Mirabal
 		// 26 = usuario de Basilio Fernandez
 		// 115 = usuario de Soodabeh Salence
+		// 17 = usuario de Epifania Aguilar
 
 		$departamentos_de_solicitud = $this->departamentos_de_salida_de_inventario($si_id);
 
-		$departamentos_que_usuario = array_column($this->departamentos_que_usuario_puede_aprobar(115, "aprobacion"), "departamento");
+		//$departamentos_que_usuario = array_column($this->departamentos_que_usuario_puede_aprobar(115, "aprobacion"), "departamento");
 		$departamentos_usuario_2 = array_column($this->departamentos_que_usuario_puede_aprobar(8, "aprobacion"), "departamento");
 		$departamentos_usuario_3 = array_column($this->departamentos_que_usuario_puede_aprobar(47, "aprobacion"), "departamento");
+		$departamentos_usuario_4 = array_column($this->departamentos_que_usuario_puede_aprobar(17, "aprobacion"), "departamento");
+		$departamentos_usuario_5 = array_column($this->departamentos_que_usuario_puede_aprobar(26, "aprobacion"), "departamento");
 
-		$todos_los_departamentos_gerentes = array_merge($departamentos_que_usuario, $departamentos_usuario_2, $departamentos_usuario_3);
+		$todos_los_departamentos_gerentes = array_merge($departamentos_usuario_2, $departamentos_usuario_3, $departamentos_usuario_4, $departamentos_usuario_5);
 
 		foreach ($departamentos_de_solicitud as $code) {
 			if (in_array($code, $todos_los_departamentos_gerentes)) {
