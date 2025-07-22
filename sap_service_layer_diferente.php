@@ -50,6 +50,11 @@ class SAPServiceLayer{
         return $this->sendRequest('POST', $createUrl, json_encode($purchaseOrderData));
     }
 
+    public function item_location($item_data){
+        $createUrl = "{$this->serviceLayerUrl}/PurchaseOrders";
+        return $this->sendRequest('POST', $createUrl, json_encode($item_data));
+    }
+
     // Función genérica para enviar solicitudes al Service Layer
     private function sendRequest($method, $url, $data = null)
     {
@@ -120,6 +125,33 @@ class SAPServiceLayer{
      } else{
         return $response;
      }
+    }
+
+    public function get_my_item_location(){
+    // Base URL for the SAP Service Layer (replace with your actual URL)
+    $base_url = $this->serviceLayerUrl;
+    $requests_url = "/BinLocations?\$filter=";
+    #$requests_url = "/PurchaseRequests/\$metadata";
+
+    // Calculate the date 2 weeks ago
+    //$twoWeeksAgo = date("Y-m-d", strtotime("-2 days"));
+
+    // Build the query to filter open Purchase Requests older than 2 weeks
+    $query = urlencode("ItemCode eq 'ALP0000002' and WhsCode eq '02'");
+    echo "Query: " . $query . "\n";
+    
+
+    // Full URL with query
+    $url = $base_url . $requests_url . $query;
+
+    //echo "Request url: " . $url . "\n";
+
+    // Send the GET request
+    $response = $this->sendRequest("POST", $url);
+
+    var_dump($response);
+    
+
     }
 
     public function get_close_purchase_requests(){
@@ -193,7 +225,7 @@ class SAPServiceLayer{
         $i = 0;
 
         
-        while($i < 26){
+        while($i < 3){
         
 
         $url = $base_url . "/" . $requests_url;
@@ -401,6 +433,7 @@ class SAPServiceLayer{
                 $notes = $row['notes'];
                 $taxPercentage = $row['tax_percentage'];
                 $discountPercentage = $row['discount_percentage'];
+                $owner_code = $row['codSAP'];
                 
                 // Construir la solicitud de compra
                 $purchaseRequest = [
@@ -411,8 +444,12 @@ class SAPServiceLayer{
                     'DocDueDate' => $dateCreatedYMD,
                     'TaxDate' => $dateCreatedYMD,
                     'ReqType' => 171,
-                    'Requester' => $supplierCodSAP,
-                    'Comments' => $poNo . " " . $notes,
+                    'Requester' => 1888,
+                    'Comments' => $poNo . " " . $notes . "5ta prueba",
+                    'DocumentsOwner' => 1888,
+                    'OwnerCode' => 1888,
+                    'SalesPersonCode' => 26,
+                    'SlpCode' => 26,
                     'DocumentLines' => []
                 ];
         
