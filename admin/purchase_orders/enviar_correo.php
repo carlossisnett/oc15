@@ -61,6 +61,51 @@
     
     }
 
+    function enviar_email_oc15($to, $title, $body) {
+    
+        #date_default_timezone_set('America/Panama');
+        #$todayDate = date("d-M-y");
+    
+        //echo $to;
+
+        try {
+            # Correos a quien se enviará
+            #$to = array('desarrollo@prensa.com');
+    
+            $mail = new PHPMailer(true);
+            $mail->isSMTP();
+            //$mail->SMTPDebug = SMTP::DEBUG_SERVER;
+            //$mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            $mail->SMTPOptions = array(
+            'ssl' => array(
+            'verify_peer' => false,
+            'verify_peer_name' => false,
+            'allow_self_signed' => true
+            )
+            );
+    
+            $mail->Host = 'simon.prensa.com';
+            $mail->Port = 25;
+            $mail->SMTPAuth = false;
+            $mail->setFrom('noreply@prensa.com', 'Sistema OC15');
+    
+            $mail->isHTML(true);
+            $mail->CharSet = 'UTF-8';
+            $mail->Subject = $title;
+            $mail->Body = $body;
+    
+            foreach ($to as $email) {
+                $mail->addAddress($email);  
+            }
+        
+            $mail->send();
+            
+        } catch (Exception $e) {
+            echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
+        }
+    
+    }
+
 function enviar_email2($id, $numero_sap) {
 
         /*if (!is_null($numero_sap) && $numero_sap > 0) 
@@ -335,7 +380,7 @@ function detalles_orden_de_compra($id, $conn){
 function detalles_salida_de_inventario($id, $conn){
 
     // 2. Consultar la tabla order_items
-    $stmt_items = $conn->prepare("SELECT o.*,i.name, i.description, i.codSAP,concat(i.codSAP,' ',i.description) as nombre_item, concat(ma.codigo_ccosto,' ',ma.nombre_ccosto) as nombre_marca,concat(de.codigo_ccosto,' ',de.nombre_ccosto) as nombre_departamento
+    $stmt_items = $conn->prepare("SELECT o.*,i.name, i.ubicacion_almacen, i.description, i.codSAP,concat(i.codSAP,' ',i.description) as nombre_item, concat(ma.codigo_ccosto,' ',ma.nombre_ccosto) as nombre_marca,concat(de.codigo_ccosto,' ',de.nombre_ccosto) as nombre_departamento
     FROM `inventory_items` o 
     inner join item_list i on o.item_id = i.id 
     inner join centro_costo ma on o.codigo_marca = ma.codigo_ccosto
@@ -356,6 +401,7 @@ function detalles_salida_de_inventario($id, $conn){
             <tr>
                 <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Cantidad</th>
                 <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Artículo</th>
+                <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Ubicación</th>
                 <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Marca</th>
                 <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Departamento</th>
             </tr>
@@ -365,6 +411,7 @@ function detalles_salida_de_inventario($id, $conn){
     while ($item = $result_items->fetch_assoc()) {
         $quantity = htmlspecialchars($item['quantity']);
         $item_id = htmlspecialchars($item['nombre_item']);
+        $ubicacion_almacen = htmlspecialchars($item['ubicacion_almacen']);
         $codigo_marca = htmlspecialchars($item['nombre_marca']);
         $codigo_departamento = htmlspecialchars($item['nombre_departamento']);
 
@@ -375,6 +422,7 @@ function detalles_salida_de_inventario($id, $conn){
             <tr>
                 <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$quantity</td>
                 <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$item_id</td>
+                <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$ubicacion_almacen</td>
                 <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$codigo_marca</td>
                 <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$codigo_departamento</td>
             </tr>";
@@ -681,8 +729,9 @@ function enviar_email_salida_de_inventario_aprobada($id){
                 }
                 td:nth-of-type(1):before { content: 'Cantidad'; }
                 td:nth-of-type(2):before { content: 'Artículo'; }
-                td:nth-of-type(3):before { content: 'Marca'; }
-                td:nth-of-type(4):before { content: 'Departamento'; }
+                td:nth-of-type(3):before { content: 'Ubicación'; }
+                td:nth-of-type(4):before { content: 'Marca'; }
+                td:nth-of-type(5):before { content: 'Departamento'; }
             }
         </style>
     </head>
@@ -969,13 +1018,14 @@ function enviar_email_solicitud_inventario($id, $numero_sap){
         }
 
         // 3. Construir la tabla HTML para order_items
-        // <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Ubicación</th>
+        // 
         $items_table = '
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr>
                     <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Cantidad</th>
                     <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Artículo</th>
+                    <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Ubicación</th>
                     <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Marca</th>
                     <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Departamento</th>
                 </tr>
@@ -985,19 +1035,20 @@ function enviar_email_solicitud_inventario($id, $numero_sap){
         while ($item = $result_items->fetch_assoc()) {
             $quantity = htmlspecialchars($item['quantity']);
             $item_name = htmlspecialchars($item['nombre_item']);
-            //$ubicacion_almacen = htmlspecialchars($item['ubicacion_almacen']);
+            $ubicacion_almacen = htmlspecialchars($item['ubicacion_almacen']);
             $stock_actual = htmlspecialchars($item['stock_actual']);
             $codigo_marca = htmlspecialchars($item['nombre_marca']);
             $codigo_departamento = htmlspecialchars($item['nombre_departamento']);
     
             //echo 'codigo_marca ' . $codigo_marca;
             //echo 'item_name ' . $item_name;
-            //<td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$ubicacion_almacen</td>
+            //
 
             $items_table .= "
                 <tr>
                     <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$quantity</td>
                     <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$item_name</td>
+                    <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$ubicacion_almacen</td>
                     <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$codigo_marca</td>
                     <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$codigo_departamento</td>
                 </tr>";
@@ -1042,8 +1093,9 @@ function enviar_email_solicitud_inventario($id, $numero_sap){
                     }
                     td:nth-of-type(1):before { content: 'Cantidad'; }
                     td:nth-of-type(2):before { content: 'Artículo'; }
-                    td:nth-of-type(3):before { content: 'Marca'; }
-                    td:nth-of-type(4):before { content: 'Departamento'; }
+                    td:nth-of-type(3):before { content: 'Ubicación'; }
+                    td:nth-of-type(4):before { content: 'Marca'; }
+                    td:nth-of-type(5):before { content: 'Departamento'; }
                 }
             </style>
         </head>
@@ -1199,6 +1251,7 @@ function enviar_email_salida_de_mercancia($id){
                 <tr>
                     <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Cantidad</th>
                     <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Artículo</th>
+                    <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Ubicación</th>
                     <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Marca</th>
                     <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Departamento</th>
                 </tr>
@@ -1208,19 +1261,20 @@ function enviar_email_salida_de_mercancia($id){
         while ($item = $result_items->fetch_assoc()) {
             $quantity = htmlspecialchars($item['quantity']);
             $item_name = htmlspecialchars($item['nombre_item']);
-            //$ubicacion_almacen = htmlspecialchars($item['ubicacion_almacen']);
+            $ubicacion_almacen = htmlspecialchars($item['ubicacion_almacen']);
             $stock_actual = htmlspecialchars($item['stock_actual']);
             $codigo_marca = htmlspecialchars($item['nombre_marca']);
             $codigo_departamento = htmlspecialchars($item['nombre_departamento']);
     
             //echo 'codigo_marca ' . $codigo_marca;
             //echo 'item_name ' . $item_name;
-            //<td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$ubicacion_almacen</td>
+            //
 
             $items_table .= "
                 <tr>
                     <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$quantity</td>
                     <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$item_name</td>
+                    <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$ubicacion_almacen</td>
                     <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$codigo_marca</td>
                     <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$codigo_departamento</td>
                 </tr>";
@@ -1265,8 +1319,9 @@ function enviar_email_salida_de_mercancia($id){
                     }
                     td:nth-of-type(1):before { content: 'Cantidad'; }
                     td:nth-of-type(2):before { content: 'Artículo'; }
-                    td:nth-of-type(3):before { content: 'Marca'; }
-                    td:nth-of-type(4):before { content: 'Departamento'; }
+                    td:nth-of-type(3):before { content: 'Ubicación'; }
+                    td:nth-of-type(4):before { content: 'Marca'; }
+                    td:nth-of-type(5):before { content: 'Departamento'; }
                 }
             </style>
         </head>
@@ -1453,6 +1508,7 @@ function enviar_email_salida_de_mercancia_actualizacion($id, $usuario_actualizad
                 <tr>
                     <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Cantidad</th>
                     <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Artículo</th>
+                    <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Ubicación</th>
                     <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Marca</th>
                     <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Departamento</th>
                 </tr>
@@ -1462,19 +1518,20 @@ function enviar_email_salida_de_mercancia_actualizacion($id, $usuario_actualizad
         while ($item = $result_items->fetch_assoc()) {
             $quantity = htmlspecialchars($item['quantity']);
             $item_name = htmlspecialchars($item['nombre_item']);
-            //$ubicacion_almacen = htmlspecialchars($item['ubicacion_almacen']);
+            $ubicacion_almacen = htmlspecialchars($item['ubicacion_almacen']);
             $stock_actual = htmlspecialchars($item['stock_actual']);
             $codigo_marca = htmlspecialchars($item['nombre_marca']);
             $codigo_departamento = htmlspecialchars($item['nombre_departamento']);
     
             //echo 'codigo_marca ' . $codigo_marca;
             //echo 'item_name ' . $item_name;
-            //<td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$ubicacion_almacen</td>
+            //
 
             $items_table .= "
                 <tr>
                     <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$quantity</td>
                     <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$item_name</td>
+                    <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$ubicacion_almacen</td>
                     <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$codigo_marca</td>
                     <td style=\"border: 1px solid #dddddd; text-align: left; padding: 8px;\">$codigo_departamento</td>
                 </tr>";
@@ -1519,8 +1576,9 @@ function enviar_email_salida_de_mercancia_actualizacion($id, $usuario_actualizad
                     }
                     td:nth-of-type(1):before { content: 'Cantidad'; }
                     td:nth-of-type(2):before { content: 'Artículo'; }
-                    td:nth-of-type(3):before { content: 'Marca'; }
-                    td:nth-of-type(4):before { content: 'Departamento'; }
+                    td:nth-of-type(3):before { content: 'Ubicación'; }
+                    td:nth-of-type(4):before { content: 'Marca'; }
+                    td:nth-of-type(5):before { content: 'Departamento'; }
                 }
             </style>
         </head>
