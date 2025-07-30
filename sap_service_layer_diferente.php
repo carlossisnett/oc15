@@ -218,14 +218,14 @@ class SAPServiceLayer{
 
     public function get_items(){
         $base_url = $this->serviceLayerUrl;
-        $requests_url = "Items?\$select=ItemCode,ItemName,InventoryItem,ItemWarehouseInfoCollection";
+        $requests_url = "Items";
 
         $url = $base_url . $requests_url;
 
         $i = 0;
 
         
-        while($i < 3){
+        while($i < 26){
         
 
         $url = $base_url . "/" . $requests_url;
@@ -233,10 +233,13 @@ class SAPServiceLayer{
         
 
         $response = $this->sendRequest("GET", $url);
-        $file = fopen('all_items_' . strval($i) . '.json','w+');
+        /*
+        $file = fopen('my_items_' . strval($i) . '.json','w+');
         fwrite($file, json_encode($response));
         fclose($file);
+        */
 
+        file_put_contents('my_items_' . strval($i) . '.json', json_encode($response, JSON_UNESCAPED_UNICODE));
         $requests_url = $response['odata.nextLink'];
 
         echo "Next URL: " . $requests_url . "\n";
@@ -341,13 +344,13 @@ class SAPServiceLayer{
         $sql_query_end = substr($sql_query_end, 0, -2);
         $fullquery = $sql_query . $case_query . " ELSE stock_actual " . $sql_query_end . ");";
         $result = $connection->query($fullquery);
-        $myfile = fopen("items_stock.txt", "a") or die("Unable to open file!");
+        //$myfile = fopen("items_stock.txt", "a") or die("Unable to open file!");
         //$txt = "itemcode: $itemcode, stock: $sum \n";
-        fwrite($myfile, $fullquery);
-        fclose($myfile);
+        //fwrite($myfile, $fullquery);
+        //fclose($myfile);
             
         
-        unlink('all_items_' . strval($i) . '.json');
+        //unlink('all_items_' . strval($i) . '.json');
 
         $requests_url = $response['odata.nextLink'];
 
