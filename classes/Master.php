@@ -717,6 +717,7 @@ Class Master extends DBConnection {
 		// 26 = usuario de Basilio Fernandez
 		// 115 = usuario de Soodabeh Salence
 		// 17 = usuario de Epifania Aguilar
+		// 414 karol saman
 
 		$departamentos_de_solicitud = $this->departamentos_de_salida_de_inventario($si_id);
 
@@ -725,8 +726,9 @@ Class Master extends DBConnection {
 		$departamentos_usuario_3 = array_column($this->departamentos_que_usuario_puede_aprobar(47, "aprobacion"), "departamento");
 		$departamentos_usuario_4 = array_column($this->departamentos_que_usuario_puede_aprobar(17, "aprobacion"), "departamento");
 		$departamentos_usuario_5 = array_column($this->departamentos_que_usuario_puede_aprobar(26, "aprobacion"), "departamento");
+		$departamentos_usuario_6 = array_column($this->departamentos_que_usuario_puede_aprobar(414, "aprobacion"), "departamento");
 
-		$todos_los_departamentos_gerentes = array_merge($departamentos_usuario_2, $departamentos_usuario_3, $departamentos_usuario_4, $departamentos_usuario_5);
+		$todos_los_departamentos_gerentes = array_merge($departamentos_usuario_2, $departamentos_usuario_3, $departamentos_usuario_4, $departamentos_usuario_5, $departamentos_usuario_6);
 
 		foreach ($departamentos_de_solicitud as $code) {
 			if (in_array($code, $todos_los_departamentos_gerentes)) {
@@ -1197,8 +1199,8 @@ Class Master extends DBConnection {
 			$save_2 = $this->conn->query("INSERT INTO `aprobaciones` (user_id, orden_compra_id, estado) VALUES ('{$user_id}', '{$id}', '{$status}') ");
 			if($approved == true) {
 				$save = $this->conn->query("UPDATE `po_list` set status = '{$status}' where id = '{$id}' ");
-				$response = create_purchase_order($id);
-				$this->conn->query("UPDATE `po_list` set SAPDocEntry = '{$response['DocEntry']}', SAPDocNum = '{$response['DocNum']}' where id = '{$id}' ");
+				//$response = create_purchase_order($id);
+				//$this->conn->query("UPDATE `po_list` set SAPDocEntry = '{$response['DocEntry']}', SAPDocNum = '{$response['DocNum']}' where id = '{$id}' ");
 				// cambiar correo que se envia:
 				enviar_email_orden_de_compra_aprobada($id);
 			};
@@ -1674,6 +1676,7 @@ Class Master extends DBConnection {
 			$resp['status'] = 'success';
 			$resp['msg'] = "Orden de compra enviada correctamente a SAP: {$response['DocEntry']}";
 			$this->settings->set_flashdata('success',"Orden de compra enviada correctamente a SAP: {$response['DocEntry']}");
+			//enviar_email_orden_de_compra_aprobada($id);
 
 		 }catch (Exception $e) {
 			$resp['status'] = 'failed';
