@@ -188,8 +188,18 @@ Class Master extends DBConnection {
 	function search_inventory_items(){
 		extract($_POST);
 		//$qry = $this->conn->query("SELECT * FROM item_list where `name` LIKE '%{$q}%'");
-		$qry = $this->conn->query("SELECT id,codSAP, concat(codSAP, ' ' , `description`) as `description` FROM item_list where `description` LIKE '%$q%' and `inventory_item` = 1");
-		$qry_2 = $this->conn->query("SELECT id,codSAP, concat(codSAP, ' ' , `description`) as `description` FROM item_list where `codSAP` LIKE '%{$q}%'");
+		// exclusive_type permite de que solo ciertos articulos le salgan a almacen en vez de a todos los usuarios
+		//
+		$qry = '';
+		$qry_2 = '';
+		if($user_type == 3) {
+			$qry = $this->conn->query("SELECT id,codSAP, concat(codSAP, ' ' , `description`) as `description` FROM item_list where `description` LIKE '%$q%' and `inventory_item` = 1");
+			$qry_2 = $this->conn->query("SELECT id,codSAP, concat(codSAP, ' ' , `description`) as `description` FROM item_list where `codSAP` LIKE '%{$q}%' and `inventory_item` = 1");
+		}
+		else {
+			$qry = $this->conn->query("SELECT id,codSAP, concat(codSAP, ' ' , `description`) as `description` FROM item_list where `description` LIKE '%$q%' and `inventory_item` = 1 and exclusivo_type IS NULL");
+			$qry_2 = $this->conn->query("SELECT id,codSAP, concat(codSAP, ' ' , `description`) as `description` FROM item_list where `codSAP` LIKE '%{$q}%' and `inventory_item` = 1 and exclusivo_type IS NULL");
+		}
 		$data = array();
 		while($row = $qry->fetch_assoc()){
 			$data[] = array("label"=>$row['description'],"id"=>$row['id'],"name"=>$row['codSAP']);
@@ -712,12 +722,18 @@ Class Master extends DBConnection {
 	}
 
 	function es_salida_de_mercancia($si_id){
+
+		return true;
+
+		/*
 		// 47 = usuario de Carlos Sisnett
 		// 8 = usuario de Nelvir Mirabal
 		// 26 = usuario de Basilio Fernandez
 		// 115 = usuario de Soodabeh Salence
 		// 17 = usuario de Epifania Aguilar
 		// 414 karol saman
+		// sr planells
+		// falta sr ramon ali 
 
 		$departamentos_de_solicitud = $this->departamentos_de_salida_de_inventario($si_id);
 
@@ -736,6 +752,8 @@ Class Master extends DBConnection {
 			}
 		}
 		return false;
+
+		*/
 
 	}
 
