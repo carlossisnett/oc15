@@ -9,6 +9,11 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
         }
     }
 }
+if(isset($_SESSION['userdata']['type']) == true){
+	$user_type = $_SESSION['userdata']['type'];
+} else {
+	$user_type = 5;
+}
 ?>
 <style>
     span.select2-selection.select2-selection--single {
@@ -389,7 +394,7 @@ if($qry['codSAP'] == null){
 				$.ajax({
 					url:_base_url_+"classes/Master.php?f=search_inventory_items",
 					method:'POST',
-					data:{q:request.term, user_type: <?php echo $_SESSION['userdata']['type'] ?>},
+					data:{q:request.term, user_type: <?php echo $user_type ?>},
 					dataType:'json',
 					error:err=>{
 						console.log(err)
