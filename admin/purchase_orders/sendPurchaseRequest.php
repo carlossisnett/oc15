@@ -173,8 +173,18 @@ function enviar_solicitud_inventario($solicitud_id){
         $companydbsap = $config['companydbsap'];
         $usernamesap = $config['usernamesap'];
         $passwordsap = $config['passwordsap'];
+        $ambiente = $config['ambiente'];
 
-    $conn = new mysqli($servername, $username, $password, $dbname);
+    if($ambiente == "azure"){
+        echo "dentro de ambiente azure";
+    $conn = mysqli_init();
+    mysqli_ssl_set($conn, NULL, NULL, NULL, NULL, NULL);
+    mysqli_real_connect($conn, $servername, $username, $password, $dbname, 3306, NULL, MYSQLI_CLIENT_SSL);
+    } else {
+         $conn = new mysqli($servername, $username, $password, $dbname);
+    }
+
+   
 
     // Verifica la conexión a la base de datos
     if ($conn->connect_error) {
@@ -325,7 +335,15 @@ function crear_salida_de_mercancia($solicitud_id){
         $usernamesap = $config['usernamesap'];
         $passwordsap = $config['passwordsap'];
 
-    $conn = new mysqli($servername, $username, $password, $dbname);
+    if($ambiente == "azure"){
+        echo "dentro de ambiente azure";
+        $conn = mysqli_init();
+        mysqli_ssl_set($conn, NULL, NULL, NULL, NULL, NULL);
+        mysqli_real_connect($conn, $servername, $username, $password, $dbname, 3306, NULL, MYSQLI_CLIENT_SSL);
+    } else {
+         $conn = new mysqli($servername, $username, $password, $dbname);
+    }
+
 
     // Verifica la conexión a la base de datos
     if ($conn->connect_error) {
@@ -368,7 +386,6 @@ function crear_salida_de_mercancia($solicitud_id){
                     'ReqType' => 171,
                     'Requester' => $supplierCodSAP,
                     'Comments' => $numero_solicitud . " " . $notes,
-                    'U_HNL_C_TIPO_DOC' => 'SALIDAINVENTARIO',
                     'DocumentLines' => [],
                     'Reference2' => $solicitud_id
                 ];
@@ -491,36 +508,15 @@ function create_purchase_order($poId){
         $usernamesap = $config['usernamesap'];
         $passwordsap = $config['passwordsap'];
 
-        
-        /*
-        $hostSAP = 'sap-bo-srvl-mtdtech.skyinone.net';
-        $puertoSAP = '50000';
-       
-    
-        $companyDBSAP = 'SBO_C184_DB2_PRD';
-    
-        $companyDBSAP = 'SBO_C184_DB2_TST2';
-      
-        
-         if ($_SESSION['userdata']['codSAP'] == '1833')
-         {
-            $companyDBSAP = 'SBO_C184_DB2_TST2';}
-            
-    
-       
-        $userNameSAP = 'SAPABO\\ef82f11a-65d9-44a3';
-        $passwordSAP = 'Sky0ne2020.';
-    
-    
-    // Configuración de la conexión a la base de datos MySQL
-    $servername = "localhost";
-    $username = "root";
-    $password = "";
-    $dbname = "ordenes_compra";
-
-    */
-
-    $conn = new mysqli($servername, $username, $password, $dbname);
+   
+    if($ambiente == "azure"){
+            echo "dentro de ambiente azure";
+            $conn = mysqli_init();
+            mysqli_ssl_set($conn, NULL, NULL, NULL, NULL, NULL);
+            mysqli_real_connect($conn, $servername, $username, $password, $dbname, 3306, NULL, MYSQLI_CLIENT_SSL);
+    } else {
+         $conn = new mysqli($servername, $username, $password, $dbname);
+    }
 
     $proveedor_id = get_proveedor($poId, $conn);
 
