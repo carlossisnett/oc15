@@ -323,10 +323,12 @@ Class Master extends DBConnection {
 						codigo_marca = ?, 
 						codigo_departamento = ?, 
 						url = ?, 
-						proveedor_id = ? 
+						proveedor_id = ?,
+						tax_percentage = ?,
+						tax_amount = ?
 					WHERE id = ?");
 				
-					$prepared->bind_param("dsdissssii", $quantity, $description[$x], $price, $id, $item_id[$x], $marca_id[$x], $departamento_id[$x], $url[$x], $supplier_id, $order_item_id[$x]);
+					$prepared->bind_param("dsdissssiddi", $quantity, $description[$x], $price, $id, $item_id[$x], $marca_id[$x], $departamento_id[$x], $url[$x], $supplier_id, $line_tax_percentage[$x], $line_tax_amount[$x], $order_item_id[$x]);
 					$prepared->execute();
 					} else{
 						$prepared = $this->conn->prepare("DELETE FROM order_items WHERE id = ?");
@@ -337,8 +339,8 @@ Class Master extends DBConnection {
 					// Crea un nuevo order item
 					$price = (float)$unit_price[$x];
 					$quantity = (float)$qty[$x];
-					$prepared = $this->conn->prepare("INSERT INTO order_items(quantity, description, unit_price, po_id, item_id, codigo_marca, codigo_departamento, url, proveedor_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-					$prepared->bind_param("dsdissssi", $quantity, $description[$x], $price, $id, $item_id[$x], $marca_id[$x], $departamento_id[$x], $url[$x], $supplier_id);
+					$prepared = $this->conn->prepare("INSERT INTO order_items(quantity, description, unit_price, po_id, item_id, codigo_marca, codigo_departamento, url, proveedor_id, tax_percentage, tax_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+					$prepared->bind_param("dsdissssidd", $quantity, $description[$x], $price, $id, $item_id[$x], $marca_id[$x], $departamento_id[$x], $url[$x], $supplier_id, $line_tax_amount[$x], $line_tax_percentage[$x]);
 					$prepared->execute();
 				}
 			}
@@ -517,7 +519,7 @@ Class Master extends DBConnection {
 		 $jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
 
 		 // Define the path to the external JSON file
-		 $filePath = 'post_data_pruebas.json';
+		 $filePath = 'post_tax.json';
 	 
 		 // Write the JSON data to the file
 		 file_put_contents($filePath, $jsonData);
@@ -592,8 +594,8 @@ Class Master extends DBConnection {
 			for($x = 0; $x < count($item_id); $x++){
 				$price = (float)$unit_price[$x];
 				$quantity = (float)$qty[$x];
-				$prepared = $this->conn->prepare("INSERT INTO order_items(quantity, description, unit_price, po_id, item_id, codigo_marca, codigo_departamento, url, proveedor_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-				$prepared->bind_param("dsdissssi", $quantity, $description[$x], $price, $id, $item_id[$x], $marca_id[$x], $departamento_id[$x], $url[$x], $supplier_id);
+				$prepared = $this->conn->prepare("INSERT INTO order_items(quantity, description, unit_price, po_id, item_id, codigo_marca, codigo_departamento, url, proveedor_id, tax_percentage, tax_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+				$prepared->bind_param("dsdissssidd", $quantity, $description[$x], $price, $id, $item_id[$x], $marca_id[$x], $departamento_id[$x], $url[$x], $supplier_id, $line_tax_percentage[$x], $line_tax_amount[$x]);
 				$prepared->execute();
 			}
 				

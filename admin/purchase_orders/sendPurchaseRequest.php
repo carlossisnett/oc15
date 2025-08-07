@@ -334,6 +334,7 @@ function crear_salida_de_mercancia($solicitud_id){
         $companydbsap = $config['companydbsap'];
         $usernamesap = $config['usernamesap'];
         $passwordsap = $config['passwordsap'];
+        $ambiente = $config['ambiente'];
 
     if($ambiente == "azure"){
         echo "dentro de ambiente azure";
@@ -507,6 +508,7 @@ function create_purchase_order($poId){
         $companydbsap = $config['companydbsap'];
         $usernamesap = $config['usernamesap'];
         $passwordsap = $config['passwordsap'];
+        $ambiente = $config['ambiente'];
 
    
     if($ambiente == "azure"){
@@ -579,9 +581,29 @@ function create_purchase_order($poId){
                     $codigo_departamento = $item['codigo_departamento'];
                     $url = $item['url'];
                     $proveedor_sap = $item['proveedor_SAP']; // Codigo de SAP del proveedor
-    
+                    $tax_percentage = $item['tax_percentage'];
+                    $tax_amount = $item['tax_amount'];
+                    
+                    $vatGroup = '';
                     // Determinar el grupo de IVA
-                    $vatGroup = ($taxPercentage == 0) ? 'C0' : 'C1';
+
+                    /*
+                    if($tax_percentage > 0){
+                        $vatGroup = "C1";
+                    } else {
+                        $vatGroup = "C0";
+                    }
+                        */
+
+                    
+                    if($tax_percentage == 0){
+                        $vatGroup = 'C0';
+                    }
+                    if($tax_percentage == 7){
+                        $vatGroup = 'C1';
+                    }
+                        
+                    //$vatGroup = ($tax_percentage == 0) ? 'C0' : 'C1';
     
                     // Construir la línea del documento
                     $line = [
@@ -600,6 +622,8 @@ function create_purchase_order($poId){
                         //'VatGroup' => $vatGroup,
                         //'DiscPercent' => $discountPercentage
                     ];
+
+                    var_dump($line);
     
                     // Agregar la línea al array de líneas del documento
                     $purchaseRequest['DocumentLines'][] = $line;
