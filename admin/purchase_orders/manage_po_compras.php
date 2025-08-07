@@ -202,6 +202,12 @@ if($qry['codSAP'] == null){
 								<td class="align-middle p-1">
 									<input type="number" step="any" min="0.01" class="text-right w-100 border-0" name="unit_price[]"  value="<?php echo ($row['unit_price']) ?>" required/>
 								</td>
+								<td class="align-middle p-1">
+									<input type="number" step="any" min="0.01" class="text-right w-100 border-0" name="tax_percentage[]"  value="<?php echo ($row['tax_percentage']) ?>" required/>
+								</td>
+								<td class="align-middle p-1">
+									<input type="number" step="any" min="0.01" class="text-right w-100 border-0" name="tax_amount[]"  value="<?php echo ($row['tax_amount']) ?>" required/>
+								</td>
 								<td class="align-middle p-1 text-right total-price"><?php echo number_format($row['quantity'] * $row['unit_price']) ?></td>
 							</tr>
 							<?php endwhile;endif; ?>
@@ -209,27 +215,27 @@ if($qry['codSAP'] == null){
 						<tfoot>
 							<tr class="bg-lightblue">
 								<tr>
-									<th class="p-1 text-right" colspan="8"><span><button class="btn btn btn-sm btn-flat btn-primary py-0 mx-1" type="button" id="add_row">Agregar Fila</button></span> Sub Total</th>
+									<th class="p-1 text-right" colspan="10"><span><button class="btn btn btn-sm btn-flat btn-primary py-0 mx-1" type="button" id="add_row">Agregar Fila</button></span> Sub Total</th>
 									<th class="p-1 text-right">
 									<input type="text" name="sub_total" id="sub_total" class="w-100 border-0 text-right" readonly>
 									</th>
 								</tr>
 								<tr>
-									<th class="p-1 text-right" colspan="8">Descuento (%)
+									<th class="p-1 text-right" colspan="10">Descuento (%)
 									<input type="number" step="any" name="discount_percentage" class="border-light text-right" value="<?php echo isset($discount_percentage) ? $discount_percentage : null ?>">
 									</th>
 									<th class="p-1"><input type="text" class="w-100 border-0 text-right" value="<?php echo isset($discount_amount) ? $discount_amount : null ?>" name="discount_amount"></th>
 								</tr>
 								<tr>
-									<th class="p-1 text-right" colspan="8">Impuestos (%)
+									<th class="p-1 text-right" colspan="10">Impuestos (%)
 									<!--<input type="number" step="any" name="tax_percentage" class="border-light text-right" value="<?php echo isset($tax_percentage) ? $tax_percentage : null ?>">-->
 									<input type="number" step="any" name="tax_percentage" class="border-light text-right" 
-        							value="<?php echo isset($tax_percentage) && $tax_percentage != 0 ? $tax_percentage : '' ?>">
+        							value="">
 									</th>
 									<th class="p-1"><input type="text" class="w-100 border-0 text-right" value="<?php echo isset($tax_amount) ? $tax_amount : null ?>" name="tax_amount"></th>
 								</tr>
 								<tr>
-									<th class="p-1 text-right" colspan="8">Total</th>
+									<th class="p-1 text-right" colspan="10">Total</th>
 									<th class="p-1 text-right"><input type="text" class="w-100 border-0 text-right" name="total" id="total" readonly></th>
 								</tr>
 							</tr>
@@ -422,6 +428,12 @@ if($qry['codSAP'] == null){
 								<td class="align-middle p-1">
 									<input type="number" step="any" min="0.01" class="text-right w-100 border-0" name="unit_price[]" required>
 								</td>
+								<td class="align-middle p-1">
+									<input type="number" step="any" min="0.01" class="text-right w-100 border-0" name="tax_percentage[]">
+								</td>
+								<td class="align-middle p-1">
+									<input type="number" step="any" min="0.01" class="text-right w-100 border-0" name="tax_amount[]">
+								</td>
 								<td class="align-middle p-1 text-right total-price">0</td>
 							</tr>
 </table>
@@ -441,9 +453,17 @@ if($qry['codSAP'] == null){
 		$('.po-item').each(function(){
 			var qty = $(this).find("[name='qty[]']").val()
 			var unit_price = $(this).find("[name='unit_price[]']").val()
+			var tax_percentage = $(this).find("[name='tax_percentage[]']").val()
+			var tax_amount = $(this).find("[name='tax_amount[]']").val()
 			var row_total = 0;
+			var pre_tax_total = 0;
 			if(qty > 0 && unit_price > 0){
-				row_total = parseFloat(qty) * parseFloat(unit_price)
+				pre_tax_total = parseFloat(qty) * parseFloat(unit_price)
+				
+				row_total = pre_tax_total + (tax_percentage * pre_tax_total/100)
+				if(tax_percentage > 0){
+					$(this).find('[name="tax_amount[]"]').val(pre_tax_total * tax_percentage/100)
+				}
 			}
 			$(this).find('.total-price').text(parseFloat(row_total).toLocaleString('en-US'))
 		})
@@ -705,6 +725,10 @@ var proceder_sin_adjunto = false;
 				allowClear: true, // Enables clearing the selection
 				placeholder: "-- Seleccione una opción --" // Keeps placeholder
     		});
+
+			tr.find('[name="tax_percentage[]"]').on('input keypress',function(e){
+				calculate()
+			})
 
 			tr.find('[name="qty[]"],[name="unit_price[]"]').on('input keypress',function(e){
 				calculate()
