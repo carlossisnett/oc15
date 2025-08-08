@@ -94,7 +94,11 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
                         // Solo podemos enviar pedidos a SAP si el estado es 1 (Aprobada):
                     } elseif($SAPDocEntry == null && $pedido == true && $status == 1){
                         echo "<a href='' onclick='enviar_pedido_a_sap()'> Reenviar a SAP </a>";
-                    } else {
+                    } elseif($_settings->userdata('type') == 2){
+                        echo "<b> $SAPDocEntry </b>";
+                        echo "<a href='' onclick='enviar_pedido_a_sap()'> Reenviar a SAP </a>";
+                        
+                    }else {
                         echo "<p><b> $SAPDocEntry </b></p>";
                     }
                     
