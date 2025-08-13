@@ -27,7 +27,7 @@ if ($conn->connect_error) {
     die("Conexión fallida: " . $conn->connect_error);
 }
     // Me excluyo (carlos.sisnett) porque yo hago muchas solicitudes de prueba y no queremos que se reenvien a SAP
-    $sql = "SELECT po.*, u.username FROM po_list po join users u on po.username = u.username WHERE po.pedido = true and status = 1 and po.SAPDocEntry and u.username <> 'carlos.sisnett' IS NULL AND po.date_created >= '2025-06-10 00:00:00';";
+    $sql = "SELECT po.*, u.username FROM po_list po join users u on po.username = u.username WHERE po.pedido = 1 and status = 1 and po.SAPDocEntry IS NULL AND po.date_created >= '2025-06-10 00:00:00'";
 
     $result = $conn->query($sql);
 
@@ -50,18 +50,19 @@ if ($conn->connect_error) {
 
         
         try {
-            $ResultRequestSAP = sendPurchaseRequest($poId);
-				$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
-				$pos0Msj = $ArrayResultRequestSAP[0];
-				$pos1DocEntry = $ArrayResultRequestSAP[1];
-				$pos2DocNum = $ArrayResultRequestSAP[2];
-                $conn->query("update `po_list` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$poId}'");
-            enviar_email(["desarrollo@prensa.com"], "Orden $poId reenviada a SAP", "Orden $poId reenviada a SAP", "Desarrollo Prensa");
+            $response = create_purchase_order($poId);
+            $conn->query("UPDATE `po_list` set SAPDocEntry = '{$response['DocEntry']}', SAPDocNum = '{$response['DocNum']}' where id = '{$poId}' ");
+			//$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
+			//$pos0Msj = $ArrayResultRequestSAP[0];
+			//$pos1DocEntry = $ArrayResultRequestSAP[1];
+			//$pos2DocNum = $ArrayResultRequestSAP[2];
+            //$conn->query("update `po_list` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$poId}'");
+            enviar_email(["desarrollo@prensa.com"], "Orden $poId enviada a SAP", "Orden $poId enviada a SAP", "Desarrollo Prensa");
             actualizar_reenvios_po($poId, $conn);
         }
 
         catch (Exception $e) {
-                enviar_email(["desarrollo@prensa.com"], "Error al reenviar la Orden $poId  a SAP", "Se intento reenviar la Orden $poId a SAP y no se pudo.", "Desarrollo Prensa");
+                enviar_email(["desarrollo@prensa.com"], "Error al enviar la Orden $poId  a SAP", "Se intento enviar la Orden $poId a SAP y no se pudo.", "Desarrollo Prensa");
                 actualizar_reenvios_po($poId, $conn);
 		}
                 
