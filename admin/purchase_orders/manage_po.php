@@ -50,6 +50,7 @@ if($qry['codSAP'] == null){
 		<h3 class="card-title" id="title"> Nueva solicitud de compra </h3>
 	</div>
 	<div class="card-body">
+		
 		<form action="" id="po-form">
 			<input type="hidden" id="id_element" name ="id" value="<?php echo isset($id) ? $id : '' ?>">
 			<div class="row">
@@ -340,6 +341,7 @@ if($qry['codSAP'] == null){
 	<div class="card-footer">
 		<button class="btn btn-flat btn-primary" form="po-form" id="guardar_boton">Guardar</button>
 		<a class="btn btn-flat btn-default" href="?page=purchase_orders">Cancelar</a>
+		<button><a href="?page=purchase_orders/manage_po_compras&id=<?php echo $id ?>&edit=true"> Modo avanzado</a> </button>
 	</div>
 </div>
 <table class="d-none" id="item-chlone">

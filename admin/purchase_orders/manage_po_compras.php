@@ -350,6 +350,7 @@ if($qry['codSAP'] == null){
 	<div class="card-footer">
 		<button class="btn btn-flat btn-primary" form="po-form" id="guardar_boton">Guardar</button>
 		<a class="btn btn-flat btn-default" href="?page=purchase_orders">Cancelar</a>
+		<button><a href="?page=purchase_orders/manage_po&id=<?php echo $id ?>&edit=true"> Modo regular</a> </button>
 	</div>
 </div>
 <table class="d-none" id="item-chlone">
