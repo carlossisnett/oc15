@@ -28,16 +28,39 @@ GLOBAL $conn;
 			width:5vw;
 		}*/
 </style>
-
 <body>
-    <h4>Lista de departamentos con sus aprobadores:</h4>
-									<?php
-									$marcas_query = $conn->query("SELECT aprobadores.*, users.name, centro_costo.nombre_ccosto FROM aprobadores join users on users.id = aprobadores.user_id join centro_costo on centro_costo.codigo_ccosto = aprobadores.departamento order by users.id");
-									while($row_2 = $marcas_query->fetch_assoc()):
-									?>
-                                    <p> <?php  echo($row_2['nombre_ccosto']); echo(" "); echo($row_2['departamento']); echo(" "); echo($row_2['name']);?> </p>
-								<?php  endwhile;  ?>
+    <h4>Lista de aprobadores y sus departamentos:</h4>
+    <?php
+    $marcas_query = $conn->query("
+        SELECT aprobadores.*, users.name, centro_costo.nombre_ccosto 
+        FROM aprobadores 
+        JOIN users ON users.id = aprobadores.user_id 
+        JOIN centro_costo ON centro_costo.codigo_ccosto = aprobadores.departamento 
+        ORDER BY users.id
+    ");
 
+    $current_user = null;
+    while($row_2 = $marcas_query->fetch_assoc()):
+        // When we hit a new user, print a header
+        if ($current_user !== $row_2['user_id']) {
+            // Close the previous list if not the first user
+            if ($current_user !== null) {
+                echo "</ul>";
+            }
+            echo "<h5>" . htmlspecialchars($row_2['name']) . "</h5>";
+            echo "<ul>";
+            $current_user = $row_2['user_id'];
+        }
+        
+        // Print the department under this user
+        echo "<li>" . htmlspecialchars($row_2['nombre_ccosto']) . " (" . htmlspecialchars($row_2['departamento']) . ")</li>";
+    endwhile;
+
+    // Close the last <ul>
+    if ($current_user !== null) {
+        echo "</ul>";
+    }
+    ?>
 </body>
 
 <script>
