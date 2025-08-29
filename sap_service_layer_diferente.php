@@ -1,5 +1,6 @@
 <?php
 
+
 class SAPServiceLayer{
     private $serviceLayerUrl;
     private $companyDB;
@@ -252,6 +253,119 @@ class SAPServiceLayer{
  
     }
 
+    public function get_new_items(){
+        $config =  require __DIR__ . '/configuracion.php';
+        
+        $servername = $config['servername'];
+        $username = $config['username'];
+        $password = $config['password'];
+        $dbname = $config['dbname'];
+        $hostsap = $config['hostsap'];
+
+        $conn = new mysqli($servername, $username, $password, $dbname);
+
+        $base_url = $this->serviceLayerUrl;
+        $requests_url = "/Items?\$select=InventoryItem,SalesItem,PurchaseItem,ItemCode,ItemName,Valid";
+
+        //$query = "CreateDate ge '2025-08-20'";
+
+        $url = $base_url . $requests_url;
+
+        $i = 0;
+
+        
+        while($i < 26){
+        
+
+        //$url = $base_url . "/" . $requests_url;
+
+        
+
+        $response = $this->sendRequest("GET", $url);
+        /*
+        $file = fopen('my_items_' . strval($i) . '.json','w+');
+        fwrite($file, json_encode($response));
+        fclose($file);
+        */
+
+        file_put_contents('my_new_items_' . strval($i) . '.json', json_encode($response, JSON_UNESCAPED_UNICODE));
+        $requests_url = $response['odata.nextLink'];
+
+        $url = $base_url . "/" . $requests_url;
+
+        echo "Next URL: " . $url . "\n";
+        
+       
+
+         $json_string = file_get_contents('my_new_items_' . $i . '.json');
+
+            $data = json_decode($json_string, true);
+
+            //print_r($data);
+
+            $count = count($data['value']);
+            $j = 0;
+
+             while($j < $count){
+                $itemcode = $data['value'][$j]['ItemCode'];
+                $name = $data['value'][$j]['ItemName'];
+                $inventory_item = $data['value'][$j]['InventoryItem'];
+                $purchase_item = $data['value'][$j]['PurchaseItem'];
+                $sales_item = $data['value'][$j]['SalesItem'];
+                $valid = $data['value'][$j]['Valid'];
+                
+                $sql = "SELECT * FROM item_list WHERE codSAP = '$itemcode'";
+                $result = $conn->query($sql);
+
+                //var_dump($result->num_rows);
+
+                if ($result->num_rows == 1) {
+                    //echo("$itemcode is already in the DB \n");
+                } else {
+                    if ($inventory_item == "tYES") {
+                        $inventory_item = 1;
+                    } else {
+                        $inventory_item = 0;
+                    }
+
+                    if ($purchase_item == "tYES") {
+                        $purchase_item = 1;
+                    } else {
+                        $purchase_item = 0;
+                    }
+
+                    if ($sales_item == "tYES") {
+                        $sales_item = 1;
+                    } else {
+                        $sales_item = 0;
+                    }
+
+                    if ($valid == "tYES") {
+                        $valid = 1;
+                    } else {
+                        $valid = 0;
+                    }
+
+                    $name = $conn->real_escape_string($name);
+
+                        
+                    $insert_sql = "INSERT INTO item_list (inventory_item, purchase_item, sales_item, codSAP, name, description, status) 
+                                VALUES ($inventory_item, $purchase_item, $sales_item, '$itemcode', '$itemcode', '$name', $valid)";
+                    $conn->query($insert_sql);
+                    echo("inserted $itemcode to MYSQL");
+                    
+                }
+                
+                $j++;
+            }
+        unlink('my_new_items_' . $i . '.json');
+        $i++;
+
+    }
+        
+ 
+    }
+
     
     public function get_inventory(){
         $base_url = $this->serviceLayerUrl;
@@ -367,34 +481,40 @@ class SAPServiceLayer{
     public function get_purchase_orders(){
             
             $base_url = $this->serviceLayerUrl;
-            $requests_url = "PurchaseOrders";
+            $requests_url = "PurchaseOrders?\$select=CardCode,CardName,DocumentLines";
     
-            $url = $base_url . $requests_url;
+            //$url = $base_url . $requests_url;
     
-            $i = 24;
-            $connection = new mysqli("localhost", "root", "", "ordenes_compra");
-            while($i < 25){
+            $i = 1;
+            $connection = new mysqli("localhost", "root", "", "ordenes_compra_pruebas");
+            while($i < 17){
             
                 $url = $base_url . "/" . $requests_url;
     
-                
-    
                 $response = $this->sendRequest("GET", $url);
-                $file = fopen('all_purchase_orders_' . strval($i) . '.json','w+');
-                fwrite($file, json_encode($response));
+                $file = fopen('orders_' . strval($i) . '.json','w+');
+                fwrite($file, json_encode($response['value']));
                 fclose($file);
+
+                
+                foreach($response as $example){
+                    //var_dump($example);
+                }
+                
+                //$json_string = file_get_contents('all_purchase_orders_' . $i . '.json');
     
-                $json_string = file_get_contents('all_purchase_orders_' . $i . '.json');
-    
-                $data = json_decode($json_string, true);
+                //$data = json_decode($json_string, true);
     
                 //print_r($data);
     
-                $count = count($data['value']);
+                //$count = count($data['value']);
+                $requests_url = $response['odata.nextLink'];
                 $j = 0;
-    
+                $i++;
     
                 }
+
+            return $response;
 
             
             
@@ -542,6 +662,14 @@ class SAPServiceLayer{
     }
 
 }
+
+    public function get_users(){
+        $createUrl = "{$this->serviceLayerUrl}/Users\$select=UserCode,UserName";
+        $response =  $this->sendRequest('GET', $createUrl);
+        var_dump($response);
+    }
+
+
 
 }
 
