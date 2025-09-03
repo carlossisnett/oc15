@@ -575,9 +575,9 @@ Class Master extends DBConnection {
 
 		$username = $_SESSION['userdata']['username'];
 
-		$prepared = $this->conn->prepare("INSERT INTO po_list(required_date, username, po_no, discount_percentage, discount_amount, tax_percentage, tax_amount, notes, sub_total, total, ruta_adjunto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+		$prepared = $this->conn->prepare("INSERT INTO po_list(required_date, username, po_no, discount_percentage, discount_amount, tax_percentage, tax_amount, notes, sub_total, total, ruta_adjunto, shipping_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-		$prepared->bind_param("sssddddsdds", $required_date, $username, $po_no, $discount_percentage, $discount_amount, $tax_percentage, $tax_amount, $notes, $sub_total, $total, $ruta_adjunto);
+		$prepared->bind_param("sssddddsddsd", $required_date, $username, $po_no, $discount_percentage, $discount_amount, $tax_percentage, $tax_amount, $notes, $sub_total, $total, $ruta_adjunto, $shipping_cost);
 		$prepared->execute();
 
 		
@@ -657,6 +657,95 @@ Class Master extends DBConnection {
 		}
 		return json_encode($resp);
 	}
+
+	function save_cotizacion(){
+		extract($_POST);
+		$data = "";
+
+		
+		
+		 // Encode the $_POST array into JSON
+		 $jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
+
+		 // Define the path to the external JSON file
+		 $filePath = 'cotizacion.json';
+	 
+		 // Write the JSON data to the file
+		 file_put_contents($filePath, $jsonData);
+		
+		$po_no = "";
+			while(true){
+				$po_no = "PO-".(sprintf("%'.011d", mt_rand(1,99999999999)));
+				$check = $this->conn->query("SELECT * FROM `po_list` where `po_no` = '{$po_no}'")->num_rows;
+				if($check <= 0)
+				break;
+			}
+
+		if(isset($notes) == false){
+			$notes = null;
+		}
+		if(isset($ruta_adjunto) == false){
+			$ruta_adjunto = null;
+		}
+
+
+		// Calcular porcentaje de descuento aqui en su propia funcion
+
+		$es_cotizacion = 1;
+
+		$username = $_SESSION['userdata']['username'];
+
+		$prepared = $this->conn->prepare("INSERT INTO po_list(required_date, username, po_no, es_cotizacion) VALUES (?, ?, ?, ?)");
+
+		$prepared->bind_param("sssi", $required_date, $username, $po_no, $es_cotizacion);
+		$prepared->execute();
+
+		
+		$prepared = $this->conn->prepare("SELECT id FROM po_list where po_no = ?");
+		$prepared->bind_param("s", $po_no);
+		$prepared->execute();
+		$result = $prepared->get_result();
+		$row = $result->fetch_assoc();
+		$id = (int)$row['id'];
+
+		#Si se creo la orden de compra entonces proceder a agregar los articulos a ella
+		if(isset($row)){
+			for($x = 0; $x < count($item_id); $x++){
+				//$price = (float)$unit_price[$x];
+				$quantity = (float)$qty[$x];
+				$prepared = $this->conn->prepare("INSERT INTO order_items(quantity, description, po_id, item_id, codigo_marca, codigo_departamento, url) VALUES (?, ?, ?, ?, ?, ?, ?)");
+				$prepared->bind_param("dsiisss", $quantity, $description[$x], $id, $item_id[$x], $marca_id[$x], $departamento_id[$x], $url[$x]);
+				$prepared->execute();
+			}
+				
+			if($this->hay_lineas($id) == false){
+				$resp['status'] = 'failed';
+				$resp['msg'] = "No se puede guardar la orden de compra porque no tiene líneas.";
+				$this->settings->set_flashdata('failed',"Hubo un problema al insertar las líneas de la solicitud de compra, por favor crear una nueva.");
+				return json_encode($resp);
+			}
+
+			$resp['status'] = 'success';
+			$resp['id'] = $id;
+			$resp['po_no'] = $po_no;
+
+			//echo 'post_max_size: ' . ini_get('post_max_size') . "upload_max_filesize:" . ini_get('upload_max_filesize');
+
+			$this->guardar_adjunto($po_no);
+
+				//$this->conn->query("UPDATE `po_list` set pedido = 1, status = 3 where id = '{$id}' ");
+				// notificar a compras y a las personas relevantes de que se ha hecho una nueva cotizacion de compra (ingenieria, mantenimiento, almacen, compras)
+				//$this->notificar_a_aprobadores($id);
+				enviar_email3($id);
+				$this->settings->set_flashdata('success',"Orden de compra guardada correctamente");
+				
+		} else{
+			$resp['status'] = 'failed';
+			$resp['err'] = $this->conn->error."[{$sql}]";
+		}
+		return json_encode($resp);
+	}
+
 
 	/*
 	Integer -> Array
@@ -1823,7 +1912,7 @@ function guardar_adjunto($po_no){
 		 $jsonData = json_encode($_POST, JSON_PRETTY_PRINT);
 
 		 // Define the path to the external JSON file
-		 $filePath = 'post_data.json';
+		 $filePath = 'post_data_approver.json';
 	 
 		 // Write the JSON data to the file
 		 file_put_contents($filePath, $jsonData);
@@ -1845,16 +1934,38 @@ function guardar_adjunto($po_no){
 			$exclusivo_inventario = true;
 		}
 
-		
-		
-		$save = $this->conn->query("INSERT INTO `aprobadores` (`user_id`,`departamento`, `exclusivo_compras`, `exclusivo_inventario`) VALUES ('{$user_id}','{$departamento_id}', '{$exclusivo_compras}', '{$exclusivo_inventario}') ");
-		if($save){
-			$resp['status'] = 'success';
-			$this->settings->set_flashdata('success',"Aprobador guardado correctamente.");
-		}else{
-			$resp['status'] = 'failed';
-			$resp['error'] = $this->conn->error;
+		if($exclusivo_inventario == true && $exclusivo_compras == true){
+			$exclusivo_inventario = false;
+			$exclusivo_compras = false;
 		}
+
+		$result = $this->conn->query("SELECT * from aprobadores where user_id = '{$user_id}' and departamento = '{$departamento_id}'");
+		$result_2 = $this->conn->query("SELECT * from users where id = '{$user_id}'");
+		$result_3 = $this->conn->query("SELECT * from centro_costo where codigo_ccosto = '{$departamento_id}'");
+
+		if ($result && $result->num_rows > 0) {
+			// At least one row found
+			$row = $result->fetch_assoc();
+			$user = $result_2->fetch_assoc();
+			$departamento = $result_3->fetch_assoc();
+			$nombre_departamento = $departamento['nombre_ccosto'];
+			$name = $user['name'];
+
+			$resp['status'] = 'success';
+			$this->settings->set_flashdata('success',"$name ya aprobaba el departamento $nombre_departamento.");
+
+			// Do something with $row
+		} else {
+			$save = $this->conn->query("INSERT INTO `aprobadores` (`user_id`,`departamento`, `exclusivo_compras`, `exclusivo_inventario`) VALUES ('{$user_id}','{$departamento_id}', '{$exclusivo_compras}', '{$exclusivo_inventario}') ");
+			if($save){
+				$resp['status'] = 'success';
+				$this->settings->set_flashdata('success',"Aprobador guardado correctamente.");
+			}else{
+				$resp['status'] = 'failed';
+				$resp['error'] = $this->conn->error;
+			}
+		}
+
 		return json_encode($resp);
 	}
 
@@ -1974,6 +2085,10 @@ switch ($action) {
 
 	case 'update_approver_vacation':
 		echo $Master->update_approver_vacation();
+	break;
+
+	case 'save_cotizacion':
+		echo $Master->save_cotizacion();
 	break;
 	
 	default:

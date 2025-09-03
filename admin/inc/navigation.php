@@ -50,6 +50,31 @@
                       </a>
                     </li>
                     <?php endif; ?>
+                    <?php 
+                    GLOBAL $conn;
+                    $id_usuario = $_settings->userdata('id');
+                    $qry = $conn->query("SELECT * from `users` where id = '$id_usuario' ");
+                      $qry = $qry->fetch_array();
+                      ?>
+                        <?php if($qry['puede_cotizar'] == false): ?>
+                    <li class="nav-item dropdown">
+                      <a href="<?php echo base_url ?>admin/?page=cotizacion" class="nav-link nav-cotizacion">
+                        <i class="nav-icon fas fa-book"></i>
+                        <p>
+                          Mis Cotizaciones de Compra
+                        </p>
+                      </a>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                      <a href="<?php echo base_url ?>admin/?page=all_cotizacion" class="nav-link nav-all-cotizacion">
+                        <i class="nav-icon fas fa-archive"></i>
+                        <p>
+                          Todas las Cotizaciones de Compra
+                        </p>
+                      </a>
+                    </li>
+                    <?php endif; ?>
 
                     <li class="nav-item dropdown">
                       <a href="<?php echo base_url ?>admin/?page=inventario" class="nav-link nav-inventario">
