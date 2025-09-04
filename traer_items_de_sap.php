@@ -16,5 +16,6 @@ $dbname = $config['dbname'];
 
     $sap = new SAPServiceLayer($hostsap, $puertosap, $companydbsap, $usernamesap, $passwordsap);
     $purchase_orders = $sap->get_new_items();
+    file_put_contents(__DIR__ . '/blank.txt', '');  // creates empty file
 
 ?>

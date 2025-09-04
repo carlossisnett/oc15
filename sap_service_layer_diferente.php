@@ -261,8 +261,16 @@ class SAPServiceLayer{
         $password = $config['password'];
         $dbname = $config['dbname'];
         $hostsap = $config['hostsap'];
+        $ambiente = $config['ambiente'];
 
-        $conn = new mysqli($servername, $username, $password, $dbname);
+          if($ambiente == "azure"){
+            echo "dentro de ambiente azure";
+            $conn = mysqli_init();
+            mysqli_ssl_set($conn, NULL, NULL, NULL, NULL, NULL);
+            mysqli_real_connect($conn, $servername, $username, $password, $dbname, 3306, NULL, MYSQLI_CLIENT_SSL);
+        } else {
+            $conn = new mysqli($servername, $username, $password, $dbname);
+        }
 
         $base_url = $this->serviceLayerUrl;
         $requests_url = "/Items?\$select=InventoryItem,SalesItem,PurchaseItem,ItemCode,ItemName,Valid";
@@ -374,7 +382,25 @@ class SAPServiceLayer{
         $url = $base_url . $requests_url;
 
         $i = 0;
-        $connection = new mysqli("localhost", "root", "", "ordenes_compra");
+
+                $config =  require __DIR__ . '/configuracion.php';
+        
+        $servername = $config['servername'];
+        $username = $config['username'];
+        $password = $config['password'];
+        $dbname = $config['dbname'];
+        $hostsap = $config['hostsap'];
+        $ambiente = $config['ambiente'];
+
+          if($ambiente == "azure"){
+            echo "dentro de ambiente azure";
+            $conn = mysqli_init();
+            mysqli_ssl_set($conn, NULL, NULL, NULL, NULL, NULL);
+            mysqli_real_connect($conn, $servername, $username, $password, $dbname, 3306, NULL, MYSQLI_CLIENT_SSL);
+        } else {
+            $conn = new mysqli($servername, $username, $password, $dbname);
+        }
+
         while($i < 25){
         
             $url = $base_url . "/" . $requests_url;
@@ -439,7 +465,7 @@ class SAPServiceLayer{
                     $case_query = $case_query . "WHEN codSAP = '$itemcode' THEN $sum ";
                     $sql_query_end .= "'$itemcode'" . ", ";
                         
-                    //$result = $connection->query("UPDATE item_list SET stock_actual = $sum WHERE codSAP = '$itemcode'");
+                    //$result = $conn->query("UPDATE item_list SET stock_actual = $sum WHERE codSAP = '$itemcode'");
                     
 
                     /*
@@ -455,9 +481,17 @@ class SAPServiceLayer{
 
 
             }
-        $sql_query_end = substr($sql_query_end, 0, -2);
-        $fullquery = $sql_query . $case_query . " ELSE stock_actual " . $sql_query_end . ");";
-        $result = $connection->query($fullquery);
+
+       if (!empty($case_query)) {
+    // Remove the last comma+space from IN list
+            $sql_query_end = substr($sql_query_end, 0, -2);
+            $fullquery = $sql_query . $case_query . " ELSE stock_actual " . $sql_query_end . ");";
+
+            echo("Full query: $fullquery\n");
+            $result = $conn->query($fullquery);
+        } else {
+            echo "No inventory items to update in this batch.\n";
+        }
         //$myfile = fopen("items_stock.txt", "a") or die("Unable to open file!");
         //$txt = "itemcode: $itemcode, stock: $sum \n";
         //fwrite($myfile, $fullquery);
