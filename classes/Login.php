@@ -98,7 +98,7 @@ class Login extends DBConnection {
 	}
 
 	public function reset_password(){
-		require "enviar_correo.php";
+		require "../admin/purchase_orders/enviar_correo.php";
 		extract($_POST);
 		$stmt = $this->conn->prepare("SELECT * FROM users WHERE email = ?");
 		$stmt->bind_param("s", $email);
