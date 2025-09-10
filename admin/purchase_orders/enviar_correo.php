@@ -30,7 +30,8 @@
             $mail = new PHPMailer(true);
             $mail->isSMTP();
             //$mail->SMTPDebug = SMTP::DEBUG_SERVER;
-            //$mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+           // $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+           // $mail->SMTPAutoTLS = true;
             $mail->SMTPOptions = array(
             'ssl' => array(
             'verify_peer' => false,
@@ -40,8 +41,10 @@
             );
     
             $mail->Host = 'simon.prensa.com';
-            $mail->Port = 25;
+            $mail->Port = 2525;
             $mail->SMTPAuth = false;
+            //$mail->Username = 'root'; // try setting dummy username/password
+            //$mail->Password = 'root';
             $mail->setFrom('noreply@prensa.com', 'Sistema OC15');
     
             $mail->isHTML(true);
@@ -85,7 +88,7 @@
             );
     
             $mail->Host = 'simon.prensa.com';
-            $mail->Port = 25;
+            $mail->Port = 2525;
             $mail->SMTPAuth = false;
             $mail->setFrom('noreply@prensa.com', 'Sistema OC15');
     
@@ -249,7 +252,7 @@ function enviar_email2($id, $numero_sap) {
             // Configuración del servidor SMTP
             $mail->isSMTP();
             $mail->Host = 'simon.prensa.com';
-            $mail->Port = 25;
+            $mail->Port = 2525;
             $mail->SMTPAuth = false;
 
 
@@ -897,7 +900,7 @@ function enviar_email3($id) {
             // Configuración del servidor SMTP
             $mail->isSMTP();
             $mail->Host = 'simon.prensa.com';
-            $mail->Port = 25;
+            $mail->Port = 2525;
             $mail->SMTPAuth = false;
 
 
@@ -1115,7 +1118,7 @@ function enviar_email_solicitud_inventario($id, $numero_sap){
             // Configuración del servidor SMTP
             $mail->isSMTP();
             $mail->Host = 'simon.prensa.com';
-            $mail->Port = 25;
+            $mail->Port = 2525;
             $mail->SMTPAuth = false;
 
 
@@ -1351,7 +1354,7 @@ function enviar_email_solicitud_inventario_2($id, $numero_sap){
             // Configuración del servidor SMTP
             $mail->isSMTP();
             $mail->Host = 'simon.prensa.com';
-            $mail->Port = 25;
+            $mail->Port = 2525;
             $mail->SMTPAuth = false;
 
 
@@ -1578,7 +1581,7 @@ function enviar_email_salida_de_mercancia($id){
             // Configuración del servidor SMTP
             $mail->isSMTP();
             $mail->Host = 'simon.prensa.com';
-            $mail->Port = 25;
+            $mail->Port = 2525;
             $mail->SMTPAuth = false;
 
 
@@ -1680,7 +1683,7 @@ function salida_de_inventario_asunto($estado_almacen, $id, $nombre_solicitante){
 
 
 
-function enviar_email_salida_de_mercancia_actualizacion($id, $usuario_actualizador, $estado_almacen){
+function enviar_email_salida_de_mercancia_actualizacion($id, $usuario_actualizador, $estado_almacen, $conn){
 
     /*
     Recibir estado de modificacion:
@@ -1698,7 +1701,7 @@ function enviar_email_salida_de_mercancia_actualizacion($id, $usuario_actualizad
         }*/ 
 
         // Incluir la conexión a la base de datos
-        $conn = new mysqli('localhost', 'root', '', 'ordenes_compra');
+        //$conn = new mysqli('localhost', 'root', '', 'ordenes_compra');
         //GLOBAL $conn;
 
         // 1. Consultar la tabla solicitud_de_inventario
@@ -1836,7 +1839,7 @@ function enviar_email_salida_de_mercancia_actualizacion($id, $usuario_actualizad
             // Configuración del servidor SMTP
             $mail->isSMTP();
             $mail->Host = 'simon.prensa.com';
-            $mail->Port = 25;
+            $mail->Port = 2525;
             $mail->SMTPAuth = false;
 
 
