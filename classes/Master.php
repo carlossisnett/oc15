@@ -455,7 +455,7 @@ Class Master extends DBConnection {
 			$resp['id'] = $id;
 			$resp['numero_solicitud'] = $numero_solicitud;
 			$usuario_actualizador = $username;
-			enviar_email_salida_de_mercancia_actualizacion($id, $usuario_actualizador, $estado_almacen);
+			enviar_email_salida_de_mercancia_actualizacion($id, $usuario_actualizador, $estado_almacen, $this->conn);
 
 					
 					//if ($po_id != 233)
@@ -681,8 +681,9 @@ Class Master extends DBConnection {
 				break;
 			}
 
+		
 		if(isset($notes) == false){
-			$notes = null;
+			$notes = '';
 		}
 		if(isset($ruta_adjunto) == false){
 			$ruta_adjunto = null;
@@ -695,9 +696,9 @@ Class Master extends DBConnection {
 
 		$username = $_SESSION['userdata']['username'];
 
-		$prepared = $this->conn->prepare("INSERT INTO po_list(required_date, username, po_no, es_cotizacion) VALUES (?, ?, ?, ?)");
+		$prepared = $this->conn->prepare("INSERT INTO po_list(required_date, username, po_no, es_cotizacion, notes) VALUES (?, ?, ?, ?, ?)");
 
-		$prepared->bind_param("sssi", $required_date, $username, $po_no, $es_cotizacion);
+		$prepared->bind_param("sssis", $required_date, $username, $po_no, $es_cotizacion, $notes);
 		$prepared->execute();
 
 		
@@ -981,7 +982,7 @@ Class Master extends DBConnection {
 								  SET aprobador_user_id = '{$user_id}', 
 									  status = '{$status}', 
 									  hora_aprobacion = '{$hora_aprobacion}' 
-								  WHERE po_id = '{$id}' and codigo_departamento in ({$departamentos_sql})");
+								  WHERE solicitud_id = '{$id}' and codigo_departamento in ({$departamentos_sql})");
 
 			if($this->containsAllElements(
 				array_column($departamentos_por_aprobar, 'codigo_departamento'),
