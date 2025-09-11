@@ -27,7 +27,7 @@
 				$rows_to_display[] = $row; // save full row for table later
 		}
 	} else {
-		echo "<h5>Su usuario $username no tiene solicitudes de compra por aprobar</h5>";
+		echo "<h5>No hay cotizaciones pendientes</h5>";
 	}
 	?>
 	
