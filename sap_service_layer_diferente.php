@@ -698,9 +698,110 @@ class SAPServiceLayer{
 }
 
     public function get_users(){
-        $createUrl = "{$this->serviceLayerUrl}/Users\$select=UserCode,UserName";
+        $createUrl = "{$this->serviceLayerUrl}/Users?\$select=UserCode,UserName";
         $response =  $this->sendRequest('GET', $createUrl);
         var_dump($response);
+    }
+
+        public function get_proveedores(){
+        $config =  require __DIR__ . '/configuracion.php';
+        
+        $servername = $config['servername'];
+        $username = $config['username'];
+        $password = $config['password'];
+        $dbname = $config['dbname'];
+        $hostsap = $config['hostsap'];
+        $ambiente = $config['ambiente'];
+
+          if($ambiente == "azure"){
+            echo "dentro de ambiente azure";
+            $conn = mysqli_init();
+            mysqli_ssl_set($conn, NULL, NULL, NULL, NULL, NULL);
+            mysqli_real_connect($conn, $servername, $username, $password, $dbname, 3306, NULL, MYSQLI_CLIENT_SSL);
+        } else {
+            $conn = new mysqli($servername, $username, $password, $dbname);
+        }
+
+        $base_url = $this->serviceLayerUrl;
+        $query = urlencode("CardType eq 'cSupplier'");
+        $requests_url = "/BusinessPartners?\$select=CardCode,CardName,CardType&\$filter=$query";
+        #$requests_url = "/PurchaseRequests/\$metadata";
+
+        // Build the query to filter closed purchase requests based on the date they were closed (UpdateDate)
+        
+
+        //$query = "CreateDate ge '2025-08-20'";
+
+        $url = $base_url . $requests_url; //. $query;
+
+        $i = 0;
+
+        
+        while($i < 7){
+        
+
+        //$url = $base_url . "/" . $requests_url;
+
+        
+
+        $response = $this->sendRequest("GET", $url);
+        /*
+        $file = fopen('my_items_' . strval($i) . '.json','w+');
+        fwrite($file, json_encode($response));
+        fclose($file);
+        */
+
+        file_put_contents('my_business_partners_' . strval($i) . '.json', json_encode($response, JSON_UNESCAPED_UNICODE));
+        $requests_url = $response['odata.nextLink'];
+
+        $url = $base_url . "/" . $requests_url;
+
+        echo "Next URL: " . $url . "\n";
+        
+       
+
+         $json_string = file_get_contents('my_business_partners_' . $i . '.json');
+
+            $data = json_decode($json_string, true);
+
+            //print_r($data);
+
+            $count = count($data['value']);
+            $j = 0;
+
+             while($j < $count){
+                
+                $code = $data['value'][$j]['CardCode'];
+                $name = $data['value'][$j]['CardName'];
+                $type = $data['value'][$j]['CardType'];
+              
+                
+                $sql = "SELECT * FROM proveedores WHERE codSAP = '$code'";
+                $result = $conn->query($sql);
+
+                //var_dump($result->num_rows);
+
+                if ($result->num_rows == 1) {
+                    //echo("$itemcode is already in the DB \n");
+                } else {
+
+                    $name = $conn->real_escape_string($name);
+
+                        
+                    $insert_sql = "INSERT INTO proveedores (name, codSAP, status) 
+                                VALUES ('$name', '$code', 1)";
+                    $conn->query($insert_sql);
+                    echo("inserted $code to MYSQL");
+                    
+                }
+                $j++;
+            }
+        //unlink('my_new_items_' . $i . '.json');
+        $i++;
+
+    }
+        
+ 
     }
 
 
