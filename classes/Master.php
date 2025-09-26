@@ -348,7 +348,7 @@ Class Master extends DBConnection {
 			$resp['status'] = 'success';
 			$resp['id'] = $id;
 			$resp['po_no'] = $po_no;
-				//$this->guardar_adjunto($po_no);
+				$this->guardar_adjunto($po_no);
 				try {
 					$resultado = enviar_email(["carlos.sisnett@prensa.com"], "Orden de compra $po_no ha sido modificada", "Orden de compra ha sido modificada con exito.", "desarrollo@prensa.com");
 
@@ -391,7 +391,7 @@ Class Master extends DBConnection {
 		
 		 
 		if(isset($notes) == false){
-			$notes = null;
+			$notes = '';
 		}
 
 		$username = $_SESSION['userdata']['username'];
@@ -696,7 +696,7 @@ Class Master extends DBConnection {
 
 		$username = $_SESSION['userdata']['username'];
 
-		$prepared = $this->conn->prepare("INSERT INTO po_list(required_date, username, po_no, es_cotizacion, notes) VALUES (?, ?, ?, ?, ?)");
+		$prepared = $this->conn->prepare("INSERT INTO po_list(required_date, username, po_no, es_cotizacion, notes, pedido) VALUES (?, ?, ?, ?, ?, 1)");
 
 		$prepared->bind_param("sssis", $required_date, $username, $po_no, $es_cotizacion, $notes);
 		$prepared->execute();
@@ -1803,7 +1803,7 @@ function guardar_adjunto($po_no){
 
 	$order = $this->conn->query("SELECT * FROM `po_list` where po_no = '{$po_no}'");
 	$row = $order->fetch_array();
-	$id = $row['id'];
+	$id = $row['id']; 
 
 	/*
 
@@ -1919,25 +1919,25 @@ function guardar_adjunto($po_no){
 		 file_put_contents($filePath, $jsonData);
 
 		if(isset($exclusivo_compras) == false){
-			$exclusivo_compras = false;
+			$exclusivo_compras = 0;
 		}
 
 
 		if($exclusivo_compras == "on"){
-			$exclusivo_compras = true;
+			$exclusivo_compras = 1;
 		}
 
 		if(isset($exclusivo_inventario) == false){
-			$exclusivo_inventario = false;
+			$exclusivo_inventario = 0;
 		}
 
 		if($exclusivo_inventario == "on"){
-			$exclusivo_inventario = true;
+			$exclusivo_inventario = 1;
 		}
 
 		if($exclusivo_inventario == true && $exclusivo_compras == true){
-			$exclusivo_inventario = false;
-			$exclusivo_compras = false;
+			$exclusivo_inventario = 0;
+			$exclusivo_compras = 0;
 		}
 
 		$result = $this->conn->query("SELECT * from aprobadores where user_id = '{$user_id}' and departamento = '{$departamento_id}'");
@@ -1957,7 +1957,7 @@ function guardar_adjunto($po_no){
 
 			// Do something with $row
 		} else {
-			$save = $this->conn->query("INSERT INTO `aprobadores` (`user_id`,`departamento`, `exclusivo_compras`, `exclusivo_inventario`) VALUES ('{$user_id}','{$departamento_id}', '{$exclusivo_compras}', '{$exclusivo_inventario}') ");
+			$save = $this->conn->query("INSERT INTO `aprobadores` (`user_id`,`departamento`, `exclusivo_compras`, `exclusivo_inventario`) VALUES ('{$user_id}','{$departamento_id}', $exclusivo_compras, $exclusivo_inventario) ");
 			if($save){
 				$resp['status'] = 'success';
 				$this->settings->set_flashdata('success',"Aprobador guardado correctamente.");
