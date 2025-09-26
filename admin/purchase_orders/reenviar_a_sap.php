@@ -20,14 +20,23 @@ require_once 'enviar_correo.php';
     $usernamesap = $config['usernamesap'];
     $passwordsap = $config['passwordsap'];
 
-$conn = new mysqli($servername, $username, $password, $dbname);
+     $ambiente = $config['ambiente'];
+
+          if($ambiente == "azure"){
+            echo "dentro de ambiente azure";
+            $conn = mysqli_init();
+            mysqli_ssl_set($conn, NULL, NULL, NULL, NULL, NULL);
+            mysqli_real_connect($conn, $servername, $username, $password, $dbname, 3306, NULL, MYSQLI_CLIENT_SSL);
+        } else {
+            $conn = new mysqli($servername, $username, $password, $dbname);
+        }
 
 // Verifica la conexión a la base de datos
 if ($conn->connect_error) {
     die("Conexión fallida: " . $conn->connect_error);
 }
     // Me excluyo (carlos.sisnett) porque yo hago muchas solicitudes de prueba y no queremos que se reenvien a SAP
-    $sql = "SELECT po.*, u.username FROM po_list po join users u on po.username = u.username WHERE po.pedido = 1 and status = 1 and po.SAPDocEntry IS NULL AND po.date_created >= '2025-06-10 00:00:00'";
+    $sql = "SELECT po.*, u.username FROM po_list po join users u on po.username = u.username WHERE po.pedido = 1 and po.status = 1 and po.SAPDocEntry IS NULL AND po.date_created >= '2025-06-10 00:00:00'";
 
     $result = $conn->query($sql);
 
@@ -48,6 +57,8 @@ if ($conn->connect_error) {
             continue;
         }
 
+        actualizar_reenvios_po($poId, $conn);
+
         
         try {
             $response = create_purchase_order($poId);
@@ -57,55 +68,13 @@ if ($conn->connect_error) {
 			//$pos1DocEntry = $ArrayResultRequestSAP[1];
 			//$pos2DocNum = $ArrayResultRequestSAP[2];
             //$conn->query("update `po_list` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$poId}'");
-            enviar_email(["desarrollo@prensa.com"], "Orden $poId enviada a SAP", "Orden $poId enviada a SAP", "Desarrollo Prensa");
-            actualizar_reenvios_po($poId, $conn);
+            enviar_email(["desarrollo@prensa.com"], "Orden $poId reenviada a SAP", "Orden $poId reenviada a SAP", "Desarrollo Prensa");
         }
 
         catch (Exception $e) {
-                enviar_email(["desarrollo@prensa.com"], "Error al enviar la Orden $poId  a SAP", "Se intento enviar la Orden $poId a SAP y no se pudo.", "Desarrollo Prensa");
-                actualizar_reenvios_po($poId, $conn);
+                enviar_email(["desarrollo@prensa.com"], "Error al reenviar la Orden $poId  a SAP", "Se intento reenviar la Orden $poId a SAP y no se pudo.", "Desarrollo Prensa");
 		}
                 
-    }
-
-    $sql = "SELECT si.*, u.username FROM solicitud_de_inventario si join users u on si.username = u.username WHERE si.SAPDocEntry IS NULL and u.username <> 'carlos.sisnett' AND date_created >= '2025-06-10 00:00:00' and salida_de_mercancia IS NULL;";
-
-     $result = $conn->query($sql);
-
-    foreach($result as $row) {
-
-        $id = $row['id'];
-        $numero_solicitud = $row['numero_solicitud'];
-        $reenvios = $row['reenvios_a_sap'];
-        //$supplier_id = $row['supplier_id'];
-       // $user_id = $row['user_id'];
-       // $status = $row['status'];
-        //$codSAP = $row['codSAP'];
-       // $firstname = $row['firstname'];
-        
-
-        if($reenvios > 3){
-            continue;
-        }
-
-        echo($id);
-        try {
-            $ResultRequestSAP = enviar_solicitud_inventario($id);
-				$ArrayResultRequestSAP = explode("|",$ResultRequestSAP);
-				$pos0Msj = $ArrayResultRequestSAP[0];
-				$pos1DocEntry = $ArrayResultRequestSAP[1];
-				$pos2DocNum = $ArrayResultRequestSAP[2];
-                $conn->query("update `solicitud_de_inventario` set SAPDocEntry = '{$pos1DocEntry}',  SAPDocNum = '{$pos2DocNum}' where id = '{$id}'");
-            enviar_email(["desarrollo@prensa.com"], "Salida de inventario $numero_solicitud reenviada a SAP", "Salida de inventario $numero_solicitud reenviada a SAP", "Desarrollo Prensa");
-            actualizar_reenvios_si($id, $conn);
-        }
-
-        catch (Exception $e) {
-                enviar_email(["desarrollo@prensa.com"], "Error al reenviar la Salida de inventario $numero_solicitud a SAP", "Se intento reenviar la Salida de inventario $numero_solicitud a SAP y no se pudo.", "Desarrollo Prensa");
-                actualizar_reenvios_si($id, $conn);
-            }
-                
-
     }
 
 function actualizar_reenvios_po($poId, $conn){
