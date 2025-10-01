@@ -496,6 +496,7 @@ Crea un pedido de SAP cuando la solicitud de compra ya ha sido aprobada
 */
 
 function create_purchase_order($poId){
+    $aditional_expenses = new stdClass();
     try {
 
         $config =  require __DIR__ . '/../../configuracion.php';
@@ -544,6 +545,9 @@ function create_purchase_order($poId){
             $owner_code = $row['codSAP'];
             $first_name = $row['firstname'];
             $last_name = $row['lastname'];
+
+
+            
             
             // Construir la solicitud de compra
             $purchaseRequest = [
@@ -563,7 +567,19 @@ function create_purchase_order($poId){
                 'DocumentLines' => [],
                 'TotalDiscount' => $discount_amount,
                 'DiscountPercent' => $discountPercentage,
+                'DocumentAdditionalExpenses' => []
             ];
+
+                
+             if(isset($row['shipping_cost'])){
+                $aditional_expenses->ExpenseCode = 8;
+                $aditional_expenses->LineTotal = $row['shipping_cost'];
+                $aditional_expenses->LineTotalSys = $row['shipping_cost'];
+                $aditional_expenses->LineGross = $row['shipping_cost'];
+                $aditional_expenses->LineGrossSys = $row['shipping_cost'];
+                $aditional_expenses->VatGroup = "C0";
+                $purchaseRequest['DocumentAdditionalExpenses'][0] = $aditional_expenses;
+        }
     
             // Recuperar los items correspondientes de la tabla order_items
             $sqlItems = "SELECT a.*, b.codSAP, p.codSAP as proveedor_SAP FROM order_items a inner join item_list b on a.item_id = b.id join proveedores p on a.proveedor_id = p.id  WHERE a.po_id = $poId";
@@ -623,11 +639,12 @@ function create_purchase_order($poId){
                         //'DiscPercent' => $discountPercentage
                     ];
 
-                    var_dump($line);
+                    //var_dump($line);
     
                     // Agregar la línea al array de líneas del documento
                     $purchaseRequest['DocumentLines'][] = $line;
                 }
+
             }
 
 
@@ -641,6 +658,8 @@ function create_purchase_order($poId){
 
         
     $conn->close();
+
+    //echo(json_encode($purchaseRequest));
 
     // Inicializar el Service Layer y crear la Purchase Request
 
@@ -657,14 +676,15 @@ function create_purchase_order($poId){
     //print $xresult;
 
     // Obtener el número de la Purchase Order creada
-    $base_url = "http://10.0.1.170/finanzas/compras/ordenes_compra/";
+    $base_url = "https://oc15-d8d8asb3cvhzfxb5.canadacentral-01.azurewebsites.net/ordenes_compra/";
     $url_orden = $base_url . "admin/?page=purchase_orders/view_po&id=" . $poId;
     $link_element = "<a href='$url_orden'>Ver Pedido de Compra $poId para reenviar</a>";
     $mensaje = "Error: El pedido de compra $poId hecha por $first_name $last_name no pudo ser enviada a SAP. $link_element";
+    $result_string = file_get_contents("purchase_order_output.json");
     if (isset($response['DocEntry'])) {
         return $response;
     } else {
-        enviar_email(['desarrollo@prensa.com', 'compras@prensa.com'],"Hubo un error al enviar Pedido de compra $poId a SAP por favor reenviar",$mensaje);
+        enviar_email(['desarrollo@prensa.com', 'compras@prensa.com'],"Hubo un error al enviar Pedido de compra $poId a SAP por favor reenviar", $mensaje . "\n \n" . $result_string);
         return 'Error: No se pudo obtener el número del documento.';
     }
 

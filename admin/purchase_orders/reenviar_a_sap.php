@@ -86,7 +86,7 @@ function actualizar_reenvios_po($poId, $conn){
         $reenvios = 1;
 		$sql = "UPDATE po_list SET reenvios_a_sap = $reenvios WHERE id = $poId";
     	$conn->query($sql);
-    } elseif ($reenvios < 3) {
+    } elseif ($reenvios < 4) {
         $reenvios = $reenvios + 1;
 		$sql = "UPDATE po_list SET reenvios_a_sap = $reenvios WHERE id = $poId";
     	$conn->query($sql);
