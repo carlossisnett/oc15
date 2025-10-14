@@ -894,7 +894,7 @@ Class Master extends DBConnection {
 	function departamentos_que_usuario_puede_aprobar($user_id, $tipo){
 
 		$query = "";
-		if($tipo == "aprobacion" and ($user_id == 27 || $user_id == 133)){
+		if($tipo == "aprobacion" and ($user_id == 26 || $user_id == 133)){
 			// El sr y la sra planells pueden aprobar todos los departamentos
 			$query = $this->conn->query("SELECT departamento from aprobadores");
 		} else {
@@ -1779,6 +1779,21 @@ Class Master extends DBConnection {
 	 
 		 // Write the JSON data to the file
 		 file_put_contents($filePath, $jsonData);
+
+		$order = $this->conn->query("SELECT * FROM `po_list` where id = '{$id}'");
+		$row = $order->fetch_array();
+				
+		if ($row) {
+			$dateCreated = strtotime($row['date_created']);
+			$createdMonth = date('Y-m', $dateCreated);
+			$currentMonth = date('Y-m');
+
+			// If the record's month is before the current month
+			if ($createdMonth < $currentMonth) {
+				$today = date('Y-m-d H:i:s');
+				$this->conn->query("UPDATE `po_list` SET `date_created` = '{$today}' WHERE id = '{$id}'");
+			}
+		}
 
 		 try{
 			$response = create_purchase_order($id);
