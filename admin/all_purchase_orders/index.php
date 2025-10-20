@@ -132,8 +132,126 @@
 	<?php endif; ?>
 
 	<br>
+	<?php
+	//echo 'post_max_size: ' . ini_get('post_max_size') . "<br>";
+	//echo 'upload_max_filesize: ' . ini_get('upload_max_filesize') . "<br>";
+	?>
 	<br>
-	<h4> Todas las Solicitudes de Compra</h4>
+
+<button id="boton_pendientes" type="button" class="btn btn-success">Pendientes</button>
+<button id="boton_historial" type="button" class="btn btn-outline-secondary">Historial</button>
+	
+	<div id="solicitudes_pendientes">
+		<h4> Solicitudes Pendientes </h4>
+			<div class="container-fluid">
+        <div class="container-fluid">
+			<table class="table table-hover table-striped">
+				<colgroup>
+						<col width="5%">
+						<col width="10%">
+						<col width="10%"> <!-- Marca -->
+						<col width="8%"> <!-- Departamento -->
+						<col width="10%">
+						<col width="10%">
+						<col width="10%">
+						<col width="10%">
+						<col width="10%">
+				</colgroup>
+				<thead>
+					<tr class="">
+						<th>#</th>
+						<th>Fecha Creación</th>
+						<th># Solicitud de Compra</th>
+						<th># SAP</th>
+						<th>Proveedor</th>
+						<th>Solicitante</th>
+						<th>Monto Total</th>
+						<th>Estado</th>
+						<th>Acción</th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php 
+					
+					$i = 1;
+					//echo "SELECT po.*, CONCAT_WS(' ', u.firstname, u.lastname) as sname FROM `po_list` po inner join `users` u on po.username = u.username where po.username = '" . $_SESSION['userdata']['username'] . "' order by unix_timestamp(po.date_updated) ";	
+					
+					//$qry = $conn->query("SELECT po.*, CONCAT_WS(' ', u.firstname, u.lastname) as sname FROM `po_list` po inner join `users` u on po.username = u.username order by unix_timestamp(po.date_updated) ");
+						//$qry = $conn->query("SELECT po.*, s.name as sname FROM `po_list` po inner join `supplier_list` s on po.supplier_id = s.id order by unix_timestamp(po.date_updated) ");
+						$strqry = "SELECT po.*, CONCAT_WS(' ', u.firstname, u.lastname) as sname FROM `po_list` po inner join `users` u on po.username = u.username " . "WHERE SAPDocEntry IS NULL
+  AND po.status <> 2
+  AND date_created >= '2024-07-01' order by unix_timestamp(po.date_created) desc";
+						$qry = $conn->query($strqry);
+					
+						while($row = $qry->fetch_assoc()):
+							$prov_name = $conn->query("SELECT pro.name from proveedores pro join order_items o on pro.id = o.proveedor_id join po_list p on p.id = o.po_id where p.id = '{$row['id']}' LIMIT 1")->fetch_assoc();
+							if($prov_name != null){
+								$row['proveedor_name'] = $prov_name["name"];
+							} else {
+								$row['proveedor_name'] = "";
+							}
+
+							$row['item_count'] = $conn->query("SELECT * FROM order_items where po_id = '{$row['id']}'")->num_rows;
+							if($row['total'] != null) {
+								$row['total_amount'] = $row['total'];
+							} else{
+							$row['total_amount'] = $conn->query("SELECT sum(quantity * unit_price) as total FROM order_items where po_id = '{$row['id']}'")->fetch_array()['total'] + $row['tax_amount'] - $row['discount_amount'];
+							}
+					?>
+						<tr>
+							<td class="text-center"><?php echo $i++; ?></td>
+							<td class=""><?php echo date("M d,Y H:i",strtotime($row['date_created'])) ; ?></td>
+							<td class=""><?php echo $row['po_no'] ?></td>
+							<td class="text-center"><?php echo $row['SAPDocEntry'] ?></td>
+							<td class="text-center"><?php echo $row['proveedor_name'] ?></td>
+							<td class=""><?php echo $row['sname'] ?></td>
+							<td class="text-right"><?php echo special_format($row['total_amount']) ?></td>
+							<td>
+								<?php 
+									switch ($row['status']) {
+										case '1':
+											echo '<span class="badge badge-success">Aprobado</span>';
+											break;
+										case '2':
+											echo '<span class="badge badge-danger">Rechazado</span>';
+											break;
+										case '3':
+											echo '<b> Listo para aprobar </b>';
+											break;
+										default:
+											echo '<span class="badge badge-secondary">Pendiente</span>';
+											break;
+									}
+								?>
+							</td>
+							<td align="center">
+								 <button type="button" class="btn btn-flat btn-default btn-sm dropdown-toggle dropdown-icon" data-toggle="dropdown">
+				                  		Acción
+				                    <span class="sr-only">Toggle Dropdown</span>
+				                  </button>
+								  <div class="dropdown-menu" role="menu">
+								  	<a class="dropdown-item" href="?page=purchase_orders/view_po&id=<?php echo $row['id'] ?>"><span class="fa fa-eye text-primary"></span> Ver</a>
+									  <div class="dropdown-divider"></div>
+									 <?php if($_SESSION['userdata']['type'] == 1 || $_SESSION['userdata']['type'] == 2): ?>
+				                    <a class="dropdown-item" href="?page=purchase_orders/manage_po&id=<?php echo $row['id']?>&edit=true"><span class="fa fa-edit text-primary"></span> Editar</a>
+									<?php endif ?>
+				                    <div class="dropdown-divider"></div>
+									<a class="dropdown-item" href="?page=purchase_orders/manage_po&id=<?php echo $row['id'] ?>&duplicate=true"><span class="fa fa-copy text-warning"></span> Duplicar </a>
+									<!--
+									</a><div class="dropdown-divider"></div>
+				                    <a class="dropdown-item delete_data" href="javascript:void(0)" data-id="<?php echo $row['id'] ?>"><span class="fa fa-trash text-danger"></span> Eliminar</a>-->
+				                  </div>
+							</td>
+						</tr>
+					<?php endwhile; ?>
+				</tbody>
+			</table>
+		</div>
+		</div>
+									</div>
+
+	<div id="todas_solicitudes">
+	<h4> Historial de Solicitudes de Compra</h4>
 	<br>
 		<div class="container-fluid">
         <div class="container-fluid">
@@ -239,8 +357,52 @@
 		</div>
 		</div>
 	</div>
+									 </div>
 </div>
 <script>
+
+	document.addEventListener("DOMContentLoaded", function() {
+    const btnPendientes = document.getElementById("boton_pendientes");
+    const btnHistorial = document.getElementById("boton_historial");
+    const divPendientes = document.getElementById("solicitudes_pendientes");
+    const divHistorial = document.getElementById("todas_solicitudes");
+	divHistorial.style.display = "none";
+
+    btnPendientes.addEventListener("click", function() {
+        divPendientes.style.display = "block";
+        divHistorial.style.display = "none";
+        btnPendientes.classList.remove("btn-outline-secondary");
+        btnPendientes.classList.add("btn-success");
+        btnHistorial.classList.remove("btn-success");
+        btnHistorial.classList.add("btn-outline-secondary");
+    });
+
+    btnHistorial.addEventListener("click", function() {
+        divPendientes.style.display = "none";
+        divHistorial.style.display = "block";
+        btnHistorial.classList.remove("btn-outline-secondary");
+        btnHistorial.classList.add("btn-success");
+        btnPendientes.classList.remove("btn-success");
+        btnPendientes.classList.add("btn-outline-secondary");
+    });
+});
+
+function show_all_solicitudes_only(){
+	const btnPendientes = document.getElementById("boton_pendientes");
+    const btnHistorial = document.getElementById("boton_historial");
+    const divPendientes = document.getElementById("solicitudes_pendientes");
+    const divHistorial = document.getElementById("todas_solicitudes");
+
+	divPendientes.style.display = "none";
+	btnPendientes.style.display = "none";
+
+}
+
+ <?php if ($_SESSION['userdata']['type'] == 1): ?>
+				             show_all_solicitudes_only();     
+		<?php endif ?>
+
+
 $(document).ready(function(){
 	$('.cambiar_estado_aprobar').on('click',function(e){
 	e.preventDefault();
