@@ -2013,8 +2013,13 @@ function guardar_adjunto($po_no){
 		return json_encode($resp);
 	}
 
-	function remover_aprobaciones_temporales(){
-		return "hello";
+	function retornar_aprobador(){
+		extract($_POST);
+		$this->conn->query("DELETE FROM `aprobadores` where user_id = $temporal_id and aprobador_original = $original_id");
+
+		$resp['status'] = 'success';
+		$this->settings->set_flashdata('success',"Aprobador retornado correctamente.");
+		return json_encode($resp);
 	}
 
 	function update_approver_vacation(){
@@ -2145,6 +2150,10 @@ switch ($action) {
 
 	case 'remover_aprobaciones_temporales':
 		echo $Master->remover_aprobaciones_temporales();
+	break;
+
+	case 'retornar_aprobador':
+		echo $Master->retornar_aprobador();
 	break;
 	
 	default:

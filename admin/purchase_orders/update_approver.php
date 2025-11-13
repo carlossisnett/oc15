@@ -30,6 +30,38 @@ GLOBAL $conn;
 </style>
 
 <body>
+  
+<?php
+// Query to find if there are any temporary approvers
+$query = $conn->query("SELECT * FROM aprobadores WHERE temporal = 1 LIMIT 1");
+
+if ($query && $query->num_rows > 0) {
+    // Get the first temporary approver (you can loop if needed)
+    $row = $query->fetch_assoc();
+
+    $original_id = $row['aprobador_original'];
+    $temporal_id = $row['user_id'];
+
+    // Get names (assuming you have a `users` table)
+    $original_user = $conn->query("SELECT name FROM users WHERE id = {$original_id}")->fetch_assoc()['name'] ?? 'Usuario Original';
+    $temporal_user = $conn->query("SELECT name FROM users WHERE id = {$temporal_id}")->fetch_assoc()['name'] ?? 'Usuario Temporal';
+    ?>
+      <h4> Retorno de aprobador </h4>
+    <form id="retornar_aprobador" action="" method="post">
+        <input type="hidden" name="original_id" value="<?= htmlspecialchars($original_id) ?>">
+        <input type="hidden" name="temporal_id" value="<?= htmlspecialchars($temporal_id) ?>">
+
+        <p>¿Desea retornar las aprobaciones que <?= htmlspecialchars($temporal_user) ?> hacia por <strong><?= htmlspecialchars($original_user) ?></strong>?</p>
+
+        <button type="submit" class="btn btn-danger btn-block" style="font-size: 16px; width: 300px">
+            Sí, retornar aprobaciones a <?= htmlspecialchars($original_user) ?>
+        </button>
+    </form>
+<br><br><br><br><br>
+    <?php
+}
+?>
+
 <form id="transferir_aprobador" action="" method="post">
 <h4>Transferir aprobaciones de un usuario a otro </h4>
 Seleccione el usuario origen y el usuario que aprobara en su lugar
@@ -194,6 +226,47 @@ $('#approver-vacation-frm').submit(function(e){
 				}
 			})
   })
+
+  
+
+  $('#retornar_aprobador').submit(function(e){
+    e.preventDefault()
+    $.ajax({
+				url:_base_url_+"classes/Master.php?f=retornar_aprobador",
+				data: new FormData($(this)[0]),
+                cache: false,
+                contentType: false,
+                processData: false,
+                method: 'POST',
+                type: 'POST',
+                dataType: 'json',
+				error:err=>{
+					console.log(err)
+					alert_toast("Ocurrió un error",'error');
+			
+				},
+				success:function(resp){
+					if(typeof resp =='object' && resp.status == 'success'){
+						alert_toast("Aprobador actualizado correctamente.",'success');
+					}else if((resp.status == 'failed' || resp.status == 'po_failed') && !!resp.msg){
+                        var el = $('<div>')
+                            el.addClass("alert alert-danger err-msg").text(resp.msg)
+                            _this.prepend(el)
+                            el.show('slow')
+                            $("html, body").animate({ scrollTop: 0 }, "fast");
+                            end_loader()
+							if(resp.status == 'po_failed'){
+								$('[name="po_no"]').addClass('border-danger').focus()
+							}
+                    }else{
+						alert_toast("Ocurrió un error",'error');
+					
+                        console.log(resp)
+					}
+				}
+			})
+  })
+
 
   $('#transferir_aprobador').submit(function(e){
     e.preventDefault()
