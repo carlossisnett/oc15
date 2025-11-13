@@ -30,6 +30,44 @@ GLOBAL $conn;
 </style>
 
 <body>
+<form id="transferir_aprobador" action="" method="post">
+<h4>Transferir aprobaciones de un usuario a otro </h4>
+Seleccione el usuario origen y el usuario que aprobara en su lugar
+<br>
+Antiguo aprobador:
+
+<select name="antiguo_aprobador_id" class="custom-select custom-select-sm rounded-0 select2" required>
+                <option value="" selected disabled>-- Escoge un usuario --</option >
+                  <?php
+                  $marcas_query = $conn->query("SELECT id, concat(firstname, ' ', lastname) as `name` FROM users order by `name`");
+                  while($row_2 = $marcas_query->fetch_assoc()):
+                  ?>
+                <option value="<?php  echo $row_2['id']  ?>"> <?php  echo($row_2['name']);?> </option>
+                <?php  endwhile;  ?>
+                </select>
+
+Nuevo Aprobador:
+
+<select name="nuevo_aprobador_id" class="custom-select custom-select-sm rounded-0 select2" required>
+                <option value="" selected disabled>-- Escoge un usuario --</option >
+                  <?php
+                  $marcas_query = $conn->query("SELECT id, concat(firstname, ' ', lastname) as `name` FROM users order by `name`");
+                  while($row_2 = $marcas_query->fetch_assoc()):
+                  ?>
+                <option value="<?php  echo $row_2['id']  ?>"> <?php  echo($row_2['name']);?> </option>
+                <?php  endwhile;  ?>
+                </select>
+
+--<b>Atención</b> -- Este nuevo aprobador lo hará permanente o temporalmente?
+<select name="type_transfer" >
+<option value=""  >-- Escoge una opción--</option >
+<option value="permanente"  > Permanente (el antiguo aprobador ya no aprobará estos departamentos)</option >
+<option value="temporal" > Temporal (por vacaciones, licencia, etc) </option >
+</select>
+<br><br>
+<button type="submit" class="btn btn-danger btn-block" style="font-size: 16px; width: 300px">Enviar</button>
+</form>
+<br><br><br><br> <br><br><br>
 <form id="approver-frm" action="" method="post">
 <h4>Seleccione el departamento y el usuario que va a aprobar solicitudes de ese departamento </h4>
 <select name="departamento_id" class="custom-select custom-select-sm rounded-0 select2" required>
@@ -123,6 +161,44 @@ $('#approver-vacation-frm').submit(function(e){
     e.preventDefault()
     $.ajax({
 				url:_base_url_+"classes/Master.php?f=update_approver_vacation",
+				data: new FormData($(this)[0]),
+                cache: false,
+                contentType: false,
+                processData: false,
+                method: 'POST',
+                type: 'POST',
+                dataType: 'json',
+				error:err=>{
+					console.log(err)
+					alert_toast("Ocurrió un error",'error');
+			
+				},
+				success:function(resp){
+					if(typeof resp =='object' && resp.status == 'success'){
+						alert_toast("Aprobador actualizado correctamente.",'success');
+					}else if((resp.status == 'failed' || resp.status == 'po_failed') && !!resp.msg){
+                        var el = $('<div>')
+                            el.addClass("alert alert-danger err-msg").text(resp.msg)
+                            _this.prepend(el)
+                            el.show('slow')
+                            $("html, body").animate({ scrollTop: 0 }, "fast");
+                            end_loader()
+							if(resp.status == 'po_failed'){
+								$('[name="po_no"]').addClass('border-danger').focus()
+							}
+                    }else{
+						alert_toast("Ocurrió un error",'error');
+					
+                        console.log(resp)
+					}
+				}
+			})
+  })
+
+  $('#transferir_aprobador').submit(function(e){
+    e.preventDefault()
+    $.ajax({
+				url:_base_url_+"classes/Master.php?f=transfer_approver",
 				data: new FormData($(this)[0]),
                 cache: false,
                 contentType: false,

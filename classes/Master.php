@@ -1985,6 +1985,38 @@ function guardar_adjunto($po_no){
 		return json_encode($resp);
 	}
 
+	function transfer_approver(){
+		extract($_POST);
+
+		$departamentos_usuario = $this->departamentos_que_usuario_puede_aprobar($antiguo_aprobador_id, "vacaciones");
+		$departamentos = array_column($departamentos_usuario, 'departamento');
+		if($type_transfer == "temporal"){
+			
+			foreach($departamentos as $key => $value){
+				$save = $this->conn->query("INSERT INTO `aprobadores` (`user_id`,`departamento`, `temporal`, `aprobador_original`) VALUES ($nuevo_aprobador_id,'{$value}', 1, $antiguo_aprobador_id) ");
+			}
+		} else{
+			$this->conn->query("DELETE FROM `aprobadores` where user_id = $antiguo_aprobador_id");
+			foreach($departamentos as $key => $value){
+				$save = $this->conn->query("INSERT INTO `aprobadores` (`user_id`,`departamento`, `temporal`, `aprobador_original`) VALUES ($nuevo_aprobador_id,'{$value}', 0, $antiguo_aprobador_id) ");
+			}
+			// Do an insert like the one above with temporal set to false
+			// if the previous query succeeds delete all instances in aprobadores where user_id = $antiguo_aprobador_id
+		}
+		if($save){
+			$resp['status'] = 'success';
+			$this->settings->set_flashdata('success',"Aprobador guardado correctamente.");
+		}else{
+			$resp['status'] = 'failed';
+			$resp['error'] = $this->conn->error;
+		}
+		return json_encode($resp);
+	}
+
+	function remover_aprobaciones_temporales(){
+		return "hello";
+	}
+
 	function update_approver_vacation(){
 		extract($_POST);
 		$departamentos_usuario = $this->departamentos_que_usuario_puede_aprobar($gerente_id, "vacaciones");
@@ -2105,6 +2137,14 @@ switch ($action) {
 
 	case 'save_cotizacion':
 		echo $Master->save_cotizacion();
+	break;
+
+	case 'transfer_approver':
+		echo $Master->transfer_approver();
+	break;
+
+	case 'remover_aprobaciones_temporales':
+		echo $Master->remover_aprobaciones_temporales();
 	break;
 	
 	default:
