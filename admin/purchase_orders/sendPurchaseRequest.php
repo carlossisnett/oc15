@@ -603,21 +603,22 @@ function create_purchase_order($poId){
                     $vatGroup = '';
                     // Determinar el grupo de IVA
 
-                    /*
+                    
                     if($tax_percentage > 0){
                         $vatGroup = "C1";
                     } else {
                         $vatGroup = "C0";
                     }
-                        */
+                        
 
-                    
+                    /*
                     if($tax_percentage == 0){
                         $vatGroup = 'C0';
                     }
                     if($tax_percentage == 7){
                         $vatGroup = 'C1';
                     }
+                        */
                         
                     //$vatGroup = ($tax_percentage == 0) ? 'C0' : 'C1';
     
@@ -632,7 +633,8 @@ function create_purchase_order($poId){
                         'RequiredDate' => $requiredDateYMD,
                         'CostingCode' => $codigo_marca,
                         'CostingCode2' => $codigo_departamento,
-                        'LineVendor' => $proveedor_sap
+                        'LineVendor' => $proveedor_sap,
+                        'VatGroup' => $vatGroup
                         
                         
                         //'VatGroup' => $vatGroup,
