@@ -1596,10 +1596,10 @@ Class Master extends DBConnection {
 			}
 		}
 
-		$username_ins = $_SESSION['userdata']['username'];
+		//$username_ins = $_SESSION['userdata']['username'];
 
 		$data .= ", numero_solicitud = '{$numero_solicitud}' ";
-		$data .= ", username = '{$username_ins}' ";
+		//$data .= ", username = '{$username}' ";
 		
 
 		//echo $data;

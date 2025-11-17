@@ -14,6 +14,7 @@ if(isset($_SESSION['userdata']['type']) == true){
 } else {
 	$user_type = 5;
 }
+$username = $_SESSION['userdata']['username'];
 ?>
 <style>
     span.select2-selection.select2-selection--single {
@@ -158,6 +159,7 @@ if($qry['codSAP'] == null){
 						<div class="col-md-6">
 							<label for="notes" class="control-label">Notas del Solicitante</label>
 							<textarea name="notes" id="notes" cols="10" rows="4" class="form-control rounded-0"><?php echo isset($notes) ? $notes : '' ?></textarea>
+							<input name="username" value="<?php echo($username); ?>"hidden>
 						</div>
 						<div class="col-md-6">
 							<label for="status" class="control-label">Estado de Almacen</label>
