@@ -262,7 +262,7 @@ function cambiar_estado_para_aprobador_inventario($po_id, $user_id, $conn, $stat
 }
 
 function cambiar_estado_para_compras($po_id, $user_id, $conn, $status){
-    $query = $conn->query("SELECT type from users where id = $user_id;");
+     $query = $conn->query("SELECT type from users where id = $user_id;");
     if(gettype($query) == "boolean"){
         echo "";
         return;
@@ -272,12 +272,16 @@ function cambiar_estado_para_compras($po_id, $user_id, $conn, $status){
         if($user_type == 2){
 
             $option_0 = '<option value="0">Pendiente</option>';
+            $option_2 = '<option value="2">Rechazar</option>';
             $option_3 = '<option value="3">Listo para aprobar </option>';
 
             switch($status){
                   case 0:
                        $option_0 = '<option value="0" selected>Pendiente</option>';
                        break;
+                  case 2:
+                        $option_2 = '<option value="2" selected>Rechazar</option>';
+                        break;
                   case 3:
                        $option_3 = '<option value="3" selected>Listo para aprobar </option>';
                        break;
@@ -290,6 +294,7 @@ function cambiar_estado_para_compras($po_id, $user_id, $conn, $status){
                          <select class=\"form-select\" aria-label=\"Default select example\">
                              $option_0
                              $option_3
+                             $option_2
                          </select>
                          </div>
                          </form>
@@ -300,13 +305,17 @@ function cambiar_estado_para_compras($po_id, $user_id, $conn, $status){
 
 }
 
+/*
+Esta funcion retorna una tabla con las solicitudes de inventario pendientes
+*/
 function render_solicitud_inventario_table($conn) {
     $query = "
         SELECT po.*, CONCAT_WS(' ', u.firstname, u.lastname) AS sname 
-        FROM solicitud_de_inventario po 
-        INNER JOIN users u ON po.username = u.username
-        where po.salida_de_mercancia = 1
-        ORDER BY unix_timestamp(po.date_created) DESC
+FROM solicitud_de_inventario po 
+INNER JOIN users u ON po.username = u.username
+WHERE po.salida_de_mercancia = 1
+  AND (po.estado_almacen NOT IN (1, 2) OR po.estado_almacen IS NULL)
+ORDER BY unix_timestamp(po.date_created) DESC;
     ";
     $result = $conn->query($query);
 
@@ -427,9 +436,11 @@ function render_solicitud_inventario_table($conn) {
 
 function render_historial_inventario($conn) {
     $query = "
-        SELECT po.*, CONCAT_WS(' ', u.firstname, u.lastname) AS sname 
+        SELECT po.*, CONCAT_WS(' ', u.firstname, u.lastname) AS sname, ct.nombre_ccosto
         FROM solicitud_de_inventario po 
         INNER JOIN users u ON po.username = u.username
+        JOIN inventory_items iv on iv.solicitud_id = po.id
+        join centro_costo ct on ct.codigo_ccosto = iv.codigo_departamento
         ORDER BY unix_timestamp(po.date_created) DESC
     ";
     $result = $conn->query($query);
@@ -439,14 +450,14 @@ function render_historial_inventario($conn) {
             <h4> Todas las Salidas de Inventario</h4>
                 <table class="table table-hover table-striped">
                     <colgroup>
-                        <col width="5%">
-                        <col width="10%">
-                        <col width="10%">
+                       <col width="8%">
+                        <col width="14%">
+                        <col width="15%">
+                        <col width="12%">
+                        <col width="15%">
+                        <col width="14%">
+                        <col width="14%">
                         <col width="8%">
-                        <col width="10%">
-                        <col width="10%">
-                        <col width="10%">
-                        <col width="10%">
                     </colgroup>
                     <thead>
                         <tr>
@@ -455,6 +466,7 @@ function render_historial_inventario($conn) {
                             <th># Salida de Inventario</th>
                             <th># SAP</th>
                             <th>Solicitante</th>
+                            <th> Departamento </th>
                             <th>Estado</th>
                             <th>Estado en Almacen</th>
                             <th>Acción</th>
@@ -483,6 +495,8 @@ function render_historial_inventario($conn) {
 
         // Solicitante
         echo '<td>' . $row['sname'] . '</td>';
+
+        echo '<td>' . $row['nombre_ccosto'] . '</td>';
 
         // Estado
         echo '<td>';
