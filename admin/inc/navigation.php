@@ -56,7 +56,7 @@
                     $qry = $conn->query("SELECT * from `users` where id = '$id_usuario' ");
                       $qry = $qry->fetch_array();
                       ?>
-                        <?php if($qry['puede_cotizar'] == false): ?>
+                        <?php if($qry['puede_cotizar'] == true): ?>
                     <li class="nav-item dropdown">
                       <a href="<?php echo base_url ?>admin/?page=cotizacion" class="nav-link nav-cotizacion">
                         <i class="nav-icon fas fa-book"></i>
@@ -95,7 +95,7 @@
                     </li>
                     <?php endif; ?>
                    
-                    <?php if($_settings->userdata('type') == 1): ?>
+                    <?php if($_settings->userdata('type') == 1 or $_settings->userdata('type') == 2): ?>
                     <li class="nav-header">Sistema</li>
                     <li class="nav-item dropdown">
                       <a href="<?php echo base_url ?>admin/?page=user/list" class="nav-link nav-user_list">
@@ -110,6 +110,30 @@
                         <i class="nav-icon fas fa-cogs"></i>
                         <p>
                           Configuración
+                        </p>
+                      </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                      <a href="<?php echo base_url ?>admin/?page=proveedores/manage_proveedor" class="nav-link nav-proveedores_manage_proveedor">
+                        <i class="nav-icon fas fa-truck"></i>
+                        <p>
+                          Agregar Proveedor
+                        </p>
+                      </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                      <a href="<?php echo base_url ?>admin/?page=purchase_orders/update_approver" class="nav-link nav-purchase_orders_update_approver">
+                        <i class="nav-icon fas fa-user-check"></i>
+                        <p>
+                          Actualizar Aprobadores
+                        </p>
+                      </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                      <a href="<?php echo base_url ?>sincronizar.php" class="nav-link nav-sincronizar" target="_blank">
+                        <i class="nav-icon fas fa-sync"></i>
+                        <p>
+                          Sincronizar con SAP
                         </p>
                       </a>
                     </li>
