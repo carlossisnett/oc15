@@ -1202,7 +1202,6 @@ Class Master extends DBConnection {
 			$user_row = $user_query->fetch_assoc();
 			$to[] = $user_row['email'];
 		}
-		$to[] = "desarrollo@prensa.com";
 
 		
 	
@@ -1244,8 +1243,6 @@ Class Master extends DBConnection {
 			$user_row = $user_query->fetch_assoc();
 			$to[] = $user_row['email']; 
 		}
-
-		$to[] = "desarrollo@prensa.com";
 	
 		$po_list_query = $this->conn->query("SELECT * from solicitud_de_inventario where id = '{$si_id}' ");
 		$po_list_row = $po_list_query->fetch_assoc();

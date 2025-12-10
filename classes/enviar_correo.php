@@ -233,7 +233,7 @@ function enviar_email2($id, $numero_sap) {
             {
             $mail->addAddress('compras@prensa.com');
             $mail->addCC($destinatario);
-            $mail->addCC('desarrollo@prensa.com');
+            //$mail->addCC('desarrollo@prensa.com');
             }
             // Asunto y cuerpo del correo
             $mail->isHTML(true);
@@ -454,7 +454,7 @@ function enviar_email_solicitud_inventario($id, $numero_sap){
             */
             $mail->addAddress('almacen@prensa.com');
             $mail->addCC($destinatario);
-            $mail->addCC('desarrollo@prensa.com');
+            //$mail->addCC('desarrollo@prensa.com');
             // Asunto y cuerpo del correo
             $mail->isHTML(true);
             $mail->CharSet = 'UTF-8';
