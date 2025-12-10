@@ -76,6 +76,41 @@ Class Master extends DBConnection {
 		return json_encode($resp);
 
 	}
+	function save_proveedor(){
+		extract($_POST);
+		$data = "";
+		
+		// Validate required fields
+		if(empty($name) || trim($name) === ''){
+			$resp['status'] = 'failed';
+			$resp['msg'] = "El nombre del proveedor es requerido";
+			return json_encode($resp);
+		}
+		
+		if(empty($codSAP) || trim($codSAP) === ''){
+			$resp['status'] = 'failed';
+			$resp['msg'] = "El código SAP es requerido";
+			return json_encode($resp);
+		}
+		
+		// Build data string for SQL
+		//$name = addslashes(trim($name));
+		//$codSAP = addslashes(trim($codSAP));
+		$status = 1; // Always set status to 1 for new proveedores
+	
+		// Insert new proveedor
+		$sql = "INSERT INTO `proveedores` (`name`, `codSAP`, `status`) VALUES ('{$name}', '{$codSAP}', {$status})";
+		$save = $this->conn->query($sql);
+		
+		if($save){
+			$resp['status'] = 'success';
+			$this->settings->set_flashdata('success',"Nuevo proveedor guardado correctamente");
+		}else{
+			$resp['status'] = 'failed';
+			$resp['err'] = $this->conn->error."[{$sql}]";
+		}
+		return json_encode($resp);
+	}
 	function save_item(){
 		extract($_POST);
 		$data = "";
@@ -2154,6 +2189,10 @@ switch ($action) {
 
 	case 'retornar_aprobador':
 		echo $Master->retornar_aprobador();
+	break;
+
+	case 'save_proveedor':
+		echo $Master->save_proveedor();
 	break;
 	
 	default:
