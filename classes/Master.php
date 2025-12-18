@@ -111,6 +111,72 @@ Class Master extends DBConnection {
 		}
 		return json_encode($resp);
 	}
+	function save_articulo(){
+		extract($_POST);
+		
+		// Validate required fields
+		if(empty($codSAP) || trim($codSAP) === ''){
+			$resp['status'] = 'failed';
+			$resp['msg'] = "El código SAP es requerido";
+			return json_encode($resp);
+		}
+		
+		if(empty($description) || trim($description) === ''){
+			$resp['status'] = 'failed';
+			$resp['msg'] = "El nombre del artículo es requerido";
+			return json_encode($resp);
+		}
+		
+		if(!isset($inventory_item) || $inventory_item === ''){
+			$resp['status'] = 'failed';
+			$resp['msg'] = "Debe indicar si se guardará en inventario";
+			return json_encode($resp);
+		}
+		
+		if(!isset($purchase_item) || $purchase_item === ''){
+			$resp['status'] = 'failed';
+			$resp['msg'] = "Debe indicar si se puede comprar de otras empresas";
+			return json_encode($resp);
+		}
+		
+		if(!isset($sales_item) || $sales_item === ''){
+			$resp['status'] = 'failed';
+			$resp['msg'] = "Debe indicar si será vendido por la empresa";
+			return json_encode($resp);
+		}
+		
+		// Check if codSAP already exists
+		$check = $this->conn->query("SELECT * FROM `item_list` where `codSAP` = '{$codSAP}' ".(!empty($id) ? " and id != {$id} " : "")." ")->num_rows;
+		if($this->capture_err())
+			return $this->capture_err();
+		if($check > 0){
+			$resp['status'] = 'failed';
+			$resp['msg'] = "El código SAP ya existe en el sistema";
+			return json_encode($resp);
+		}
+		
+		// Escape strings for SQL
+		$codSAP = $this->conn->real_escape_string($codSAP);
+		$description = $this->conn->real_escape_string($description);
+		$inventory_item = (int)$inventory_item;
+		$purchase_item = (int)$purchase_item;
+		$sales_item = (int)$sales_item;
+		$status = 1; // Always set status to 1
+		
+		// Insert new article
+		$sql = "INSERT INTO `item_list` (`inventory_item`, `purchase_item`, `sales_item`, `codSAP`, `name`, `description`, `status`) 
+				VALUES ($inventory_item, $purchase_item, $sales_item, '$codSAP', '$codSAP', '$description', $status)";
+		$save = $this->conn->query($sql);
+		
+		if($save){
+			$resp['status'] = 'success';
+			$this->settings->set_flashdata('success',"Nuevo artículo guardado correctamente");
+		}else{
+			$resp['status'] = 'failed';
+			$resp['err'] = $this->conn->error."[{$sql}]";
+		}
+		return json_encode($resp);
+	}
 	function save_item(){
 		extract($_POST);
 		$data = "";
@@ -2191,6 +2257,11 @@ switch ($action) {
 	case 'save_proveedor':
 		echo $Master->save_proveedor();
 	break;
+
+	case 'save_articulo':
+		echo $Master->save_articulo();
+	break;
+	
 	
 	default:
 		// echo $sysset->index();
