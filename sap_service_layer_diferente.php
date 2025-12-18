@@ -377,7 +377,7 @@ class SAPServiceLayer{
     
     public function get_inventory(){
         $base_url = $this->serviceLayerUrl;
-        $requests_url = "Items?\$select=ItemCode,ItemName,InventoryItem,ItemWarehouseInfoCollection";
+        $requests_url = "Items";
 
         $url = $base_url . $requests_url;
 
@@ -507,6 +507,11 @@ class SAPServiceLayer{
         $i++;
     
         }
+
+        $logFile = __DIR__ . "/rutinas.log"; // log file in the same folder
+        $message = date("Y-m-d H:i:s") . " - get_inventario was run \n";
+
+        file_put_contents($logFile, $message, FILE_APPEND);
         
         
  
