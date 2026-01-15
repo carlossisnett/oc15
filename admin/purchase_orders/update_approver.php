@@ -57,7 +57,7 @@ GLOBAL $conn;
                 echo "</ul>";
             }
             echo "<h5>" . htmlspecialchars($row_2['name']) . "</h5>";
-            echo "<ul>";
+            echo "<ul style='list-style: none; padding-left: 0;'>";
             $current_user = $row_2['user_id'];
         }
         
@@ -71,8 +71,20 @@ GLOBAL $conn;
         }
         $label_text = !empty($labels) ? " [" . implode(", ", $labels) . "]" : "";
 
-        // Print the department under this user
-        echo "<li>" . htmlspecialchars($row_2['nombre_ccosto']) . " (" . htmlspecialchars($row_2['departamento']) . ")$label_text</li>";
+        // Print the department under this user with delete button
+        echo "<li style='margin-bottom: 8px;'>";
+        //echo "• ";
+        echo "<button class='btn btn-sm btn-danger delete-approver' 
+                data-user-id='" . $row_2['user_id'] . "' 
+                data-departamento='" . htmlspecialchars($row_2['departamento']) . "' 
+                data-user-name='" . htmlspecialchars($row_2['name']) . "' 
+                data-dept-name='" . htmlspecialchars($row_2['nombre_ccosto']) . "' 
+                style='padding: 1px 6px; margin-right: 5px;' 
+                title='Eliminar aprobador'>
+                <i class='fas fa-times'></i>
+              </button>";
+        echo htmlspecialchars($row_2['nombre_ccosto']) . " (" . htmlspecialchars($row_2['departamento']) . ")$label_text";
+        echo "</li>";
     endwhile;
 
     // Close the last <ul>
@@ -243,6 +255,44 @@ ORDER BY
 // Toggle approver list visibility
 $('#toggleApproverList').click(function() {
     $('#approverListSection').slideToggle(300);
+});
+
+// Handle delete approver button click
+$(document).on('click', '.delete-approver', function(e) {
+    e.preventDefault();
+    
+    var userId = $(this).data('user-id');
+    var departamento = $(this).data('departamento');
+    var userName = $(this).data('user-name');
+    var deptName = $(this).data('dept-name');
+    var button = $(this);
+    
+    if(confirm('¿Está seguro que desea dejar de permitir que ' + userName + ' apruebe el departamento ' + deptName + '?')) {
+        $.ajax({
+            url: _base_url_ + "classes/Master.php?f=delete_approver",
+            data: { user_id: userId, departamento: departamento },
+            method: 'POST',
+            dataType: 'json',
+            error: function(err) {
+                console.log(err);
+                alert_toast("Ocurrió un error", 'error');
+            },
+            success: function(resp) {
+                if(typeof resp == 'object' && resp.status == 'success') {
+                    alert_toast("Aprobador eliminado correctamente.", 'success');
+                    // Remove the list item from the DOM
+                    button.closest('li').fadeOut(300, function() {
+                        $(this).remove();
+                    });
+                } else if(resp.status == 'failed' && !!resp.msg) {
+                    alert_toast(resp.msg, 'error');
+                } else {
+                    alert_toast("Ocurrió un error", 'error');
+                    console.log(resp);
+                }
+            }
+        });
+    }
 });
 
 $('#approver-vacation-frm').submit(function(e){

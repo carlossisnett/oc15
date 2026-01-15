@@ -163,9 +163,14 @@ Class Master extends DBConnection {
 		$sales_item = (int)$sales_item;
 		$status = 1; // Always set status to 1
 		
+		// Handle optional ubicacion_almacen
+		$ubicacion_almacen = isset($ubicacion_almacen) && !empty(trim($ubicacion_almacen)) 
+			? "'" . $this->conn->real_escape_string(trim($ubicacion_almacen)) . "'" 
+			: "NULL";
+		
 		// Insert new article
-		$sql = "INSERT INTO `item_list` (`inventory_item`, `purchase_item`, `sales_item`, `codSAP`, `name`, `description`, `status`) 
-				VALUES ($inventory_item, $purchase_item, $sales_item, '$codSAP', '$codSAP', '$description', $status)";
+		$sql = "INSERT INTO `item_list` (`inventory_item`, `purchase_item`, `sales_item`, `codSAP`, `name`, `description`, `status`, `ubicacion_almacen`) 
+				VALUES ($inventory_item, $purchase_item, $sales_item, '$codSAP', '$codSAP', '$description', $status, $ubicacion_almacen)";
 		$save = $this->conn->query($sql);
 		
 		if($save){
@@ -2120,6 +2125,31 @@ function guardar_adjunto($po_no){
 		return json_encode($resp);
 	}
 
+	function delete_approver(){
+		extract($_POST);
+		
+		// Validate inputs
+		if(empty($user_id) || empty($departamento)){
+			$resp['status'] = 'failed';
+			$resp['msg'] = 'Datos incompletos';
+			return json_encode($resp);
+		}
+
+		// Delete the approver record
+		$delete = $this->conn->query("DELETE FROM `aprobadores` WHERE user_id = '{$user_id}' AND departamento = '{$departamento}'");
+		
+		if($delete){
+			$resp['status'] = 'success';
+			$resp['msg'] = 'Aprobador eliminado correctamente.';
+		}else{
+			$resp['status'] = 'failed';
+			$resp['msg'] = 'Error al eliminar el aprobador.';
+			$resp['error'] = $this->conn->error;
+		}
+		
+		return json_encode($resp);
+	}
+
 	function update_approver_vacation(){
 		extract($_POST);
 		$departamentos_usuario = $this->departamentos_que_usuario_puede_aprobar($gerente_id, "vacaciones");
@@ -2261,7 +2291,10 @@ switch ($action) {
 	case 'save_articulo':
 		echo $Master->save_articulo();
 	break;
-	
+
+	case 'delete_approver':
+		echo $Master->delete_approver();
+	break;
 	
 	default:
 		// echo $sysset->index();
