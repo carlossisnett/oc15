@@ -235,7 +235,8 @@ if($qry['codSAP'] == null){
 					<div class="row">
 						<div class="col-md-6">
 							<label for="notes" class="control-label">Notas</label>
-							<textarea name="notes" id="notes" cols="10" rows="4" class="form-control rounded-0"><?php echo isset($notes) ? $notes : '' ?></textarea>
+							<textarea maxlength="235" name="notes" id="notes" cols="10" rows="4" class="form-control rounded-0"><?php echo isset($notes) ? $notes : '' ?></textarea>
+										<div id="char-count">0 / 230</div>
 						</div>
 						<div class="col-md-6">
 							<label for="status" class="control-label">Estado</label>
@@ -425,6 +426,24 @@ if($qry['codSAP'] == null){
 </table>
 
 <script>
+const textarea = document.getElementById("notes");
+const counter = document.getElementById("char-count");
+const maxLength = 235;
+
+// Update counter on page load
+counter.textContent = `${textarea.value.length} / ${maxLength}`;
+
+textarea.addEventListener("input", function() {
+  const currentLength = this.value.length;
+  
+  // Enforce max length
+  if (currentLength > maxLength) {
+    this.value = this.value.substring(0, maxLength);
+  }
+  
+  counter.textContent = `${this.value.length} / ${maxLength}`;
+});
+
 	function rem_item(_this){
 		if(es_editado()){
 			let row = _this.closest('tr'); 
