@@ -30,7 +30,58 @@ GLOBAL $conn;
 </style>
 
 <body>
-  
+
+<!-- Toggle button for approver list -->
+<button id="toggleApproverList" class="btn btn-primary mb-3" type="button">
+    <i class="fas fa-list"></i> Mostrar/Ocultar Lista de Aprobadores
+</button>
+
+<!-- Approver list section (hidden by default) -->
+<div id="approverListSection" style="display: none; margin-bottom: 30px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9;">
+    <h4>Lista de aprobadores y sus departamentos:</h4>
+    <?php
+    $marcas_query = $conn->query("
+        SELECT aprobadores.*, users.name, centro_costo.nombre_ccosto 
+        FROM aprobadores 
+        JOIN users ON users.id = aprobadores.user_id 
+        JOIN centro_costo ON centro_costo.codigo_ccosto = aprobadores.departamento 
+        ORDER BY users.id
+    ");
+
+    $current_user = null;
+    while($row_2 = $marcas_query->fetch_assoc()):
+        // When we hit a new user, print a header
+        if ($current_user !== $row_2['user_id']) {
+            // Close the previous list if not the first user
+            if ($current_user !== null) {
+                echo "</ul>";
+            }
+            echo "<h5>" . htmlspecialchars($row_2['name']) . "</h5>";
+            echo "<ul>";
+            $current_user = $row_2['user_id'];
+        }
+        
+        // Build label text
+        $labels = [];
+        if ($row_2['exclusivo_inventario'] == 1) {
+            $labels[] = "Exclusivo Inventario";
+        }
+        if ($row_2['exclusivo_compras'] == 1) {
+            $labels[] = "Exclusivo Compras";
+        }
+        $label_text = !empty($labels) ? " [" . implode(", ", $labels) . "]" : "";
+
+        // Print the department under this user
+        echo "<li>" . htmlspecialchars($row_2['nombre_ccosto']) . " (" . htmlspecialchars($row_2['departamento']) . ")$label_text</li>";
+    endwhile;
+
+    // Close the last <ul>
+    if ($current_user !== null) {
+        echo "</ul>";
+    }
+    ?>
+</div>
+
 <?php
 // Query to find if there are any temporary approvers
 $query = $conn->query("SELECT * FROM aprobadores WHERE temporal = 1 LIMIT 1");
@@ -159,7 +210,7 @@ ORDER BY
     
 
 
-<form id="approver-vacation-frm" action="" method="post">
+<form id="approver-vacation-frm" action="" method="post" hidden>
 <h4> Seleccione el usuario que aprobará las solicitudes del gerente que se va de vacaciones </h4>
 <select name="user_id" class="custom-select custom-select-sm rounded-0 select2" required>
 								<option value="" selected disabled>-- Escoge el usuario que va a aprobar --</option >
@@ -189,6 +240,11 @@ ORDER BY
 </body>
 
 <script>
+// Toggle approver list visibility
+$('#toggleApproverList').click(function() {
+    $('#approverListSection').slideToggle(300);
+});
+
 $('#approver-vacation-frm').submit(function(e){
     e.preventDefault()
     $.ajax({
