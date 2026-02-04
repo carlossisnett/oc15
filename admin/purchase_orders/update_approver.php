@@ -27,6 +27,61 @@ GLOBAL $conn;
 		[name="tax_percentage"],[name="discount_percentage"]{
 			width:5vw;
 		}*/
+		
+	/* Toggle Switch Styles */
+	.toggle-switch {
+		position: relative;
+		display: inline-block;
+		width: 50px;
+		height: 24px;
+		margin-left: 10px;
+		vertical-align: middle;
+	}
+
+	.toggle-switch input {
+		opacity: 0;
+		width: 0;
+		height: 0;
+	}
+
+	.toggle-slider {
+		position: absolute;
+		cursor: pointer;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: #ccc;
+		transition: .4s;
+		border-radius: 24px;
+	}
+
+	.toggle-slider:before {
+		position: absolute;
+		content: "";
+		height: 18px;
+		width: 18px;
+		left: 3px;
+		bottom: 3px;
+		background-color: white;
+		transition: .4s;
+		border-radius: 50%;
+	}
+
+	input:checked + .toggle-slider {
+		background-color: #28a745;
+	}
+
+	input:checked + .toggle-slider:before {
+		transform: translateX(26px);
+	}
+
+	.super-firma-label {
+		display: inline-block;
+		margin-left: 5px;
+		font-size: 14px;
+		font-weight: normal;
+	}
 </style>
 
 <body>
@@ -41,7 +96,7 @@ GLOBAL $conn;
     <h4>Lista de aprobadores y sus departamentos:</h4>
     <?php
     $marcas_query = $conn->query("
-        SELECT aprobadores.*, users.name, centro_costo.nombre_ccosto 
+        SELECT aprobadores.*, users.name, users.super_firma, centro_costo.nombre_ccosto 
         FROM aprobadores 
         JOIN users ON users.id = aprobadores.user_id 
         JOIN centro_costo ON centro_costo.codigo_ccosto = aprobadores.departamento 
@@ -49,6 +104,7 @@ GLOBAL $conn;
     ");
 
     $current_user = null;
+    $user_super_firma = null;
     while($row_2 = $marcas_query->fetch_assoc()):
         // When we hit a new user, print a header
         if ($current_user !== $row_2['user_id']) {
@@ -56,7 +112,22 @@ GLOBAL $conn;
             if ($current_user !== null) {
                 echo "</ul>";
             }
-            echo "<h5>" . htmlspecialchars($row_2['name']) . "</h5>";
+            
+            // Store super_firma status for this user
+            $user_super_firma = $row_2['super_firma'];
+            $checked = $user_super_firma == 1 ? 'checked' : '';
+            $super_firma_status = $user_super_firma == 1 ? 'Activada' : 'Desactivada';
+            
+            echo "<h5>" . htmlspecialchars($row_2['name']) . " 
+                    <label class='toggle-switch'>
+                        <input type='checkbox' class='toggle-super-firma' 
+                               data-user-id='" . $row_2['user_id'] . "' 
+                               data-user-name='" . htmlspecialchars($row_2['name']) . "' 
+                               {$checked}>
+                        <span class='toggle-slider'></span>
+                    </label>
+                    <span class='super-firma-label'>Super Firma: <span class='super-firma-status'>{$super_firma_status}</span></span>
+                  </h5>";
             echo "<ul style='list-style: none; padding-left: 0;'>";
             $current_user = $row_2['user_id'];
         }
@@ -292,6 +363,51 @@ $(document).on('click', '.delete-approver', function(e) {
                 }
             }
         });
+    }
+});
+
+// Handle toggle super firma switch change
+$(document).on('change', '.toggle-super-firma', function(e) {
+    
+    var userId = $(this).data('user-id');
+    var userName = $(this).data('user-name');
+    var checkbox = $(this);
+    var originalState = checkbox.prop('checked');
+    
+    if(confirm('¿Está seguro que desea cambiar el estado de Super Firma para ' + userName + '?')) {
+        $.ajax({
+            url: _base_url_ + "classes/Master.php?f=toggle_super_firma",
+            data: { user_id: userId },
+            method: 'POST',
+            dataType: 'json',
+            error: function(err) {
+                console.log(err);
+                alert_toast("Ocurrió un error", 'error');
+                // Revert checkbox state on error
+                checkbox.prop('checked', !originalState);
+            },
+            success: function(resp) {
+                if(typeof resp == 'object' && resp.status == 'success') {
+                    alert_toast(resp.msg, 'success');
+                    
+                    // Update status text
+                    var statusText = resp.new_value == 1 ? 'Activada' : 'Desactivada';
+                    checkbox.closest('h5').find('.super-firma-status').text(statusText);
+                } else if(resp.status == 'failed' && !!resp.msg) {
+                    alert_toast(resp.msg, 'error');
+                    // Revert checkbox state on error
+                    checkbox.prop('checked', !originalState);
+                } else {
+                    alert_toast("Ocurrió un error", 'error');
+                    console.log(resp);
+                    // Revert checkbox state on error
+                    checkbox.prop('checked', !originalState);
+                }
+            }
+        });
+    } else {
+        // User cancelled, revert the checkbox
+        checkbox.prop('checked', !originalState);
     }
 });
 

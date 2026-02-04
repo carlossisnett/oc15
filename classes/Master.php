@@ -1000,9 +1000,18 @@ Class Master extends DBConnection {
 	function departamentos_que_usuario_puede_aprobar($user_id, $tipo){
 
 		$query = "";
-		if($tipo == "aprobacion" and ($user_id == 26 || $user_id == 133)){
-			// El sr y la sra planells pueden aprobar todos los departamentos
-			$query = $this->conn->query("SELECT departamento from aprobadores");
+		if($tipo == "aprobacion"){
+			// Check if user has super_firma = 1
+			$user_check = $this->conn->query("SELECT super_firma FROM users WHERE id = '{$user_id}'");
+			$user_data = $user_check->fetch_assoc();
+			
+			if($user_data && $user_data['super_firma'] == 1){
+				// Users with super_firma can approve all departments
+				//echo("aqui super firma!!");
+				$query = $this->conn->query("SELECT departamento from aprobadores");
+			} else {
+				$query = $this->conn->query("SELECT departamento from aprobadores where user_id = '{$user_id}'");
+			}
 		} else {
 			$query = $this->conn->query("SELECT departamento from aprobadores where user_id = '{$user_id}'");
 		}
@@ -1039,6 +1048,21 @@ Class Master extends DBConnection {
 			return false;
 		}
 
+		// Check if user has super_firma = 1
+		$user_check = $this->conn->query("SELECT super_firma FROM users WHERE id = '{$user_id}'");
+		$user_data = $user_check->fetch_assoc();
+		$hora_aprobacion = date('Y-m-d H:i:s');
+
+		if($user_data && $user_data['super_firma'] == 1){
+			// Users with super_firma can approve ALL departments at once
+			$this->conn->query("UPDATE `order_items` 
+								  SET aprobador_user_id = '{$user_id}', 
+									  status = '{$status}', 
+									  hora_aprobacion = '{$hora_aprobacion}' 
+								  WHERE po_id = '{$id}'");
+			return true;
+		}
+
 		$departamentos_por_aprobar = $this->departamentos_que_faltan_por_aprobar($id);
 			$departamentos_que_usuario_puede_aprobar = $this->departamentos_que_usuario_puede_aprobar($user_id, "aprobacion");
 			// Extract only the department values
@@ -1047,7 +1071,6 @@ Class Master extends DBConnection {
 			// Convert to a string formatted for SQL
 			$departamentos_sql = "'" . implode("', '", $departamentos) . "'";
 
-			$hora_aprobacion = date('Y-m-d H:i:s');
 			//$departamentos_string = "'" . implode("', '", $departamentos_que_usuario_puede_aprobar) . "'";
 
 			$this->conn->query("UPDATE `order_items` 
@@ -2150,6 +2173,39 @@ function guardar_adjunto($po_no){
 		return json_encode($resp);
 	}
 
+	function toggle_super_firma(){
+		extract($_POST);
+		
+		// Validate inputs
+		if(empty($user_id)){
+			$resp['status'] = 'failed';
+			$resp['msg'] = 'ID de usuario requerido';
+			return json_encode($resp);
+		}
+
+		// Get current super_firma value
+		$check = $this->conn->query("SELECT super_firma FROM users WHERE id = '{$user_id}'");
+		$current = $check->fetch_assoc();
+		
+		// Toggle the value (0 to 1, or 1 to 0)
+		$new_value = ($current['super_firma'] == 1) ? 0 : 1;
+		
+		// Update the user
+		$update = $this->conn->query("UPDATE users SET super_firma = '{$new_value}' WHERE id = '{$user_id}'");
+		
+		if($update){
+			$resp['status'] = 'success';
+			$resp['new_value'] = $new_value;
+			$resp['msg'] = $new_value == 1 ? 'Super firma activada' : 'Super firma desactivada';
+		}else{
+			$resp['status'] = 'failed';
+			$resp['msg'] = 'Error al actualizar super firma.';
+			$resp['error'] = $this->conn->error;
+		}
+		
+		return json_encode($resp);
+	}
+
 	function update_approver_vacation(){
 		extract($_POST);
 		$departamentos_usuario = $this->departamentos_que_usuario_puede_aprobar($gerente_id, "vacaciones");
@@ -2294,6 +2350,10 @@ switch ($action) {
 
 	case 'delete_approver':
 		echo $Master->delete_approver();
+	break;
+
+	case 'toggle_super_firma':
+		echo $Master->toggle_super_firma();
 	break;
 	
 	default:
