@@ -1,0 +1,9 @@
+libs/
+*.svg
+plugins/
+vendor/
+uploads/
+build/
+dist/
+*.json
+*.csv

@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Sistema OC15</title>
+    <style>
+        :root {
+            --primary-color: #c41e3a;
+            --primary-dark: #9a1830;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --bg-light: #f8f9fa;
+            --bg-white: #ffffff;
+            --text-dark: #2c3e50;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            color: var(--text-dark);
+            background: var(--bg-light);
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            position: relative;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            position: relative;
+        }
+
+        /* Layout wrapper */
+        .page-wrapper {
+            display: flex;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Navigation - Left Sidebar */
+        .nav-container {
+            background: var(--bg-white);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            width: 280px;
+            flex-shrink: 0;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .nav-content {
+            padding: 25px 20px;
+        }
+
+        .nav-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--bg-light);
+        }
+
+        .toc {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .toc a {
+            color: var(--text-dark);
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            background: transparent;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .toc a:hover {
+            background: var(--bg-light);
+            color: var(--primary-color);
+            border-left-color: var(--primary-color);
+            transform: translateX(5px);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Sections */
+        section {
+            background: var(--bg-white);
+            border-radius: 12px;
+            padding: 35px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border-left: 5px solid var(--primary-color);
+            scroll-margin-top: 20px;
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--bg-light);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h2 .icon {
+            font-size: 1.5rem;
+        }
+
+        h3 {
+            color: var(--secondary-color);
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+            padding-left: 15px;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        h4 {
+            color: var(--text-dark);
+            font-size: 1.1rem;
+            margin: 20px 0 10px 0;
+        }
+
+        p {
+            margin-bottom: 15px;
+            color: var(--text-dark);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        th {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #34495e 100%);
+            color: white;
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:nth-child(even) {
+            background: var(--bg-light);
+        }
+
+        tr:hover {
+            background: #e8f4f8;
+        }
+
+        /* Lists */
+        ol, ul {
+            margin: 15px 0 15px 25px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            padding-left: 5px;
+        }
+
+        /* Code blocks */
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        code {
+            background: #f1f3f4;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            color: var(--accent-color);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-secondary { background: #e2e3e5; color: #383d41; }
+        .badge-info { background: #d1ecf1; color: #0c5460; }
+
+        /* Alert boxes */
+        .alert {
+            padding: 18px 22px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #e8f4f8 0%, #d1ecf1 100%);
+            border-left: 4px solid var(--info-color);
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #e8f5e9 0%, #d4edda 100%);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .alert-icon {
+            font-size: 1.3rem;
+        }
+
+        /* Steps */
+        .steps {
+            counter-reset: step;
+            list-style: none;
+            margin-left: 0;
+            padding-left: 0;
+        }
+
+        .steps li {
+            position: relative;
+            padding-left: 50px;
+            margin-bottom: 20px;
+        }
+
+        .steps li::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 35px;
+            height: 35px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        /* Flow diagram */
+        .flow-diagram {
+            background: var(--bg-light);
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .flow-number {
+            width: 30px;
+            height: 30px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .flow-arrow {
+            color: var(--primary-color);
+            margin: 0 10px;
+        }
+
+        /* FAQ */
+        .faq-item {
+            background: var(--bg-light);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .faq-question {
+            padding: 18px 20px;
+            font-weight: 600;
+            color: var(--secondary-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .faq-question::before {
+            content: '❓';
+        }
+
+        .faq-answer {
+            padding: 0 20px 18px 20px;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--secondary-color);
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+            margin-top: 40px;
+        }
+
+        .footer a {
+            color: #74b9ff;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .page-wrapper {
+                flex-direction: column;
+            }
+            .nav-container {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .toc {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            .toc a {
+                border-left: none;
+                border-bottom: 3px solid transparent;
+            }
+            .toc a:hover {
+                transform: translateY(-2px);
+            }
+            section {
+                scroll-margin-top: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2rem; }
+            .header .subtitle { font-size: 1rem; }
+            section { padding: 25px 20px; }
+            h2 { font-size: 1.5rem; }
+        }
+
+        /* Print styles */
+        @media print {
+            .nav-container { display: none; }
+            section { box-shadow: none; border: 1px solid #ddd; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <h1>📋 Manual de Usuario</h1>
+        <p class="subtitle">Sistema OC15 - Gestión de Órdenes de Compra</p>
+    </header>
+
+    <!-- Page Wrapper -->
+    <div class="page-wrapper">
+        <!-- Navigation - Left Sidebar -->
+        <nav class="nav-container">
+            <div class="nav-content">
+                <div class="nav-title">📑 Tabla de Contenidos</div>
+                <div class="toc">
+                    <a href="#introduccion">1. Introducción</a>
+                    <a href="#acceso">2. Acceso al Sistema</a>
+                    <a href="#dashboard">3. Panel Principal</a>
+                    <a href="#ordenes">4. Órdenes de Compra</a>
+                    <a href="#aprobacion">5. Aprobación</a>
+                    <a href="#aprobadores">6. Gestión Aprobadores</a>
+                    <a href="#proveedores">7. Proveedores</a>
+                    <a href="#articulos">8. Artículos</a>
+                    <a href="#inventario">9. Inventario</a>
+                    <a href="#usuarios">10. Usuarios</a>
+                    <a href="#faq">11. FAQ</a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <main class="container">
+
+        <!-- Section 1: Introducción -->
+        <section id="introduccion">
+            <h2><span class="icon">📖</span> 1. Introducción</h2>
+            <p>OC15 es un sistema web para la gestión de órdenes de compra e inventario con integración a SAP Business One. Permite crear, aprobar y dar seguimiento a solicitudes de compra, gestionar proveedores, artículos e inventario.</p>
+            
+            <h3>Tipos de Usuario</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Rol</th>
+                        <th>Permisos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-danger">1</span></td>
+                        <td>Administrador</td>
+                        <td>Acceso total al sistema</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-info">2</span></td>
+                        <td>Compras</td>
+                        <td>Gestión de órdenes de compra</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">3</span></td>
+                        <td>Almacén</td>
+                        <td>Gestión de inventario</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Section 2: Acceso al Sistema -->
+        <section id="acceso">
+            <h2><span class="icon">🔐</span> 2. Acceso al Sistema</h2>
+            
+            <h3>Inicio de Sesión</h3>
+            <ol class="steps">
+                <li>Abra su navegador web y acceda a la URL del sistema</li>
+                <li>Ingrese su <strong>Usuario</strong> y <strong>Contraseña</strong></li>
+                <li>Haga clic en <strong>INICIAR SESIÓN</strong></li>
+            </ol>
+
+            <h3>Recuperación de Contraseña</h3>
+            <p>Si olvidó su contraseña:</p>
+            <ol class="steps">
+                <li>Haga clic en el enlace <strong>"Olvidé mi contraseña"</strong></li>
+                <li>Ingrese su correo electrónico registrado</li>
+                <li>Recibirá un enlace para restablecer su contraseña</li>
+            </ol>
+
+            <div class="alert alert-warning">
+                <span class="alert-icon">⚠️</span>
+                <div>
+                    <strong>Advertencia de Código SAP</strong><br>
+                    Si al iniciar sesión ve el mensaje: <em>"ADVERTENCIA: Su usuario no tiene código de SAP"</em>, contacte a <strong>desarrollo@prensa.com</strong> para que le asignen uno antes de realizar órdenes de compra.
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Dashboard -->
+        <section id="dashboard">
+            <h2><span class="icon">📊</span> 3. Panel Principal (Dashboard)</h2>
+            <p>Al ingresar al sistema, verá el panel principal con las siguientes estadísticas:</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Indicador</th>
+                        <th>Descripción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>🚚 Total Solicitantes</td>
+                        <td>Cantidad de proveedores registrados</td>
+                    </tr>
+                    <tr>
+                        <td>📦 Total Solicitudes</td>
+                        <td>Número total de órdenes de compra</td>
+                    </tr>
+                    <tr>
+                        <td>✅ Solicitudes Aprobadas</td>
+                        <td>Órdenes con estado aprobado</td>
+                    </tr>
+                    <tr>
+                        <td>❌ Solicitudes Canceladas</td>
+                        <td>Órdenes rechazadas</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Section 4: Órdenes de Compra -->
+        <section id="ordenes">
+            <h2><span class="icon">🛒</span> 4. Gestión de Órdenes de Compra</h2>
+            
+            <h3>4.1 Crear Nueva Solicitud de Compra</h3>
+            <ol class="steps">
+                <li>Vaya a <strong>Solicitudes de Compra</strong> → <strong>Crear Nuevo</strong></li>
+                <li>Complete los campos requeridos del formulario</li>
+            </ol>
+
+            <h4>Campos del Formulario</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Campo</th>
+                        <th>Descripción</th>
+                        <th>Obligatorio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Proveedor</td>
+                        <td>Seleccione el proveedor de la lista</td>
+                        <td><span class="badge badge-danger">Sí</span></td>
+                    </tr>
+                    <tr>
+                        <td>Solicitud #</td>
+                        <td>Se genera automáticamente</td>
+                        <td><span class="badge badge-secondary">No</span></td>
+                    </tr>
+                    <tr>
+                        <td>Fecha necesaria</td>
+                        <td>Fecha en que requiere el producto/servicio</td>
+                        <td><span class="badge badge-danger">Sí</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Agregar Artículos</h4>
+            <p>Para cada línea de artículo:</p>
+            <ol class="steps">
+                <li>Haga clic en <strong>"Agregar Fila"</strong></li>
+                <li>Complete los campos de la línea:
+                    <ul>
+                        <li><strong>Cantidad:</strong> Número de unidades</li>
+                        <li><strong>Búsqueda del Artículo:</strong> Escriba al menos 3 caracteres para buscar</li>
+                        <li><strong>Descripción:</strong> Detalles adicionales (opcional)</li>
+                        <li><strong>Marca:</strong> Seleccione el centro de costo de marca</li>
+                        <li><strong>Departamento:</strong> Seleccione el departamento</li>
+                        <li><strong>Enlace:</strong> URL de referencia del producto (opcional)</li>
+                        <li><strong>Precio:</strong> Precio unitario</li>
+                    </ul>
+                </li>
+                <li>El sistema calcula automáticamente Sub Total, Descuento, Impuestos y Total</li>
+            </ol>
+
+            <div class="alert alert-info">
+                <span class="alert-icon">📎</span>
+                <div>
+                    <strong>Adjuntar Archivos</strong><br>
+                    Solo se permiten archivos PDF. Puede adjuntar hasta 10 archivos por solicitud. Use el botón "Agregar otro adjunto" para añadir más.
+                </div>
+            </div>
+
+            <h3>4.2 Ver Solicitudes de Compra</h3>
+            <p>En la pantalla principal de solicitudes verá dos secciones:</p>
+            <ul>
+                <li><strong>Pendientes:</strong> Solicitudes sin número SAP y no rechazadas</li>
+                <li><strong>Historial:</strong> Todas las solicitudes del sistema</li>
+            </ul>
+
+            <h4>Filtrar por Monto</h4>
+            <ol class="steps">
+                <li>Ingrese un monto mínimo en el campo de filtro</li>
+                <li>Haga clic en <strong>"Aplicar"</strong></li>
+                <li>Use <strong>"Limpiar"</strong> para quitar el filtro</li>
+            </ol>
+
+            <h3>4.3 Acciones sobre Solicitudes</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Acción</th>
+                        <th>Descripción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>👁️ Ver</td>
+                        <td>Muestra los detalles completos</td>
+                    </tr>
+                    <tr>
+                        <td>✏️ Editar</td>
+                        <td>Modifica la solicitud (solo Admin/Compras)</td>
+                    </tr>
+                    <tr>
+                        <td>📋 Duplicar</td>
+                        <td>Crea una copia de la solicitud</td>
+                    </tr>
+                    <tr>
+                        <td>✅ Aprobar</td>
+                        <td>Aprueba la solicitud (solo Admin)</td>
+                    </tr>
+                    <tr>
+                        <td>🚫 Rechazar</td>
+                        <td>Rechaza la solicitud (solo Admin)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>4.4 Estados de las Solicitudes</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Estado</th>
+                        <th>Descripción</th>
+                        <th>Indicador</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Pendiente</td>
+                        <td>Esperando revisión</td>
+                        <td><span class="badge badge-secondary">Gris</span></td>
+                    </tr>
+                    <tr>
+                        <td>Listo para aprobar</td>
+                        <td>Requiere aprobación</td>
+                        <td><strong>Negro/Negrita</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Aprobado</td>
+                        <td>Solicitud aprobada</td>
+                        <td><span class="badge badge-success">Verde</span></td>
+                    </tr>
+                    <tr>
+                        <td>Rechazado</td>
+                        <td>Solicitud denegada</td>
+                        <td><span class="badge badge-danger">Rojo</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Section 5: Aprobación -->
+        <section id="aprobacion">
+            <h2><span class="icon">✅</span> 5. Aprobación de Solicitudes</h2>
+            
+            <h3>Solicitudes Pendientes de Aprobación</h3>
+            <p>Si usted es aprobador, al ingresar verá una sección especial: <strong>"Las siguientes solicitudes requieren su aprobación"</strong></p>
+
+            <h3>Proceso de Aprobación</h3>
+            <ol class="steps">
+                <li>Revise los detalles de la solicitud haciendo clic en <strong>"Ver"</strong></li>
+                <li>Desde el menú <strong>"Acción"</strong>, seleccione <strong>"Aprobar"</strong> o <strong>"Rechazar"</strong></li>
+                <li>Confirme la acción en el cuadro de diálogo</li>
+            </ol>
+
+            <h3>Flujo de Aprobación</h3>
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <span class="flow-number">1</span>
+                    <span>Usuario crea solicitud</span>
+                </div>
+                <div class="flow-step">
+                    <span class="flow-number">2</span>
+                    <span>Sistema notifica a aprobadores por email</span>
+                </div>
+                <div class="flow-step">
+                    <span class="flow-number">3</span>
+                    <span>Aprobador revisa y aprueba/rechaza</span>
+                </div>
+                <div class="flow-step">
+                    <span class="flow-number">4</span>
+                    <span>Si aprobada → Se envía a SAP automáticamente</span>
+                </div>
+                <div class="flow-step">
+                    <span class="flow-number">5</span>
+                    <span>SAP genera documento y devuelve número</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6: Gestión de Aprobadores -->
+        <section id="aprobadores">
+            <h2><span class="icon">👥</span> 6. Gestión de Aprobadores</h2>
+            
+            <div class="alert alert-warning">
+                <span class="alert-icon">🔒</span>
+                <div><strong>Acceso:</strong> Solo Administradores</div>
+            </div>
+
+            <h3>Ver Lista de Aprobadores</h3>
+            <ol class="steps">
+                <li>Vaya a <strong>Gestión de Aprobadores</strong></li>
+                <li>Haga clic en <strong>"Mostrar/Ocultar Lista de Aprobadores"</strong></li>
+                <li>Verá cada aprobador con sus departamentos asignados</li>
+            </ol>
+
+            <h3>Agregar Nuevo Aprobador</h3>
+            <ol class="steps">
+                <li>Seleccione el <strong>Departamento</strong> de la lista</li>
+                <li>Seleccione el <strong>Usuario</strong> que aprobará</li>
+                <li>Configure opciones adicionales si es necesario:
+                    <ul>
+                        <li>☑️ Aprobará órdenes de compra solamente</li>
+                        <li>☑️ Aprobará salidas de inventario solamente</li>
+                    </ul>
+                </li>
+                <li>Haga clic en <strong>"Enviar"</strong></li>
+            </ol>
+
+            <h3>Eliminar Aprobador</h3>
+            <ol class="steps">
+                <li>En la lista de aprobadores, haga clic en el botón rojo <strong>X</strong> junto al departamento</li>
+                <li>Confirme la eliminación</li>
+            </ol>
+
+            <h3>Super Firma</h3>
+            <div class="alert alert-info">
+                <span class="alert-icon">⭐</span>
+                <div>
+                    La <strong>Super Firma</strong> permite a un usuario aprobar solicitudes de <strong>cualquier departamento</strong>, sin importar si está asignado como aprobador de ese departamento específico.
+                </div>
+            </div>
+            <p>Para activar/desactivar:</p>
+            <ol class="steps">
+                <li>En la lista de aprobadores, use el interruptor junto al nombre del usuario</li>
+                <li><strong>Activada:</strong> El usuario puede aprobar cualquier solicitud</li>
+                <li><strong>Desactivada:</strong> Solo aprueba sus departamentos asignados</li>
+            </ol>
+
+            <h3>Transferir Aprobaciones</h3>
+            <p>Para transferir las responsabilidades de un aprobador a otro:</p>
+            <ol class="steps">
+                <li>Seleccione el <strong>Antiguo aprobador</strong></li>
+                <li>Seleccione el <strong>Nuevo aprobador</strong></li>
+                <li>Elija el tipo de transferencia:
+                    <ul>
+                        <li><strong>Permanente:</strong> El antiguo aprobador pierde los permisos</li>
+                        <li><strong>Temporal:</strong> Por vacaciones o licencia (se puede revertir)</li>
+                    </ul>
+                </li>
+                <li>Haga clic en <strong>"Enviar"</strong></li>
+            </ol>
+
+            <h3>Retornar Aprobaciones</h3>
+            <p>Si hay una transferencia temporal activa:</p>
+            <ol class="steps">
+                <li>Verá la sección <strong>"Retorno de aprobador"</strong></li>
+                <li>Haga clic en <strong>"Sí, retornar aprobaciones"</strong> para devolver los permisos al aprobador original</li>
+            </ol>
+        </section>
+
+        <!-- Section 7: Proveedores -->
+        <section id="proveedores">
+            <h2><span class="icon">🏢</span> 7. Gestión de Proveedores</h2>
+            
+            <h3>Ver Proveedores</h3>
+            <ol class="steps">
+                <li>Vaya a <strong>Proveedores</strong> en el menú lateral</li>
+                <li>Verá la lista de todos los proveedores registrados</li>
+            </ol>
+
+            <h3>Información del Proveedor</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Campo</th>
+                        <th>Descripción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Código SAP</td>
+                        <td>Identificador único en SAP</td>
+                    </tr>
+                    <tr>
+                        <td>Nombre</td>
+                        <td>Nombre del proveedor</td>
+                    </tr>
+                    <tr>
+                        <td>Estado</td>
+                        <td>Activo/Inactivo</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="alert alert-info">
+                <span class="alert-icon">🔄</span>
+                <div><strong>Sincronización:</strong> Los proveedores se importan automáticamente desde SAP mediante tareas programadas.</div>
+            </div>
+        </section>
+
+        <!-- Section 8: Artículos -->
+        <section id="articulos">
+            <h2><span class="icon">📦</span> 8. Gestión de Artículos</h2>
+            
+            <h3>Buscar Artículos</h3>
+            <p>Al crear una orden de compra:</p>
+            <ol class="steps">
+                <li>Escriba al menos <strong>3 caracteres</strong> en el campo de búsqueda</li>
+                <li>El sistema mostrará coincidencias por código o descripción</li>
+                <li>Seleccione el artículo de la lista desplegable</li>
+            </ol>
+
+            <h3>Catálogo de Artículos</h3>
+            <ol class="steps">
+                <li>Vaya a <strong>Artículos</strong> en el menú lateral</li>
+                <li>Puede ver y buscar todos los artículos disponibles</li>
+            </ol>
+
+            <div class="alert alert-info">
+                <span class="alert-icon">🔄</span>
+                <div><strong>Sincronización:</strong> Los artículos se importan automáticamente desde SAP mediante tareas programadas.</div>
+            </div>
+        </section>
+
+        <!-- Section 9: Inventario -->
+        <section id="inventario">
+            <h2><span class="icon">📋</span> 9. Gestión de Inventario</h2>
+            
+            <h3>Solicitudes de Inventario</h3>
+            <ol class="steps">
+                <li>Vaya a <strong>Inventario</strong> en el menú lateral</li>
+                <li>Puede crear solicitudes de salida de inventario</li>
+                <li>Las solicitudes siguen un flujo de aprobación similar a las órdenes de compra</li>
+            </ol>
+
+            <h3>Consultar Stock</h3>
+            <p>El sistema consulta el stock actual de los artículos desde SAP de forma automática.</p>
+        </section>
+
+        <!-- Section 10: Usuarios -->
+        <section id="usuarios">
+            <h2><span class="icon">👤</span> 10. Gestión de Usuarios</h2>
+            
+            <div class="alert alert-warning">
+                <span class="alert-icon">🔒</span>
+                <div><strong>Acceso:</strong> Solo Administradores</div>
+            </div>
+
+            <h3>Ver Usuarios</h3>
+            <ol class="steps">
+                <li>Vaya a <strong>Usuarios</strong> en el menú lateral</li>
+                <li>Verá la lista de todos los usuarios del sistema</li>
+            </ol>
+
+            <h3>Información del Usuario</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Campo</th>
+                        <th>Descripción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Usuario</td>
+                        <td>Nombre de usuario para login</td>
+                    </tr>
+                    <tr>
+                        <td>Nombre</td>
+                        <td>Nombre completo</td>
+                    </tr>
+                    <tr>
+                        <td>Email</td>
+                        <td>Correo electrónico</td>
+                    </tr>
+                    <tr>
+                        <td>Código SAP</td>
+                        <td>Identificador en SAP (obligatorio para crear OC)</td>
+                    </tr>
+                    <tr>
+                        <td>Tipo</td>
+                        <td>Rol del usuario (Admin/Compras/Almacén)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Section 11: FAQ -->
+        <section id="faq">
+            <h2><span class="icon">❓</span> 11. Preguntas Frecuentes</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question">¿Por qué no puedo crear órdenes de compra?</div>
+                <div class="faq-answer">Verifique que su usuario tenga asignado un código SAP. Si no lo tiene, contacte a <strong>desarrollo@prensa.com</strong>.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">¿Por qué no veo solicitudes para aprobar?</div>
+                <div class="faq-answer">
+                    <ul>
+                        <li>Verifique que esté configurado como aprobador de algún departamento</li>
+                        <li>Las solicitudes deben estar en estado "Listo para aprobar"</li>
+                        <li>Debe ser aprobador del departamento de los artículos de la solicitud</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">¿Cómo sé si mi solicitud fue enviada a SAP?</div>
+                <div class="faq-answer">Cuando una solicitud es aprobada y enviada exitosamente a SAP, aparecerá un número en la columna <strong>"# SAP"</strong>.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">¿Puedo editar una solicitud aprobada?</div>
+                <div class="faq-answer">No. Una vez aprobada, la solicitud no puede modificarse. Puede duplicarla para crear una nueva.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">¿Qué formatos de archivo puedo adjuntar?</div>
+                <div class="faq-answer">Solo se permiten archivos en formato <strong>PDF</strong>.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">¿Cuántos archivos puedo adjuntar?</div>
+                <div class="faq-answer">Puede adjuntar hasta <strong>10 archivos PDF</strong> por solicitud.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">¿Cómo busco un artículo específico?</div>
+                <div class="faq-answer">En el campo de búsqueda, escriba al menos <strong>3 caracteres</strong> del código SAP o la descripción del artículo.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">¿Qué significa "Super Firma"?</div>
+                <div class="faq-answer">Un usuario con Super Firma puede aprobar solicitudes de <strong>cualquier departamento</strong>, sin importar si está asignado como aprobador de ese departamento específico.</div>
+            </div>
+        </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <h3>📧 Soporte Técnico</h3>
+        <p>Para asistencia técnica o reportar problemas, contacte a:</p>
+        <p><a href="mailto:desarrollo@prensa.com">desarrollo@prensa.com</a></p>
+        <br>
+        <p><small>Documento actualizado: Febrero 2026 | Versión del Sistema: OC15</small></p>
+    </footer>
+
+</body>
+</html>

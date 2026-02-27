@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OC15 - Documentación del Sistema</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 15px; }
+        h3 { color: #7f8c8d; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background: #3498db; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        tr:hover { background: #f1f1f1; }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            color: #c7254e;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 0.9em;
+        }
+        pre code { background: none; color: #f8f8f2; padding: 0; }
+        ul, ol { padding-left: 25px; }
+        li { margin: 8px 0; }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .warning::before { content: "⚠️ "; }
+        .flow-diagram {
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        .badge-php { background: #777BB4; color: white; }
+        .badge-mysql { background: #4479A1; color: white; }
+        .badge-sap { background: #0FAAFF; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>OC15 - Sistema de Gestión de Órdenes de Compra</h1>
+        <p>Sistema web para gestión de órdenes de compra e inventario con integración a SAP Business One.</p>
+
+        <h2>Stack Tecnológico</h2>
+        <table>
+            <tr><th>Componente</th><th>Tecnología</th></tr>
+            <tr><td>Backend</td><td><span class="badge badge-php">PHP 7+</span></td></tr>
+            <tr><td>Base de Datos</td><td><span class="badge badge-mysql">MySQL</span></td></tr>
+            <tr><td>Frontend</td><td>Bootstrap 4, jQuery, AdminLTE 3</td></tr>
+            <tr><td>Dependencias</td><td>PHPMailer, Azure Storage Blob</td></tr>
+            <tr><td>Integraciones</td><td><span class="badge badge-sap">SAP Business One Service Layer</span>, LDAP/Active Directory</td></tr>
+        </table>
+
+        <h2>Requisitos</h2>
+        <ul>
+            <li>PHP 7.4+</li>
+            <li>MySQL 5.7+</li>
+            <li>Composer</li>
+            <li>Servidor web (Apache/XAMPP)</li>
+            <li>Acceso a SAP Business One Service Layer</li>
+        </ul>
+
+        <h2>Instalación Rápida</h2>
+        <pre><code># 1. Clonar en directorio web
+git clone [repo] C:\xampp\htdocs\ordenes_compra
+
+# 2. Instalar dependencias
+composer install
+
+# 3. Importar base de datos
+mysql -u root -p ordenes_compra &lt; ordenes_compra.sql
+
+# 4. Configurar credenciales (ver sección Configuración)
+
+# 5. Acceder
+http://localhost/ordenes_compra/admin/</code></pre>
+
+        <h2>Configuración</h2>
+        
+        <h3>Base de Datos (<code>initialize.php</code>)</h3>
+        <pre><code>define('DB_SERVER', "localhost");
+define('DB_USERNAME', "root");
+define('DB_PASSWORD', "");
+define('DB_NAME', "ordenes_compra");
+define('base_url', 'http://localhost/ordenes_compra/');</code></pre>
+
+        <h3>SAP Service Layer (<code>configuracion.php</code>)</h3>
+        <pre><code>return [
+    'hostsap' =&gt; 'servidor-sap.dominio.com',
+    'puertosap' =&gt; '50000',
+    'companydbsap' =&gt; 'NOMBRE_BD_SAP',
+    'usernamesap' =&gt; 'usuario_sap',
+    'passwordsap' =&gt; 'contraseña_sap',
+    'ambiente' =&gt; 'local' // local | produccion
+];</code></pre>
+
+        <h2>Estructura del Proyecto</h2>
+        <pre><code>├── admin/                      # Panel de administración
+│   ├── purchase_orders/        # CRUD órdenes de compra
+│   │   ├── manage_po.php       # Crear/editar OC
+│   │   ├── sap_service_layer.php # Clase integración SAP
+│   │   ├── sendPurchaseRequest.php # Envío a SAP
+│   │   └── enviar_correo.php   # Notificaciones email
+│   ├── all_purchase_orders/    # Listados y aprobaciones
+│   ├── inventario/             # Gestión de inventario
+│   ├── items/                  # Catálogo de artículos
+│   ├── proveedores/            # Gestión de proveedores
+│   └── user/                   # Gestión de usuarios
+├── classes/                    # Lógica de negocio
+│   ├── Master.php              # Controlador principal (CRUD)
+│   ├── Login.php               # Autenticación
+│   ├── DBConnection.php        # Conexión MySQL
+│   ├── SystemSettings.php      # Configuración del sistema
+│   └── Users.php               # Gestión de usuarios
+├── uploads/                    # Archivos adjuntos OC
+├── config.php                  # Configuración global PHP
+├── initialize.php              # Constantes de BD
+└── configuracion.php           # Credenciales SAP</code></pre>
+
+        <h2>Tablas Principales</h2>
+        <table>
+            <tr><th>Tabla</th><th>Descripción</th></tr>
+            <tr><td><code>po_list</code></td><td>Órdenes de compra (cabecera)</td></tr>
+            <tr><td><code>order_items</code></td><td>Líneas de órdenes de compra</td></tr>
+            <tr><td><code>item_list</code></td><td>Catálogo de artículos</td></tr>
+            <tr><td><code>proveedores</code></td><td>Proveedores</td></tr>
+            <tr><td><code>users</code></td><td>Usuarios del sistema</td></tr>
+            <tr><td><code>aprobadores</code></td><td>Aprobadores por departamento</td></tr>
+            <tr><td><code>centro_costo</code></td><td>Centros de costo (marcas/departamentos)</td></tr>
+            <tr><td><code>solicitud_de_inventario</code></td><td>Solicitudes de inventario</td></tr>
+            <tr><td><code>inventory_items</code></td><td>Artículos de una solicitud de inventario</td></tr>
+            <tr><td><code>aprobaciones</code></td><td>Historial de aprobaciones</td></tr>
+        </table>
+
+        <h2>Clases Principales</h2>
+        
+        <h3>Master.php (Controlador Principal)</h3>
+        <pre><code>// Proveedores
+$master-&gt;save_proveedor();
+$master-&gt;delete_supplier();
+
+// Artículos
+$master-&gt;save_articulo();
+$master-&gt;search_items();
+$master-&gt;get_stock();
+
+// Órdenes de Compra
+$master-&gt;save_po();
+$master-&gt;edit_po();
+$master-&gt;hay_lineas($id);
+
+// Inventario
+$master-&gt;update_inventory_request();
+$master-&gt;search_inventory_items();</code></pre>
+
+        <h3>SAPServiceLayer (Integración SAP)</h3>
+        <pre><code>$sap = new SAPServiceLayer($host, $puerto, $companyDB, $user, $pass);
+
+// Crear solicitud de compra
+$sap-&gt;createPurchaseRequest($data);
+
+// Crear orden de compra
+$sap-&gt;createPurchaseOrder($data);
+
+// Salida de inventario
+$sap-&gt;create_inventory_exit($data);
+
+// Consultar solicitudes abiertas
+$sap-&gt;get_old_open_purchase_requests();</code></pre>
+
+        <h2>Flujo de Trabajo</h2>
+        <div class="flow-diagram">1. Usuario crea OC → 2. Sistema genera PO-{random}
+                   → 3. Calcula totales/impuestos
+                   → 4. Notifica aprobadores
+                   → 5. Aprobación/Rechazo
+                   → 6. Envío a SAP Service Layer
+                   → 7. Genera documento en SAP</div>
+
+        <h2>Estados de Órdenes</h2>
+        <table>
+            <tr><th>Status</th><th>Descripción</th></tr>
+            <tr><td>0</td><td>Pendiente</td></tr>
+            <tr><td>1</td><td>Aprobado</td></tr>
+            <tr><td>2</td><td>Rechazado</td></tr>
+            <tr><td>3</td><td>Listo para aprobar</td></tr>
+        </table>
+
+        <h2>Tipos de Usuario</h2>
+        <table>
+            <tr><th>Type</th><th>Rol</th><th>Permisos</th></tr>
+            <tr><td>1</td><td>Administrador</td><td>Acceso total</td></tr>
+            <tr><td>2</td><td>Compras</td><td>Gestión de OC</td></tr>
+            <tr><td>3</td><td>Almacén</td><td>Inventario</td></tr>
+        </table>
+
+        <h2>Rutas del Admin</h2>
+        <table>
+            <tr><th>Ruta</th><th>Descripción</th></tr>
+            <tr><td><code>?page=purchase_orders/manage_po</code></td><td>Crear/editar órdenes de compra</td></tr>
+            <tr><td><code>?page=all_purchase_orders</code></td><td>Listado de órdenes de compra</td></tr>
+            <tr><td><code>?page=purchase_orders/update_approver</code></td><td>Gestionar aprobadores</td></tr>
+            <tr><td><code>?page=inventario</code></td><td>Gestión de inventario</td></tr>
+            <tr><td><code>?page=proveedores</code></td><td>Gestión de proveedores</td></tr>
+            <tr><td><code>?page=items</code></td><td>Catálogo de artículos</td></tr>
+            <tr><td><code>?page=user</code></td><td>Gestión de usuarios</td></tr>
+        </table>
+
+        <h2>Scripts de Sincronización SAP</h2>
+        <p>Estas 4 son tareas programadas que están programadas en <strong>cron-job.org</strong> (un servicio externo que las llama desde un browser):</p>
+        <pre><code># Enviar a SAP las órdenes de compra aprobadas
+php /admin/purchase_orders/reenviar_a_sap_paralelo.php
+
+# Importar artículos nuevos desde SAP
+php traer_items_de_sap_paralelo.php
+
+# Importar proveedores desde SAP
+php traer_proveedores_de_sap_paralelo.php
+
+# Obtener stock actual de los artículos en inventario
+php obtener_inventario_paralelo.php</code></pre>
+
+        <h2>Sistema de Correos</h2>
+        <p>Configurado en <code>admin/purchase_orders/enviar_correo.php</code>:</p>
+        <ul>
+            <li>Servidor SMTP configurable</li>
+            <li>Funciones: <code>enviar_email()</code>, <code>enviar_email2()</code>, <code>enviar_email_orden_de_compra_aprobada()</code></li>
+            <li>Soporte para adjuntos PDF</li>
+        </ul>
+
+        <h2>Notas para Desarrolladores</h2>
+        <ul>
+            <li>Las contraseñas se hashean con <code>password_hash()</code> (bcrypt)</li>
+            <li>Archivos adjuntos se guardan en <code>/uploads/{fecha}_OCID_{id}/</code></li>
+            <li>Los códigos SAP son obligatorios para usuarios, artículos y proveedores</li>
+            <li>La zona horaria está configurada en <code>America/Bogota</code></li>
+            <li>Los logs de errores cURL se guardan en <code>curl_error_log.json</code></li>
+        </ul>
+
+        <h2>Archivos de Configuración Sensibles</h2>
+        <div class="warning">
+            <strong>No subir a repositorio público:</strong>
+            <ul>
+                <li><code>configuracion.php</code> (credenciales SAP)</li>
+                <li><code>secrets.json</code></li>
+                <li><code>admin/purchase_orders/secrets_SAP.json</code></li>
+                <li><code>admin/purchase_orders/secrets_mysql.json</code></li>
+                <li><code>initialize.php</code></li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
