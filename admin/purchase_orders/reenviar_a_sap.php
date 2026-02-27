@@ -1,7 +1,8 @@
 <?php
 
-require 'SendPurchaseRequest.php';
+require 'sendPurchaseRequest.php';
 require_once 'enviar_correo.php';
+//require __DIR__ . '/../../rutinas.php';
 
  $config =  require __DIR__ . '/../../configuracion.php';
     /*
@@ -72,11 +73,20 @@ if ($conn->connect_error) {
         }
 
         catch (Exception $e) {
-                enviar_email(["desarrollo@prensa.com"], "Error al reenviar la Orden $poId  a SAP", "Se intento reenviar la Orden $poId a SAP y no se pudo.", "Desarrollo Prensa");
+                $result_string = file_get_contents("purchase_order_output.json");
+                enviar_email(["desarrollo@prensa.com"], "Error al reenviar la Orden $poId  a SAP", "Se intento reenviar la Orden $poId a SAP y no se pudo. \n \n" . $result_string, "Desarrollo Prensa");
 		}
                 
     }
 
+    $myFile =  __DIR__  . "../../rutinas.log"; 
+    $log_file = fopen($myFile, 'a') or die("can't open file");
+    $now = date("Y-m-d H:i:s");
+    $message = "Reenviar a sap rutina terminada. " . $now ;
+    fwrite($log_file, $message);
+    fclose($log_file);
+
+//log_message("Reenviar a sap.php rutina ejecutada");
 function actualizar_reenvios_po($poId, $conn){
     $sql = "SELECT reenvios_a_sap from po_list WHERE id = $poId";
     $result = $conn->query($sql);
