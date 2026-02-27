@@ -28,7 +28,8 @@
 		</div>
 		
 		<div class="card-body">
-			<a href="<?php echo base_url ?>admin/?page=purchase_orders/update_approver">Actualizar Aprobadores</a>
+			<a href="<?php echo base_url ?>admin/?page=purchase_orders/update_approver">Actualizar Aprobadores</a> <br>
+			<a target="_blank" rel="noopener noreferrer" href="<?php echo base_url ?>sincronizar.php">Sincronizar con SAP</a>
 			<form action="" id="system-frm">
 				<div id="msg" class="form-group"></div>
 				<div class="form-group">

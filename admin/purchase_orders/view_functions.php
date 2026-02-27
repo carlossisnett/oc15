@@ -145,12 +145,16 @@ function cambiar_estado_para_compras($po_id, $user_id, $conn, $status){
         if($user_type == 2){
 
             $option_0 = '<option value="0">Pendiente</option>';
+            $option_2 = '<option value="2">Rechazar</option>';
             $option_3 = '<option value="3">Listo para aprobar </option>';
 
             switch($status){
                   case 0:
                        $option_0 = '<option value="0" selected>Pendiente</option>';
                        break;
+                  case 2:
+                        $option_2 = '<option value="2" selected>Rechazar</option>';
+                        break;
                   case 3:
                        $option_3 = '<option value="3" selected>Listo para aprobar </option>';
                        break;
@@ -163,6 +167,7 @@ function cambiar_estado_para_compras($po_id, $user_id, $conn, $status){
                          <select class=\"form-select\" aria-label=\"Default select example\">
                              $option_0
                              $option_3
+                             $option_2
                          </select>
                          </div>
                          </form>

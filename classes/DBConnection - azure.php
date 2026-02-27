@@ -16,12 +16,12 @@ class DBConnection{
 
         if (!isset($this->conn)) {
             
-            $this->conn = new mysqli($this->host, $this->username, $this->password, $this->database);
-            /*
+            //$this->conn = new mysqli($this->host, $this->username, $this->password, $this->database);
+            
             $this->conn = mysqli_init();
             mysqli_ssl_set($this->conn, NULL, NULL, NULL, NULL, NULL);
             mysqli_real_connect($this->conn, $this->host, $this->username, $this->password, $this->database, 3306, NULL, MYSQLI_CLIENT_SSL);
-            */
+            
             if (!$this->conn) {
                 echo 'Cannot connect to database server';
                 exit;
