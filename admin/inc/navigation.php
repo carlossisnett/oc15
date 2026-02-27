@@ -122,10 +122,26 @@
                       </a>
                     </li>
                     <li class="nav-item dropdown">
+                      <a href="<?php echo base_url ?>admin/?page=items/manage_item" class="nav-link nav-items_manage_item">
+                        <i class="nav-icon fas fa-box"></i>
+                        <p>
+                          Agregar Artículo
+                        </p>
+                      </a>
+                    </li>
+                    <li class="nav-item dropdown">
                       <a href="<?php echo base_url ?>admin/?page=purchase_orders/update_approver" class="nav-link nav-purchase_orders_update_approver">
                         <i class="nav-icon fas fa-user-check"></i>
                         <p>
                           Actualizar Aprobadores
+                        </p>
+                      </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                      <a href="<?php echo base_url ?>admin/?page=purchase_orders/approver_list" class="nav-link nav-purchase_orders_approver_list">
+                        <i class="nav-icon fas fa-list"></i>
+                        <p>
+                          Lista de aprobadores
                         </p>
                       </a>
                     </li>

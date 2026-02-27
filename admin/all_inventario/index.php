@@ -173,6 +173,7 @@ render_solicitud_inventario_table($conn);
 	render_historial_inventario($conn);
 	?>
 	<br>
+	<!-- this is hidden is not shown right now -->
 		<div class="container-fluid" hidden>
         <div class="container-fluid">
 			<table class="table table-hover table-striped">
@@ -181,10 +182,11 @@ render_solicitud_inventario_table($conn);
 						<col width="10%">
 						<col width="10%"> <!-- Marca -->
 						<col width="8%"> <!-- Departamento -->
+						<col width="9%">
 						<col width="10%">
-						<col width="10%">
-						<col width="10%">
-						<col width="10%">
+						<col width="9%">
+						<col width="9%">
+						<col width="5%">
 				</colgroup>
 				<thead>
 					<tr class="">
@@ -193,6 +195,7 @@ render_solicitud_inventario_table($conn);
 						<th># Salida de Inventario</th>
 						<th># SAP</th>
 						<th>Solicitante</th>
+						<th>Departamento</th>
 						<th>Estado</th>
 						<th>Estado en Almacen</th>
 						<th>Acción</th>

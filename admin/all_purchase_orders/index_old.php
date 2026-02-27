@@ -3,22 +3,11 @@
 	alert_toast("<?php echo $_settings->flashdata('success') ?>",'success')
 </script>
 <?php endif;?>
-
-<?php
-	$user_type = 0;
-	if(isset($_SESSION['userdata']['type'])){
-		$user_type = $_SESSION['userdata']['type'];
-	}
-?>
 <div class="card card-outline card-info">
 	<div class="card-header">
-		<h3 class="card-title">Mis Solicitudes de Compra</h3>
+		<h3 class="card-title">Solicitudes de Compra</h3>
 		<div class="card-tools">
 			<a href="?page=purchase_orders/manage_po" class="btn btn-flat btn-primary"><span class="fas fa-plus"></span>  Crear Nuevo</a>
-			<?php if($user_type == 2): ?>
-				<a href="?page=purchase_orders/manage_po_compras" class="btn btn-flat"><span class="fas fa-plus"></span>  Crear Nuevo en Modo Avanzado</a>      
-			<?php endif ?>
-			
 		</div>
 	</div>
 	<div class="card-body">
@@ -30,8 +19,7 @@
 						<col width="10%">
 						<col width="10%"> <!-- Marca -->
 						<col width="8%"> <!-- Departamento -->
-						<col width="10%">
-						<col width="10%">
+						<col width="20%">
 						<col width="10%">
 						<col width="10%">
 						<col width="10%">
@@ -42,7 +30,6 @@
 						<th>Fecha Creación</th>
 						<th># Solicitud de Compra</th>
 						<th># SAP</th>
-						<th>Proveedor</th>
 						<th>Solicitante</th>
 						<th>Monto Total</th>
 						<th>Estado</th>
@@ -51,27 +38,15 @@
 				</thead>
 				<tbody>
 					<?php 
-					require "view_functions.php";
 					$i = 1;
-
-					
 					//echo "SELECT po.*, CONCAT_WS(' ', u.firstname, u.lastname) as sname FROM `po_list` po inner join `users` u on po.username = u.username where po.username = '" . $_SESSION['userdata']['username'] . "' order by unix_timestamp(po.date_updated) ";	
 					
 					//$qry = $conn->query("SELECT po.*, CONCAT_WS(' ', u.firstname, u.lastname) as sname FROM `po_list` po inner join `users` u on po.username = u.username order by unix_timestamp(po.date_updated) ");
 						//$qry = $conn->query("SELECT po.*, s.name as sname FROM `po_list` po inner join `supplier_list` s on po.supplier_id = s.id order by unix_timestamp(po.date_updated) ");
-						$strqry = "SELECT po.*, CONCAT_WS(' ', u.firstname, u.lastname) as sname FROM `po_list` po inner join `users` u on po.username = u.username where po.username = '" . $_SESSION['userdata']['username'] . "' order by unix_timestamp(po.date_created) desc";
+						$strqry = "SELECT po.*, CONCAT_WS(' ', u.firstname, u.lastname) as sname FROM `po_list` po inner join `users` u on po.username = u.username " . "order by unix_timestamp(po.date_updated)";
 						$qry = $conn->query($strqry);
-
-						
 					
 						while($row = $qry->fetch_assoc()):
-							$prov_name = $conn->query("SELECT pro.name from proveedores pro join order_items o on pro.id = o.proveedor_id join po_list p on p.id = o.po_id where p.id = '{$row['id']}' LIMIT 1")->fetch_assoc();
-							if($prov_name != null){
-								$row['proveedor_name'] = $prov_name["name"];
-							} else {
-								$row['proveedor_name'] = "";
-							}
-							
 							$row['item_count'] = $conn->query("SELECT * FROM order_items where po_id = '{$row['id']}'")->num_rows;
 							if($row['total'] != null) {
 								$row['total_amount'] = $row['total'];
@@ -84,9 +59,8 @@
 							<td class=""><?php echo date("M d,Y H:i",strtotime($row['date_created'])) ; ?></td>
 							<td class=""><?php echo $row['po_no'] ?></td>
 							<td class="text-center"><?php echo $row['SAPDocEntry'] ?></td>
-							<td class="text-center"><?php echo $row['proveedor_name'] ?></td>
 							<td class=""><?php echo $row['sname'] ?></td>
-							<td class="text-right"><?php echo special_format($row['total_amount']) ?></td>
+							<td class="text-right"><?php echo $row['total_amount'] ?></td>
 							<td>
 								<?php 
 									switch ($row['status']) {
@@ -97,7 +71,7 @@
 											echo '<span class="badge badge-danger">Rechazado</span>';
 											break;
 										case '3':
-											echo '<b> Listo para aprobar </b>';
+											echo '<span class="badge badge-success">Cerrado</span>';
 											break;
 										default:
 											echo '<span class="badge badge-secondary">Pendiente</span>';
@@ -113,14 +87,10 @@
 				                  <div class="dropdown-menu" role="menu">
 								  	<a class="dropdown-item" href="?page=purchase_orders/view_po&id=<?php echo $row['id'] ?>"><span class="fa fa-eye text-primary"></span> Ver</a>
 				                    <!-- Botón Editar/Duplicar/Eliminar deshabilitado temporalmente -->
-									<div class="dropdown-divider"></div>
-
-									 <?php if(isset($_SESSION['userdata']['type'])): ?>
-				                    <a class="dropdown-item" href="?page=purchase_orders/manage_po&id=<?php echo $row['id']?>&edit=true"><span class="fa fa-edit text-primary"></span> Editar</a>
-									<?php endif ?>
+									<!-- <div class="dropdown-divider"></div>-->
+				                    <!--<a class="dropdown-item" href="?page=purchase_orders/manage_po&id=<?php echo $row['id'] ?>"><span class="fa fa-edit text-primary"></span> Editar</a>
 				                    <div class="dropdown-divider"></div>
-									<a class="dropdown-item" href="?page=purchase_orders/manage_po&id=<?php echo $row['id'] ?>&duplicate=true"><span class="fa fa-copy text-warning"></span> Duplicar </a>
-									<!--
+									<a class="dropdown-item" href="?page=purchase_orders/duplicate_po&action=duplicate&id=<?php echo $row['id'] ?>"><span class="fa fa-copy text-warning"></span> Duplicar
 									</a><div class="dropdown-divider"></div>
 				                    <a class="dropdown-item delete_data" href="javascript:void(0)" data-id="<?php echo $row['id'] ?>"><span class="fa fa-trash text-danger"></span> Eliminar</a>-->
 				                  </div>

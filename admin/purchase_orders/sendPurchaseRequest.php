@@ -1,7 +1,7 @@
 <?php
 
 require_once 'sap_service_layer.php';
-require_once 'enviar_correo.php';
+require_once __DIR__ . '/enviar_correo.php';
 
 function sendPurchaseRequest ($poId){
 
@@ -536,7 +536,21 @@ function create_purchase_order($poId){
             $supplierId = $row['supplier_id'];
             $supplierCodSAP = $row['codSAP'];// $_SESSION['userdata']['codSAP'];
             $dateCreated = $row['date_created'];
-            $dateCreatedYMD = date('Y-m-d', strtotime($row['date_created']));
+            
+            // Check if the created month is before the current month
+            $dateCreatedTimestamp = strtotime($row['date_created']);
+            $createdMonth = date('Y-m', $dateCreatedTimestamp);
+            $currentMonth = date('Y-m');
+
+            // If the record's month is before the current month, update to today
+            if ($createdMonth < $currentMonth) {
+                $today = date('Y-m-d H:i:s');
+                $conn->query("UPDATE `po_list` SET `date_created` = '{$today}' WHERE id = '{$poId}'");
+                // Use the new date for SAP
+                $dateCreated = $today;
+            }
+            
+            $dateCreatedYMD = date('Y-m-d', strtotime($dateCreated));
             $requiredDateYMD = date('Y-m-d', strtotime($row['required_date']));
             $notes = $row['notes'];
             $taxPercentage = isset($row['tax_percentage']) ? $row['tax_percentage'] : 0;

@@ -22,13 +22,13 @@
 <div class="login-box">
   <!-- /.login-logo -->
   <div class="card card-outline">
-    <div class="card-header text-center bg-danger">
+    <div class="card-header text-center bg-white">
      <a href="./" class="h1">
-        <img src="../corprensa_red.png" style="max-width: 250px; height: auto;">
+        <img src="../corprensa_red.png" style="max-width: 250px; height: auto; background-color: white;">
       </a>
     </div>
     <div class="card-body">
-      <p class="login-box-msg"></p>
+      <p class="login-box-msg"> Inicio de Sesión OC15</p>
 
       <form id="login-frm" action="" method="post">
         <div class="input-group mb-3">

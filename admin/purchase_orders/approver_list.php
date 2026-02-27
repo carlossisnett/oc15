@@ -52,8 +52,18 @@ GLOBAL $conn;
             $current_user = $row_2['user_id'];
         }
         
+        // Build label text
+        $labels = [];
+        if ($row_2['exclusivo_inventario'] == 1) {
+            $labels[] = "Exclusivo Inventario";
+        }
+        if ($row_2['exclusivo_compras'] == 1) {
+            $labels[] = "Exclusivo Compras";
+        }
+        $label_text = !empty($labels) ? " [" . implode(", ", $labels) . "]" : "";
+
         // Print the department under this user
-        echo "<li>" . htmlspecialchars($row_2['nombre_ccosto']) . " (" . htmlspecialchars($row_2['departamento']) . ")</li>";
+        echo "<li>" . htmlspecialchars($row_2['nombre_ccosto']) . " (" . htmlspecialchars($row_2['departamento']) . ")$label_text</li>";
     endwhile;
 
     // Close the last <ul>

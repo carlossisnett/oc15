@@ -5,7 +5,7 @@
 <?php endif;?>
 <div class="card card-outline card-info">
 	<div class="card-header">
-		<h3 class="card-title">Todas las Cotizaciones de Compra</h3>
+		<h3 class="card-title">Solicitudes de Compra</h3>
 		<div class="card-tools">
 			<a href="?page=cotizacion/manage_co" class="btn btn-flat btn-primary"><span class="fas fa-plus"></span>  Crear Nuevo</a>
 		</div>
@@ -14,7 +14,7 @@
 
 	<?php
 	require_once "./views/view_functions.php";
-	$query = "SELECT * FROM `po_list` WHERE status = 0 and es_cotizacion = 1";
+	$query = "SELECT * FROM `po_list` WHERE status = 3";
 	$result = $conn->query($query);
 	$ids = array();
 	$rows_to_display = array();
@@ -23,16 +23,18 @@
 	
 	if ($result && $result->num_rows > 0) {
 		while ($row = $result->fetch_assoc()) {
+			if (puede_aprobar_compras($_SESSION['userdata']['id'], $row['id'], $conn)) {
 				$ids[] = $row['id'];
 				$rows_to_display[] = $row; // save full row for table later
+			}
 		}
 	} else {
-		echo "<h5>No hay cotizaciones pendientes</h5>";
+		echo "<h5>Su usuario $username no tiene solicitudes de compra por aprobar</h5>";
 	}
 	?>
 	
 	<?php if (count($rows_to_display) > 0): ?>
-		<h5>Las siguientes cotizaciones están pendientes</h5>
+		<h5>Las siguientes solicitudes requieren su aprobación</h5>
 		<div class="container-fluid">
 			<table class="table table-hover table-striped">
 				<colgroup>
@@ -43,8 +45,7 @@
 					<col width="10%">
 					<col width="10%">
 					<col width="10%">
-					<col width="5%">
-					<col width="5%">
+					<col width="10%">
 					<col width="10%">
 				</colgroup>
 				<thead>
@@ -55,7 +56,6 @@
 						<th># SAP</th>
 						<th>Proveedor</th>
 						<th>Solicitante</th>
-						<th>Artículo</th>
 						<th>Monto Total</th>
 						<th>Estado</th>
 						<th>Acción</th>
@@ -73,21 +73,6 @@
 							$conn->query("SELECT SUM(quantity * unit_price) AS total FROM order_items WHERE po_id = '{$row['id']}'")->fetch_array()['total'] 
 							+ $row['tax_amount'] - $row['discount_amount']
 						);
-						$item_desc = $conn->query("
-							SELECT il.description 
-							FROM order_items oi 
-							JOIN item_list il ON oi.item_id = il.id 
-							WHERE oi.po_id = '{$row['id']}' 
-							LIMIT 1
-						")->fetch_assoc();
-
-						if($item_desc == null){
-							$item_desc = '';
-						} else{
-							$item_desc = $item_desc['description'];
-						}
-
-						//$row['item_description'] = $item_desc["description"];
 					?>
 					<tr>
 						<td class="text-center"><?php echo $i++; ?></td>
@@ -96,7 +81,6 @@
 						<td class="text-center"><?php echo $row['SAPDocEntry']; ?></td>
 						<td class="text-center"><?php echo $row['proveedor_name']; ?></td>
 						<td><?php echo $row['username']; ?></td> <!-- Could replace with real name if needed -->
-						<td><?php echo $item_desc; ?></td>
 						<td class="text-right"><?php echo special_format($row['total_amount']); ?></td>
 						<td id="status_<?php echo $row['id']; ?>" class="status">
 							<?php
@@ -153,22 +137,21 @@
 	//echo 'upload_max_filesize: ' . ini_get('upload_max_filesize') . "<br>";
 	?>
 	<br>
-	<h4> Todas las Cotizaciones de Compra</h4>
+	<h4> Todas las Solicitudes de Compra</h4>
 	<br>
 		<div class="container-fluid">
         <div class="container-fluid">
 			<table class="table table-hover table-striped">
 				<colgroup>
 						<col width="5%">
-					<col width="10%">
-					<col width="10%">
-					<col width="8%">
-					<col width="10%">
-					<col width="10%">
-					<col width="10%">
-					<col width="5%">
-					<col width="5%">
-					<col width="10%">
+						<col width="10%">
+						<col width="10%"> <!-- Marca -->
+						<col width="8%"> <!-- Departamento -->
+						<col width="10%">
+						<col width="10%">
+						<col width="10%">
+						<col width="10%">
+						<col width="10%">
 				</colgroup>
 				<thead>
 					<tr class="">
@@ -178,7 +161,6 @@
 						<th># SAP</th>
 						<th>Proveedor</th>
 						<th>Solicitante</th>
-						<th>Articulo</th>
 						<th>Monto Total</th>
 						<th>Estado</th>
 						<th>Acción</th>
@@ -192,14 +174,16 @@
 					
 					//$qry = $conn->query("SELECT po.*, CONCAT_WS(' ', u.firstname, u.lastname) as sname FROM `po_list` po inner join `users` u on po.username = u.username order by unix_timestamp(po.date_updated) ");
 						//$qry = $conn->query("SELECT po.*, s.name as sname FROM `po_list` po inner join `supplier_list` s on po.supplier_id = s.id order by unix_timestamp(po.date_updated) ");
-						$strqry = "SELECT po.*, CONCAT_WS(' ', u.firstname, u.lastname) as sname FROM `po_list` po inner join `users` u on po.username = u.username where es_cotizacion = 1" . " order by unix_timestamp(po.date_created) desc";
+						$strqry = "SELECT po.*, CONCAT_WS(' ', u.firstname, u.lastname) as sname FROM `po_list` po inner join `users` u on po.username = u.username " . "order by unix_timestamp(po.date_created) desc";
 						$qry = $conn->query($strqry);
 					
 						while($row = $qry->fetch_assoc()):
-							//$prov_name = $conn->query("SELECT pro.name from proveedores pro join order_items o on pro.id = o.proveedor_id join po_list p on p.id = o.po_id where p.id = '{$row['id']}' LIMIT 1")->fetch_assoc();
-							
+							$prov_name = $conn->query("SELECT pro.name from proveedores pro join order_items o on pro.id = o.proveedor_id join po_list p on p.id = o.po_id where p.id = '{$row['id']}' LIMIT 1")->fetch_assoc();
+							if($prov_name != null){
+								$row['proveedor_name'] = $prov_name["name"];
+							} else {
 								$row['proveedor_name'] = "";
-							
+							}
 
 							$row['item_count'] = $conn->query("SELECT * FROM order_items where po_id = '{$row['id']}'")->num_rows;
 							if($row['total'] != null) {
@@ -207,20 +191,6 @@
 							} else{
 							$row['total_amount'] = $conn->query("SELECT sum(quantity * unit_price) as total FROM order_items where po_id = '{$row['id']}'")->fetch_array()['total'] + $row['tax_amount'] - $row['discount_amount'];
 							}
-
-								$item_desc = $conn->query("
-							SELECT il.description 
-							FROM order_items oi 
-							JOIN item_list il ON oi.item_id = il.id 
-							WHERE oi.po_id = '{$row['id']}' 
-							LIMIT 1
-						")->fetch_assoc();
-
-						if($item_desc == null){
-							$item_desc = '';
-						} else{
-							$item_desc = $item_desc['description'];
-						}
 					?>
 						<tr>
 							<td class="text-center"><?php echo $i++; ?></td>
@@ -229,9 +199,7 @@
 							<td class="text-center"><?php echo $row['SAPDocEntry'] ?></td>
 							<td class="text-center"><?php echo $row['proveedor_name'] ?></td>
 							<td class=""><?php echo $row['sname'] ?></td>
-							<td class=""><?php echo $item_desc ?></td>
 							<td class="text-right"><?php echo special_format($row['total_amount']) ?></td>
-
 							<td>
 								<?php 
 									switch ($row['status']) {

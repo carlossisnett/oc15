@@ -221,6 +221,13 @@ if($qry['codSAP'] == null){
 									</th>
 								</tr>
 								<tr>
+									<th class="p-1 text-right" colspan="10">Costo de Shipping
+									
+									</th>
+									<th class="p-1"><input type="number" step="any" name="shipping_cost" class="border-light text-right" value=""></th>
+								</tr>
+								</tr>
+								<tr>
 									<th class="p-1 text-right" colspan="10">Descuento (%)
 									<input type="number" step="any" name="discount_percentage" class="border-light text-right" value="<?php echo isset($discount_percentage) ? $discount_percentage : null ?>">
 									</th>
@@ -480,6 +487,11 @@ if($qry['codSAP'] == null){
 		if($('[name="discount_percentage"]').val() > 0){
 			discount_perc = $('[name="discount_percentage"]').val()
 		}
+		var shipping_cost = 0;
+		if($('[name="shipping_cost"]').val() > 0){
+			shipping_cost = $('[name="shipping_cost"]').val();
+			shipping_cost = parseFloat(shipping_cost);
+		}
 		var discount_amount = Math.round(_total * (discount_perc))/100;
 		$('[name="discount_amount"]').val(parseFloat(discount_amount).toLocaleString("en-US"))
 		var tax_perc = 0
@@ -489,7 +501,7 @@ if($qry['codSAP'] == null){
 		var tax_amount = Math.round((_total - discount_amount) * (tax_perc))/100;
 		$('[name="tax_amount"]').val(parseFloat(tax_amount).toLocaleString("en-US"))
 		$('#sub_total').val(parseFloat(_total).toLocaleString("en-US"))
-		$('[name="total"]').val(parseFloat(_total - discount_amount + tax_amount).toLocaleString("en-US"))
+		$('[name="total"]').val(parseFloat(_total - discount_amount + tax_amount + shipping_cost).toLocaleString("en-US"))
 	}
 
 	function calculate_amount(){
@@ -740,6 +752,9 @@ var proceder_sin_adjunto = false;
 			$('#item-list tfoot').find('[name="discount_percentage"],[name="tax_percentage"]').on('input keypress',function(e){
 				calculate()
 			})
+			$('#item-list tfoot').find('[name="shipping_cost"]').on('input keypress',function(e){
+				calculate()
+			})
 
 			$('#item-list tfoot').find('[name="discount_amount"],[name="tax_amount"]').on('input keyup change blur paste keypress',function(e){
 				calculate_amount()
@@ -764,6 +779,10 @@ var proceder_sin_adjunto = false;
 				})
 				$('#item-list tfoot').find('[name="discount_amount"],[name="tax_amount"]').on('input keyup change blur paste keypress',function(e){
 				calculate_amount()
+			})
+
+			$('#item-list tfoot').find('[name="shipping_cost"]').on('input keypress',function(e){
+				calculate()
 			})
 				tr.find('[name="qty[]"],[name="unit_price[]"]').trigger('keypress')
 			})

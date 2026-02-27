@@ -14,8 +14,19 @@ $dbname = $config['dbname'];
     $usernamesap = $config['usernamesap'];
     $passwordsap = $config['passwordsap'];
 
+    
+        $logFile = __DIR__ . "/rutinas.log"; // log file in the same folder
+        $message = date("Y-m-d H:i:s") . " - empezo a correr traer_items_de_sap.php \n";
+
+        file_put_contents($logFile, $message, FILE_APPEND);
+        
+
     $sap = new SAPServiceLayer($hostsap, $puertosap, $companydbsap, $usernamesap, $passwordsap);
     $purchase_orders = $sap->get_new_items();
-    file_put_contents(__DIR__ . '/blank.txt', '');  // creates empty file
+
+            $logFile = __DIR__ . "/rutinas.log"; // log file in the same folder
+        $message = date("Y-m-d H:i:s") . " - terminamos de correr traer_items_de_sap.php \n";
+
+        file_put_contents($logFile, $message, FILE_APPEND);
 
 ?>
