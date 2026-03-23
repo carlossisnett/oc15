@@ -1,4 +1,4 @@
-﻿</style>
+</style>
 <!-- Main Sidebar Container -->
       <aside class="main-sidebar sidebar-dark-primary bg-black elevation-4 sidebar-no-expand">
         <!-- Brand Logo -->
@@ -55,6 +55,11 @@
                     $id_usuario = $_settings->userdata('id');
                     $qry = $conn->query("SELECT * from `users` where id = '$id_usuario' ");
                       $qry = $qry->fetch_array();
+                      $es_aprobador = (!empty($qry['super_firma']) && (int)$qry['super_firma'] === 1);
+                      if (!$es_aprobador) {
+                          $chk_ap = $conn->query("SELECT 1 FROM aprobadores WHERE user_id = '{$id_usuario}' LIMIT 1");
+                          $es_aprobador = ($chk_ap && $chk_ap->num_rows > 0);
+                      }
                       ?>
                         <?php if($qry['puede_cotizar'] == true): ?>
                     <li class="nav-item dropdown">
@@ -138,14 +143,6 @@
                       </a>
                     </li>
                     <li class="nav-item dropdown">
-                      <a href="<?php echo base_url ?>admin/?page=purchase_orders/approver_list" class="nav-link nav-purchase_orders_approver_list">
-                        <i class="nav-icon fas fa-list"></i>
-                        <p>
-                          Lista de aprobadores
-                        </p>
-                      </a>
-                    </li>
-                    <li class="nav-item dropdown">
                       <a href="<?php echo base_url ?>sincronizar.php" class="nav-link nav-sincronizar" target="_blank">
                         <i class="nav-icon fas fa-sync"></i>
                         <p>
@@ -155,6 +152,15 @@
                     </li>
                     <?php endif; ?>
 
+                    <li class="nav-header">Documentación</li>
+                    <li class="nav-item dropdown">
+                      <a href="<?php echo base_url ?>README.html" class="nav-link nav-readme" target="_blank" rel="noopener noreferrer">
+                        <i class="nav-icon fas fa-book-open"></i>
+                        <p>
+                          README
+                        </p>
+                      </a>
+                    </li>
                   </ul>
                 </nav>
                 <!-- /.sidebar-menu -->

@@ -48,6 +48,12 @@
         pre code { background: none; color: #f8f8f2; padding: 0; }
         ul, ol { padding-left: 25px; }
         li { margin: 8px 0; }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 20px 0;
+            padding: 12px 20px;
+            background: #f8f9fa;
+        }
         .warning {
             background: #fff3cd;
             border: 1px solid #ffc107;
@@ -74,10 +80,36 @@
         .badge-php { background: #777BB4; color: white; }
         .badge-mysql { background: #4479A1; color: white; }
         .badge-sap { background: #0FAAFF; color: white; }
+        .doc-toolbar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+        .btn-back-app {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #3498db;
+            color: #fff !important;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(52, 152, 219, 0.35);
+        }
+        .btn-back-app:hover {
+            background: #2980b9;
+            color: #fff !important;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="doc-toolbar">
+            <a href="admin/" class="btn-back-app">← Volver a la aplicación</a>
+        </div>
         <h1>OC15 - Sistema de Gestión de Órdenes de Compra</h1>
         <p>Sistema web para gestión de órdenes de compra e inventario con integración a SAP Business One.</p>
 
@@ -168,26 +200,16 @@ define('base_url', 'http://localhost/ordenes_compra/');</code></pre>
             <tr><td><code>aprobadores</code></td><td>Aprobadores por departamento</td></tr>
             <tr><td><code>centro_costo</code></td><td>Centros de costo (marcas/departamentos)</td></tr>
             <tr><td><code>solicitud_de_inventario</code></td><td>Solicitudes de inventario</td></tr>
-            <tr><td><code>inventory_items</code></td><td>Artículos de una solicitud de inventario</td></tr>
+            <tr><td><code>inventory_items</code></td><td>Articulos de una solicitud de inventario</td></tr>
             <tr><td><code>aprobaciones</code></td><td>Historial de aprobaciones</td></tr>
         </table>
 
         <h2>Clases Principales</h2>
         
         <h3>Master.php (Controlador Principal)</h3>
-        <pre><code>// Proveedores
-$master-&gt;save_proveedor();
-$master-&gt;delete_supplier();
-
-// Artículos
-$master-&gt;save_articulo();
-$master-&gt;search_items();
-$master-&gt;get_stock();
-
-// Órdenes de Compra
+        <pre><code>// Órdenes de Compra
 $master-&gt;save_po();
 $master-&gt;edit_po();
-$master-&gt;hay_lineas($id);
 
 // Inventario
 $master-&gt;update_inventory_request();
@@ -203,10 +225,7 @@ $sap-&gt;createPurchaseRequest($data);
 $sap-&gt;createPurchaseOrder($data);
 
 // Salida de inventario
-$sap-&gt;create_inventory_exit($data);
-
-// Consultar solicitudes abiertas
-$sap-&gt;get_old_open_purchase_requests();</code></pre>
+$sap-&gt;create_inventory_exit($data);</code></pre>
 
         <h2>Flujo de Trabajo</h2>
         <div class="flow-diagram">1. Usuario crea OC → 2. Sistema genera PO-{random}
@@ -215,6 +234,10 @@ $sap-&gt;get_old_open_purchase_requests();</code></pre>
                    → 5. Aprobación/Rechazo
                    → 6. Envío a SAP Service Layer
                    → 7. Genera documento en SAP</div>
+
+        <blockquote>
+            <p><strong>Super firma (gerente general):</strong> En la tabla <code>users</code>, el campo <code>super_firma = 1</code> identifica usuarios que pueden <strong>aprobar cualquier orden de compra</strong>, sin limitarse a los departamentos asignados en <code>aprobadores</code>: al aprobar, el sistema actualiza <strong>todas</strong> las líneas de la OC de una vez (<code>is_po_ready_to_be_approved</code> en <code>classes/Master.php</code>). Suele asignarse al gerente general u otro perfil con facultad equivalente. El estado de super firma se puede activar o desactivar desde <strong>Actualizar Aprobadores</strong> (<code>?page=purchase_orders/update_approver</code>).</p>
+        </blockquote>
 
         <h2>Estados de Órdenes</h2>
         <table>
@@ -225,19 +248,77 @@ $sap-&gt;get_old_open_purchase_requests();</code></pre>
             <tr><td>3</td><td>Listo para aprobar</td></tr>
         </table>
 
+        <h2>Estados de <code>solicitud_de_inventario</code></h2>
+        <p>La tabla de solicitudes de inventario (<code>solicitud_de_inventario</code>) usa varios campos de estado; los que se muestran en pantalla como <strong>Estado</strong> y <strong>Estado en Almacén</strong> son <code>status</code> y <code>estado_almacen</code>.</p>
+
+        <h3>Campo <code>status</code> (aprobación)</h3>
+        <table>
+            <tr><th>Valor</th><th>Descripción</th></tr>
+            <tr><td><code>0</code></td><td>Pendiente</td></tr>
+            <tr><td><code>1</code></td><td>Aprobado</td></tr>
+            <tr><td><code>2</code></td><td>Rechazado</td></tr>
+            <tr><td><code>3</code></td><td>Listo para aprobar</td></tr>
+        </table>
+
+        <h3>Campo <code>estado_almacen</code> (almacén / salida de mercancía)</h3>
+        <p>Aplica cuando la solicitud entra en flujo de salida de mercancía; al enviar la salida a SAP el sistema puede fijar <code>4</code>.</p>
+        <table>
+            <tr><th>Valor</th><th>Descripción</th></tr>
+            <tr><td><code>0</code></td><td>Pendiente</td></tr>
+            <tr><td><code>1</code></td><td>Entregado</td></tr>
+            <tr><td><code>2</code></td><td>Rechazado</td></tr>
+            <tr><td><code>3</code></td><td>Listo para entregar</td></tr>
+            <tr><td><code>4</code></td><td>Enviado a SAP</td></tr>
+        </table>
+
+        <h3>Otros campos relacionados</h3>
+        <table>
+            <tr><th>Campo</th><th>Uso</th></tr>
+            <tr><td><code>salida_de_mercancia</code></td><td><code>1</code> si la solicitud es salida de mercancía (notificación a almacén, etc.); <code>0</code> en caso contrario.</td></tr>
+            <tr><td><code>SAPDocEntry</code> / <code>SAPDocNum</code></td><td>Referencia del documento en SAP cuando aplica.</td></tr>
+        </table>
+
         <h2>Tipos de Usuario</h2>
         <table>
             <tr><th>Type</th><th>Rol</th><th>Permisos</th></tr>
             <tr><td>1</td><td>Administrador</td><td>Acceso total</td></tr>
-            <tr><td>2</td><td>Compras</td><td>Gestión de OC</td></tr>
+            <tr><td>2</td><td>Compras</td><td>Gestión de OC (ver <a href="#rol-compras-type-2">Rol Compras</a>)</td></tr>
             <tr><td>3</td><td>Almacén</td><td>Inventario</td></tr>
         </table>
+
+        <h2 id="rol-compras-type-2">Rol Compras (type 2)</h2>
+        <p>Usuarios de Compras comparten con el administrador varias entradas del menú lateral (<code>admin/inc/navigation.php</code>). Base: <code>admin/?page=…</code> salvo donde se indique otra ruta.</p>
+
+        <h3>Enlaces del menú (administración de la aplicación)</h3>
+        <table>
+            <tr><th>Ruta / página</th><th>Descripción</th></tr>
+            <tr><td><code>purchase_orders</code></td><td>Mis solicitudes de compra (propias): crear, ver, editar, duplicar.</td></tr>
+            <tr><td><code>all_purchase_orders</code></td><td>Todas las solicitudes: listados, historial, filtros; editar y duplicar solicitudes de cualquier usuario.</td></tr>
+            <tr><td><code>cotizacion</code> / <code>all_cotizacion</code></td><td>Solo si el usuario tiene <code>puede_cotizar</code> en <code>users</code>: cotizaciones propias y listado global.</td></tr>
+            <tr><td><code>inventario</code></td><td>Salida de inventario (flujo del solicitante). <strong>No</strong> ven el ítem «Todas las Salidas de Inventario» (reservado a administrador y almacén).</td></tr>
+            <tr><td><code>user/list</code></td><td>Lista de usuarios del sistema.</td></tr>
+            <tr><td><code>system_info</code></td><td>Configuración / información del sistema.</td></tr>
+            <tr><td><code>proveedores/manage_proveedor</code></td><td>Agregar proveedor.</td></tr>
+            <tr><td><code>items/manage_item</code></td><td>Agregar artículo.</td></tr>
+            <tr><td><code>purchase_orders/update_approver</code></td><td>Actualizar aprobadores por departamento y <strong>activar o desactivar super firma</strong> por usuario.</td></tr>
+            <tr><td><code>…/sincronizar.php</code> (raíz del sitio, enlace externo en el menú)</td><td>Sincronización con SAP.</td></tr>
+        </table>
+
+        <h3>Funcionalidades habituales de Compras</h3>
+        <ul>
+            <li><strong>Solicitudes:</strong> crear OC estándar (<code>manage_po</code>) o <strong>modo avanzado</strong> (<code>manage_po_compras</code>) desde «Mis Solicitudes».</li>
+            <li><strong>Actualizar aprobadores:</strong> gestionar aprobadores por departamento, activar o desactivar <strong>super firma</strong> y sustitutos en vacaciones desde <code>purchase_orders/update_approver</code>.</li>
+            <li><strong>Revisión previa a aprobadores:</strong> en la vista de una OC (<code>purchase_orders/view_po</code>), el rol Compras puede usar el selector de estado <strong>Pendiente / Rechazar / Listo para aprobar</strong> (compras prepara la solicitud antes del circuito de aprobación por departamento).</li>
+            <li><strong>Aprobación:</strong> si el usuario está en <code>aprobadores</code> para los departamentos de la línea (y no es exclusivo de inventario), puede actuar sobre solicitudes en estado «Listo para aprobar» (p. ej. tabla superior en <code>all_purchase_orders</code>). Quien tenga <strong>super firma</strong> puede aprobar cualquier OC como se describe arriba.</li>
+            <li><strong>SAP:</strong> en vista de OC, reenvío a SAP según reglas de la pantalla (p. ej. cuando aplica mostrar número SAP y reenvío para usuarios tipo Compras).</li>
+            <li><strong>Maestros y operación:</strong> agregar proveedor y artículo, gestión de usuarios listados, sincronización SAP y acceso a configuración según lo implementado en <code>system_info</code>.</li>
+        </ul>
 
         <h2>Rutas del Admin</h2>
         <table>
             <tr><th>Ruta</th><th>Descripción</th></tr>
-            <tr><td><code>?page=purchase_orders/manage_po</code></td><td>Crear/editar órdenes de compra</td></tr>
-            <tr><td><code>?page=all_purchase_orders</code></td><td>Listado de órdenes de compra</td></tr>
+            <tr><td><code>?page=purchase_orders/manage_po</code></td><td>Crear/editar ordenes de compra</td></tr>
+            <tr><td><code>?page=all_purchase_orders</code></td><td>Listado de ordenes de compra</td></tr>
             <tr><td><code>?page=purchase_orders/update_approver</code></td><td>Gestionar aprobadores</td></tr>
             <tr><td><code>?page=inventario</code></td><td>Gestión de inventario</td></tr>
             <tr><td><code>?page=proveedores</code></td><td>Gestión de proveedores</td></tr>
@@ -246,8 +327,9 @@ $sap-&gt;get_old_open_purchase_requests();</code></pre>
         </table>
 
         <h2>Scripts de Sincronización SAP</h2>
-        <p>Estas 4 son tareas programadas que están programadas en <strong>cron-job.org</strong> (un servicio externo que las llama desde un browser):</p>
-        <pre><code># Enviar a SAP las órdenes de compra aprobadas
+        <pre><code>Estas 4 son tareas programadas que estan programadas en cron-job.org (un servicio externo que las llama desde un browser)
+
+# Enviar a SAP las ordenes de compra aprobadas
 php /admin/purchase_orders/reenviar_a_sap_paralelo.php
 
 # Importar artículos nuevos desde SAP
@@ -256,7 +338,7 @@ php traer_items_de_sap_paralelo.php
 # Importar proveedores desde SAP
 php traer_proveedores_de_sap_paralelo.php
 
-# Obtener stock actual de los artículos en inventario
+# Obtener stock actual de los articulos en inventario
 php obtener_inventario_paralelo.php</code></pre>
 
         <h2>Sistema de Correos</h2>
