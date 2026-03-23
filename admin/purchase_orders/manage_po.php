@@ -255,7 +255,7 @@ if($qry['codSAP'] == null){
 							</label>
                 <?php
 				$number_of_files = 1;
-                    if(isset($ruta_adjunto)){
+                    if(isset($ruta_adjunto) && is_dir($ruta_adjunto)){
                         $files = scandir($ruta_adjunto);
                         $files = array_diff($files, array('.', '..')); // Remove . and ..
                         //$only_files = array_filter($files, fn($file) => pathinfo($file, PATHINFO_EXTENSION) === 'pdf'); // Filter only PDFs
