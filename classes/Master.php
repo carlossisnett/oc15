@@ -1221,6 +1221,28 @@ Class Master extends DBConnection {
 		$codigo_departamento_list = "'" . implode("', '", $departamentos) . "'";
 
 		$aprobadores = array();
+
+		// Get the username of whoever created this PO
+		$po_query = $this->conn->query("SELECT username FROM po_list WHERE id = $po_id");
+		$po_row = $po_query->fetch_assoc();
+		$po_username = $po_row['username'];
+
+		// Get the user_id of the PO creator
+		$creator_query = $this->conn->query("SELECT id FROM users WHERE username = '{$po_username}'");
+		$creator_row = $creator_query->fetch_assoc();
+		$creator_id = $creator_row['id'];
+
+		// If the creator is themselves an approver, escalate to superfirma users only
+		$is_approver_query = $this->conn->query("SELECT 1 FROM aprobadores WHERE user_id = '{$creator_id}' LIMIT 1");
+		if($is_approver_query && $is_approver_query->num_rows > 0){
+			$superfirma_query = $this->conn->query("SELECT id FROM users WHERE super_firma = 1");
+			$superfirma_ids = array();
+			while($row = $superfirma_query->fetch_assoc()){
+				$superfirma_ids[] = $row['id'];
+			}
+			return $superfirma_ids;
+		}
+
 		foreach($departamentos as $departamento){
 			$query_2 = $this->conn->query("SELECT user_id FROM aprobadores where departamento = '{$departamento}' and exclusivo_inventario <> 1");
 			while ($row = $query_2->fetch_assoc()) {
