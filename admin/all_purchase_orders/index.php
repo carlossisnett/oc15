@@ -5,12 +5,23 @@ $user_type = (int)$_SESSION['userdata']['type'];
 $user_id   = (int)$_settings->userdata('id');
 $username  = $_SESSION['userdata']['username'];
 
+// Check if current user has super_firma
+$super_firma_check = $conn->query("SELECT super_firma FROM users WHERE id = '{$user_id}'");
+$is_super_firma = ($super_firma_check && ($sf_row = $super_firma_check->fetch_assoc()) && $sf_row['super_firma'] == 1);
+
 // --- POs pending THIS user's approval (status = 3) ---
 $result = $conn->query("SELECT * FROM `po_list` WHERE status = 3");
 $rows_to_display = array();
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
-        if (puede_aprobar_compras($user_id, $row['id'], $conn)) {
+        $can_approve = puede_aprobar_compras($user_id, $row['id'], $conn);
+
+        // Super firma users also see POs flagged with super_firma = 1
+        if (!$can_approve && $is_super_firma && !empty($row['super_firma'])) {
+            $can_approve = true;
+        }
+
+        if ($can_approve) {
             $rows_to_display[] = $row;
         }
     }

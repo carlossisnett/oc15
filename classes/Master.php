@@ -1235,6 +1235,10 @@ Class Master extends DBConnection {
 		// If the creator is themselves an approver, escalate to superfirma users only
 		$is_approver_query = $this->conn->query("SELECT 1 FROM aprobadores WHERE user_id = '{$creator_id}' LIMIT 1");
 		if($is_approver_query && $is_approver_query->num_rows > 0){
+
+			// Flag the PO so superfirma users can identify it in their approval queue
+			$this->conn->query("UPDATE po_list SET super_firma = 1 WHERE id = '{$po_id}'");
+
 			$superfirma_query = $this->conn->query("SELECT id FROM users WHERE super_firma = 1");
 			$superfirma_ids = array();
 			while($row = $superfirma_query->fetch_assoc()){

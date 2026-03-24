@@ -96,31 +96,54 @@ function puede_aprobar($user_id, $po_id, $conn){
             }
 }
 
-function puede_aprobar_compras($user_id, $po_id, $conn){
-    if($user_id == 27 || $user_id == 133){
-        return true;
+function determinar_aprobadores($po_id, $conn){
+    $query = $conn->query("SELECT codigo_departamento FROM order_items where po_id = $po_id;");
+    if(gettype($query) == "boolean"){
+        return false;
+    }
+    $departamentos = array();
+    while($row = $query->fetch_assoc()) {
+        $departamentos[] = $row['codigo_departamento'];
     }
 
-    $query = $conn->query("SELECT codigo_departamento FROM order_items where po_id = '$po_id';");
-             if(gettype($query) == "boolean"){
-                 echo "";
-             }
-                $departamentos = array();
-            while($row = $query->fetch_assoc()) {
-                    $departamentos[] = $row['codigo_departamento'];
-                }
- 
-             $codigo_departamento_list = "'" . implode("', '", $departamentos) . "'";
+    // Get the username of whoever created this PO
+    $po_query = $conn->query("SELECT username FROM po_list WHERE id = $po_id");
+    $po_row = $po_query->fetch_assoc();
+    $po_username = $po_row['username'];
 
-            $aprobador = $conn->query("SELECT * FROM aprobadores 
-          WHERE user_id = '{$user_id}' 
-          AND departamento IN ({$codigo_departamento_list}) and exclusivo_inventario <> 1");
-            
-            if($aprobador->num_rows == 0){
-                return false;
-            } else{
-                return true;
-            }
+    // Get the user_id of the PO creator
+    $creator_query = $conn->query("SELECT id FROM users WHERE username = '{$po_username}'");
+    $creator_row = $creator_query->fetch_assoc();
+    $creator_id = $creator_row['id'];
+
+    // If the creator is themselves an approver, escalate to superfirma users only
+    $is_approver_query = $conn->query("SELECT 1 FROM aprobadores WHERE user_id = '{$creator_id}' LIMIT 1");
+    if($is_approver_query && $is_approver_query->num_rows > 0){
+        $superfirma_query = $conn->query("SELECT id FROM users WHERE super_firma = 1");
+        $superfirma_ids = array();
+        while($row = $superfirma_query->fetch_assoc()){
+            $superfirma_ids[] = $row['id'];
+        }
+        return $superfirma_ids;
+    }
+
+    $aprobadores = array();
+    foreach($departamentos as $departamento){
+        $query_2 = $conn->query("SELECT user_id FROM aprobadores where departamento = '{$departamento}' and exclusivo_inventario <> 1");
+        while($row = $query_2->fetch_assoc()){
+            $aprobadores[] = $row['user_id'];
+        }
+    }
+
+    return array_unique($aprobadores);
+}
+
+function puede_aprobar_compras($user_id, $po_id, $conn){
+    $aprobadores = determinar_aprobadores($po_id, $conn);
+    if($aprobadores === false || empty($aprobadores)){
+        return false;
+    }
+    return in_array($user_id, $aprobadores);
 }
 
 function puede_aprobar_inventario($user_id, $po_id, $conn){
