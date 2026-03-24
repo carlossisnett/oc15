@@ -140,24 +140,8 @@
 
 <button id="boton_pendientes" type="button" class="btn btn-success">Pendientes</button>
 <button id="boton_historial" type="button" class="btn btn-outline-secondary">Historial</button>
-
-	<div class="row mb-3 mt-3">
-		<div class="col-md-4">
-			<label for="filter_amount">Filtrar por Monto Total Mínimo:</label>
-			<div class="input-group">
-				<div class="input-group-prepend">
-					<span class="input-group-text">$</span>
-				</div>
-				<input type="number" class="form-control" id="filter_amount" placeholder="Ej: 1000" min="0" step="0.01">
-				<div class="input-group-append">
-					<button class="btn btn-primary" type="button" id="apply_filter">Aplicar</button>
-					<button class="btn btn-secondary" type="button" id="clear_filter">Limpiar</button>
-				</div>
-			</div>
-		</div>
-	</div>
 	
-	<div id="solicitudes_pendientes">
+	<div id="solicitudes_pendientes" hidden>
 		<h4> Solicitudes Pendientes </h4>
 			<div class="container-fluid">
         <div class="container-fluid">
@@ -266,7 +250,7 @@
 		</div>
 									</div>
 
-	<div id="todas_solicitudes">
+	<div id="todas_solicitudes" hidden>
 	<h4> Historial de Solicitudes de Compra</h4>
 	<br>
 		<div class="container-fluid">
@@ -401,74 +385,6 @@
         btnPendientes.classList.remove("btn-success");
         btnPendientes.classList.add("btn-outline-secondary");
     });
-
-	// Filter functionality
-	const filterInput = document.getElementById("filter_amount");
-	const applyFilterBtn = document.getElementById("apply_filter");
-	const clearFilterBtn = document.getElementById("clear_filter");
-
-	function parseAmount(amountText) {
-		// Remove currency symbols, commas, and spaces, then parse as float
-		return parseFloat(amountText.replace(/[$,\s]/g, '')) || 0;
-	}
-
-	function applyFilter() {
-		const minAmount = parseFloat(filterInput.value) || 0;
-		
-		// Filter both tables
-		const tables = [
-			document.querySelector("#solicitudes_pendientes table tbody"),
-			document.querySelector("#todas_solicitudes table tbody")
-		];
-
-		tables.forEach(tbody => {
-			if (!tbody) return;
-			
-			const rows = tbody.querySelectorAll("tr");
-			let visibleCount = 0;
-
-			rows.forEach(row => {
-				const amountCell = row.querySelector("td:nth-child(7)"); // 7th column is "Monto Total"
-				if (amountCell) {
-					const amount = parseAmount(amountCell.textContent);
-					if (amount >= minAmount) {
-						row.style.display = "";
-						visibleCount++;
-					} else {
-						row.style.display = "none";
-					}
-				}
-			});
-		});
-	}
-
-	function clearFilter() {
-		filterInput.value = "";
-		
-		// Show all rows in both tables
-		const tables = [
-			document.querySelector("#solicitudes_pendientes table tbody"),
-			document.querySelector("#todas_solicitudes table tbody")
-		];
-
-		tables.forEach(tbody => {
-			if (!tbody) return;
-			const rows = tbody.querySelectorAll("tr");
-			rows.forEach(row => {
-				row.style.display = "";
-			});
-		});
-	}
-
-	applyFilterBtn.addEventListener("click", applyFilter);
-	clearFilterBtn.addEventListener("click", clearFilter);
-	
-	// Allow Enter key to apply filter
-	filterInput.addEventListener("keypress", function(e) {
-		if (e.key === "Enter") {
-			applyFilter();
-		}
-	});
 });
 
 function show_all_solicitudes_only(){
@@ -479,8 +395,12 @@ function show_all_solicitudes_only(){
 
 	divPendientes.style.display = "none";
 	btnPendientes.style.display = "none";
-
-}
+	/*
+	divHistorial.style.display = "block";
+	btnHistorial.classList.remove("btn-outline-secondary");
+	btnHistorial.classList.add("btn-success");
+	*/
+	}
 
  <?php if ($_SESSION['userdata']['type'] == 1): ?>
 				             show_all_solicitudes_only();     
