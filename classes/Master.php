@@ -1203,15 +1203,92 @@ Class Master extends DBConnection {
 	}
 
 	function determinar_aprobadores_api(){
-		extract($_POST);
-		$departamentos = json_decode($departamentos, true);
+		if(!isset($_POST['user_id']) || !isset($_POST['departamentos'])){
+			return json_encode(array('status' => 'failed', 'msg' => 'Parámetros incompletos'));
+		}
+		$creator_id = intval($_POST['user_id']);
+		$departamentos = json_decode($_POST['departamentos'], true);
+		if(!is_array($departamentos)){
+			return json_encode(array('status' => 'failed', 'msg' => 'Lista de departamentos inválida'));
+		}
+		$departamentos = array_values(array_unique(array_filter(array_map(function($d){
+			return trim((string)$d);
+		}, $departamentos))));
+		if(count($departamentos) === 0){
+			return json_encode(array('status' => 'success', 'message' => '', 'approvers' => array(), 'approver_names' => array()));
+		}
+		$ids = $this->determinar_aprobadores_departamentos($departamentos, $creator_id);
+		if(!is_array($ids)){
+			$ids = array();
+		}
+		$ids = array_values(array_unique(array_map('intval', $ids)));
+		$nombres = $this->approver_display_names_for_ids($ids);
+		if(count($nombres) === 0){
+			$mensaje = 'No hay aprobadores configurados para estos departamentos.';
+		}else{
+			$mensaje = 'Esta orden de compra será aprobada por ' . $this->format_lista_nombres_es($nombres) . '.';
+		}
+		return json_encode(array(
+			'status' => 'success',
+			'message' => $mensaje,
+			'approvers' => $ids,
+			'approver_names' => $nombres
+		));
+	}
 
-		return $this->determinar_aprobadores_departamentos($departamentos, $user_id);
+	function format_lista_nombres_es($nombres){
+		$nombres = array_values(array_filter(array_map('trim', $nombres)));
+		$n = count($nombres);
+		if($n === 0){
+			return '';
+		}
+		if($n === 1){
+			return $nombres[0];
+		}
+		if($n === 2){
+			return $nombres[0] . ' y ' . $nombres[1];
+		}
+		$ultimo = array_pop($nombres);
+		return implode(', ', $nombres) . ' y ' . $ultimo;
+	}
+
+	function approver_display_names_for_ids($ids){
+		if(empty($ids) || !is_array($ids)){
+			return array();
+		}
+		$ids = array_values(array_unique(array_map('intval', $ids)));
+		if(count($ids) === 0){
+			return array();
+		}
+		$in = implode(',', $ids);
+		$by_id = array();
+		$q = $this->conn->query("SELECT id, firstname, lastname, username FROM users WHERE id IN ({$in})");
+		if($q){
+			while($row = $q->fetch_assoc()){
+				$uid = intval($row['id']);
+				$nom = trim(trim($row['firstname'] ?? '') . ' ' . trim($row['lastname'] ?? ''));
+				if($nom === ''){
+					$nom = trim($row['username'] ?? '');
+				}
+				$by_id[$uid] = $nom;
+			}
+		}
+		$ordered = array();
+		foreach($ids as $id){
+			if(isset($by_id[$id]) && $by_id[$id] !== ''){
+				$ordered[] = $by_id[$id];
+			}
+		}
+		return $ordered;
 	}
 
 	// recibe los departamentos y retorna los ids de los aprobadores que pueden aprobar esos departamentos
 
 	function determinar_aprobadores_departamentos($departamentos, $creator_id){
+
+		if(!is_array($departamentos) || count($departamentos) === 0){
+			return array();
+		}
 
 		$codigo_departamento_list = "'" . implode("', '", $departamentos) . "'";
 
@@ -1225,25 +1302,27 @@ Class Master extends DBConnection {
 				$superfirma_ids[] = $row['id'];
 			}
 
-		// If the creator is themselves an approver, escalate to superfirma users only
+		// If the creator is themselves an approver, escalate to superfirma users only (when any exist)
 		$is_approver_query = $this->conn->query("SELECT 1 FROM aprobadores WHERE user_id = '{$creator_id}' LIMIT 1");
-		if($is_approver_query && $is_approver_query->num_rows > 0){
-			// Flag the PO so superfirma users can identify it in their approval queue
-			$this->conn->query("UPDATE po_list SET super_firma = 1 WHERE id = '{$po_id}'");
+		$creator_es_aprobador = ($is_approver_query && $is_approver_query->num_rows > 0);
+		if($creator_es_aprobador && count($superfirma_ids) > 0){
 			return $superfirma_ids;
 		}
 
 		foreach($departamentos as $departamento){
-			$query_2 = $this->conn->query("SELECT user_id FROM aprobadores where departamento = '{$departamento}' and exclusivo_inventario <> 1");
+			$d = $this->conn->real_escape_string(trim($departamento));
+			// IFNULL: rows with exclusivo_inventario NULL were excluded by "<> 1" in SQL
+			$query_2 = $this->conn->query("SELECT user_id FROM aprobadores WHERE TRIM(CAST(departamento AS CHAR)) = '{$d}' AND IFNULL(exclusivo_inventario, 0) <> 1");
 			while ($row = $query_2->fetch_assoc()) {
-				$aprobadores[] = $row['user_id'];
+				$aprobadores[] = intval($row['user_id']);
 			}
 		}
 
-		$aprobadores = array_unique($aprobadores);
+		$aprobadores = array_values(array_unique($aprobadores));
 
+		// Más de 2 aprobadores distintos: escalar a superfirma. Si no hay superfirma, conservar la lista (evita [] y mensaje "sin aprobadores").
 		if(count($aprobadores) > 2){
-			return $superfirma_ids;
+			return count($superfirma_ids) > 0 ? $superfirma_ids : $aprobadores;
 		}
 
 		return $aprobadores;
@@ -1285,25 +1364,26 @@ Class Master extends DBConnection {
 				$superfirma_ids[] = $row['id'];
 			}
 
-		// If the creator is themselves an approver, escalate to superfirma users only
+		// If the creator is themselves an approver, escalate to superfirma users only (when any exist)
 		$is_approver_query = $this->conn->query("SELECT 1 FROM aprobadores WHERE user_id = '{$creator_id}' LIMIT 1");
-		if($is_approver_query && $is_approver_query->num_rows > 0){
-			// Flag the PO so superfirma users can identify it in their approval queue
+		$creator_es_aprobador = ($is_approver_query && $is_approver_query->num_rows > 0);
+		if($creator_es_aprobador && count($superfirma_ids) > 0){
 			$this->conn->query("UPDATE po_list SET super_firma = 1 WHERE id = '{$po_id}'");
 			return $superfirma_ids;
 		}
 
 		foreach($departamentos as $departamento){
-			$query_2 = $this->conn->query("SELECT user_id FROM aprobadores where departamento = '{$departamento}' and exclusivo_inventario <> 1");
+			$d = $this->conn->real_escape_string(trim($departamento));
+			$query_2 = $this->conn->query("SELECT user_id FROM aprobadores WHERE TRIM(CAST(departamento AS CHAR)) = '{$d}' AND IFNULL(exclusivo_inventario, 0) <> 1");
 			while ($row = $query_2->fetch_assoc()) {
-				$aprobadores[] = $row['user_id'];
+				$aprobadores[] = intval($row['user_id']);
 			}
 		}
 
-		$aprobadores = array_unique($aprobadores);
+		$aprobadores = array_values(array_unique($aprobadores));
 
 		if(count($aprobadores) > 2){
-			return $superfirma_ids;
+			return count($superfirma_ids) > 0 ? $superfirma_ids : $aprobadores;
 		}
 
 		return $aprobadores;
@@ -2416,6 +2496,10 @@ switch ($action) {
 
 	case 'toggle_super_firma':
 		echo $Master->toggle_super_firma();
+	break;
+
+	case 'determinar_aprobadores_api':
+		echo $Master->determinar_aprobadores_api();
 	break;
 	
 	default:

@@ -232,6 +232,9 @@ if($qry['codSAP'] == null){
 							</tr>
 						</tfoot>
 					</table>
+					<div class="mb-2 d-none" id="po-aprobadores-msg-wrap">
+						<div class="alert alert-info mb-0 py-2" role="status"><span id="po-aprobadores-msg-text"></span></div>
+					</div>
 					<div class="row">
 						<div class="col-md-6">
 							<label for="notes" class="control-label">Notas</label>
@@ -444,6 +447,74 @@ textarea.addEventListener("input", function() {
   counter.textContent = `${this.value.length} / ${maxLength}`;
 });
 
+	var poCreatorUserId = <?php echo (int)$id_usuario; ?>;
+	var poAprobadoresTimer = null;
+
+	function collectDepartamentosPo(){
+		var seen = {};
+		var list = [];
+		$('#item-list tbody tr.po-item').each(function(){
+			var $tr = $(this);
+			if(!$tr.is(':visible')){
+				return;
+			}
+			if($tr.find('input[name="delete[]"]').length && $tr.find('input[name="delete[]"]').val() === 'true'){
+				return;
+			}
+			var $sel = $tr.find('select[name="departamento_id[]"]');
+			if(!$sel.length){
+				return;
+			}
+			var v = $sel.val();
+			if(Array.isArray(v)){
+				v = v.length ? v[0] : '';
+			}
+			if(v != null && String(v) !== ''){
+				v = String(v);
+				if(!seen[v]){
+					seen[v] = true;
+					list.push(v);
+				}
+			}
+		});
+		return list;
+	}
+
+	function actualizarMensajeAprobadores(){
+		clearTimeout(poAprobadoresTimer);
+		poAprobadoresTimer = setTimeout(function(){
+			var deps = collectDepartamentosPo();
+			var $wrap = $('#po-aprobadores-msg-wrap');
+			var $text = $('#po-aprobadores-msg-text');
+			if(deps.length === 0){
+				$wrap.addClass('d-none');
+				$text.text('');
+				return;
+			}
+			$.ajax({
+				url: _base_url_ + 'classes/Master.php?f=determinar_aprobadores_api',
+				method: 'POST',
+				data: {
+					departamentos: JSON.stringify(deps),
+					user_id: poCreatorUserId
+				},
+				dataType: 'json',
+				error: function(){
+					$wrap.addClass('d-none');
+				},
+				success: function(resp){
+					if(resp && resp.status === 'success' && resp.message){
+						$text.text(resp.message);
+						$wrap.removeClass('d-none');
+					}else{
+						$wrap.addClass('d-none');
+						$text.text('');
+					}
+				}
+			});
+		}, 250);
+	}
+
 	function rem_item(_this){
 		if(es_editado()){
 			let row = _this.closest('tr'); 
@@ -452,6 +523,7 @@ textarea.addEventListener("input", function() {
 		} else{
 		_this.closest('tr').remove()
 		}
+		actualizarMensajeAprobadores();
 	}
 	function calculate(){
 		var _total = 0
@@ -755,6 +827,10 @@ var proceder_sin_adjunto = false;
 		$('#add_row').trigger('click')
 		}
         $('.select2').select2({placeholder:"Por favor selecciona aquí",width:"relative"})
+		$(document).on('change', '#item-list select[name="departamento_id[]"]', function(){
+			actualizarMensajeAprobadores();
+		});
+		actualizarMensajeAprobadores();
 		$('#po-form').submit(function(e){
 			e.preventDefault();
 			let adjunto_1 = document.getElementById('ruta_adjunto_1');
