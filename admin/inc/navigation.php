@@ -89,6 +89,16 @@
                       </p>
                       </a>
                     </li>
+                    <?php if($_settings->userdata('type') == 3): ?>
+                    <li class="nav-item dropdown">
+                      <a href="<?php echo base_url ?>admin/?page=items" class="nav-link nav-items">
+                        <i class="nav-icon fas fa-history"></i>
+                        <p>
+                          Historial por Artículo
+                        </p>
+                      </a>
+                    </li>
+                    <?php endif; ?>
                     <?php if($_settings->userdata('type') == 1 or $_settings->userdata('type') == 3): ?>
                     <li class="nav-item dropdown">
                       <a href="<?php echo base_url ?>admin/?page=all_inventario" class="nav-link nav-all_inventario">
