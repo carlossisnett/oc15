@@ -1321,9 +1321,11 @@ Class Master extends DBConnection {
 		$aprobadores = array_values(array_unique($aprobadores));
 
 		// Más de 2 aprobadores distintos: escalar a superfirma. Si no hay superfirma, conservar la lista (evita [] y mensaje "sin aprobadores").
+		/*
 		if(count($aprobadores) > 2){
 			return count($superfirma_ids) > 0 ? $superfirma_ids : $aprobadores;
 		}
+			*/
 
 		return $aprobadores;
 	}
@@ -1382,9 +1384,11 @@ Class Master extends DBConnection {
 
 		$aprobadores = array_values(array_unique($aprobadores));
 
+		/*
 		if(count($aprobadores) > 2){
 			return count($superfirma_ids) > 0 ? $superfirma_ids : $aprobadores;
 		}
+			*/
 
 		return $aprobadores;
 }
