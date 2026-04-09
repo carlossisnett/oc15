@@ -76,11 +76,20 @@ GLOBAL $conn;
 		transform: translateX(26px);
 	}
 
-	.super-firma-label {
+	.super-firma-label,
+	.gerente-label {
 		display: inline-block;
 		margin-left: 5px;
 		font-size: 14px;
 		font-weight: normal;
+	}
+	.approver-user-toggles {
+		display: inline-flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.75rem 1.25rem;
+		margin-left: 0.5rem;
+		vertical-align: middle;
 	}
 </style>
 
@@ -96,7 +105,7 @@ GLOBAL $conn;
     <h4>Lista de aprobadores y sus departamentos:</h4>
     <?php
     $marcas_query = $conn->query("
-        SELECT aprobadores.*, users.name, users.super_firma, centro_costo.nombre_ccosto 
+        SELECT aprobadores.*, users.name, users.super_firma, users.is_gerente, centro_costo.nombre_ccosto 
         FROM aprobadores 
         JOIN users ON users.id = aprobadores.user_id 
         JOIN centro_costo ON centro_costo.codigo_ccosto = aprobadores.departamento 
@@ -104,7 +113,6 @@ GLOBAL $conn;
     ");
 
     $current_user = null;
-    $user_super_firma = null;
     while($row_2 = $marcas_query->fetch_assoc()):
         // When we hit a new user, print a header
         if ($current_user !== $row_2['user_id']) {
@@ -113,20 +121,36 @@ GLOBAL $conn;
                 echo "</ul>";
             }
             
-            // Store super_firma status for this user
-            $user_super_firma = $row_2['super_firma'];
-            $checked = $user_super_firma == 1 ? 'checked' : '';
-            $super_firma_status = $user_super_firma == 1 ? 'Activada' : 'Desactivada';
-            
-            echo "<h5>" . htmlspecialchars($row_2['name']) . " 
+            $user_super_firma = (int)($row_2['super_firma'] ?? 0);
+            $checked_sf = $user_super_firma === 1 ? 'checked' : '';
+            $super_firma_status = $user_super_firma === 1 ? 'Activada' : 'Desactivada';
+            $user_is_gerente = (int)($row_2['is_gerente'] ?? 0);
+            $checked_g = $user_is_gerente === 1 ? 'checked' : '';
+            $gerente_status = $user_is_gerente === 1 ? 'Sí' : 'No';
+
+            echo "<h5 style='display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;'>" . htmlspecialchars($row_2['name']) . "
+                    <span class='approver-user-toggles'>
+                    <span>
                     <label class='toggle-switch'>
-                        <input type='checkbox' class='toggle-super-firma' 
-                               data-user-id='" . $row_2['user_id'] . "' 
-                               data-user-name='" . htmlspecialchars($row_2['name']) . "' 
-                               {$checked}>
+                        <input type='checkbox' class='toggle-super-firma'
+                               data-user-id='" . $row_2['user_id'] . "'
+                               data-user-name='" . htmlspecialchars($row_2['name']) . "'
+                               {$checked_sf}>
                         <span class='toggle-slider'></span>
                     </label>
                     <span class='super-firma-label'>Super Firma: <span class='super-firma-status'>{$super_firma_status}</span></span>
+                    </span>
+                    <span>
+                    <label class='toggle-switch'>
+                        <input type='checkbox' class='toggle-is-gerente'
+                               data-user-id='" . $row_2['user_id'] . "'
+                               data-user-name='" . htmlspecialchars($row_2['name']) . "'
+                               {$checked_g}>
+                        <span class='toggle-slider'></span>
+                    </label>
+                    <span class='gerente-label'>Gerente: <span class='gerente-status'>{$gerente_status}</span></span>
+                    </span>
+                    </span>
                   </h5>";
             echo "<ul style='list-style: none; padding-left: 0;'>";
             $current_user = $row_2['user_id'];
@@ -363,6 +387,45 @@ $(document).on('click', '.delete-approver', function(e) {
                 }
             }
         });
+    }
+});
+
+// Handle toggle is_gerente switch change
+$(document).on('change', '.toggle-is-gerente', function(e) {
+
+    var userId = $(this).data('user-id');
+    var userName = $(this).data('user-name');
+    var checkbox = $(this);
+    var originalState = checkbox.prop('checked');
+
+    if(confirm('¿Está seguro que desea cambiar el estado de Gerente para ' + userName + '?')) {
+        $.ajax({
+            url: _base_url_ + "classes/Master.php?f=toggle_is_gerente",
+            data: { user_id: userId },
+            method: 'POST',
+            dataType: 'json',
+            error: function(err) {
+                console.log(err);
+                alert_toast("Ocurrió un error", 'error');
+                checkbox.prop('checked', !originalState);
+            },
+            success: function(resp) {
+                if(typeof resp == 'object' && resp.status == 'success') {
+                    alert_toast(resp.msg, 'success');
+                    var statusText = resp.new_value == 1 ? 'Sí' : 'No';
+                    checkbox.closest('h5').find('.gerente-status').text(statusText);
+                } else if(resp.status == 'failed' && !!resp.msg) {
+                    alert_toast(resp.msg, 'error');
+                    checkbox.prop('checked', !originalState);
+                } else {
+                    alert_toast("Ocurrió un error", 'error');
+                    console.log(resp);
+                    checkbox.prop('checked', !originalState);
+                }
+            }
+        });
+    } else {
+        checkbox.prop('checked', !originalState);
     }
 });
 

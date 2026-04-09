@@ -1302,10 +1302,15 @@ Class Master extends DBConnection {
 				$superfirma_ids[] = $row['id'];
 			}
 
-		// If the creator is themselves an approver, escalate to superfirma users only (when any exist)
+		// If the creator is themselves an approver or a gerente, escalate to superfirma users only (when any exist)
+		/*
 		$is_approver_query = $this->conn->query("SELECT 1 FROM aprobadores WHERE user_id = '{$creator_id}' LIMIT 1");
 		$creator_es_aprobador = ($is_approver_query && $is_approver_query->num_rows > 0);
-		if($creator_es_aprobador && count($superfirma_ids) > 0){
+		*/
+		$creator_user_q = $this->conn->query("SELECT is_gerente FROM users WHERE id = '{$creator_id}' LIMIT 1");
+		$creator_user_row = $creator_user_q ? $creator_user_q->fetch_assoc() : null;
+		$creator_es_gerente = $creator_user_row && (int)($creator_user_row['is_gerente'] ?? 0) === 1;
+		if(($creator_es_gerente) && count($superfirma_ids) > 0){
 			return $superfirma_ids;
 		}
 
@@ -1366,10 +1371,15 @@ Class Master extends DBConnection {
 				$superfirma_ids[] = $row['id'];
 			}
 
-		// If the creator is themselves an approver, escalate to superfirma users only (when any exist)
+		// If the creator is themselves an approver or a gerente, escalate to superfirma users only (when any exist)
+		/*
 		$is_approver_query = $this->conn->query("SELECT 1 FROM aprobadores WHERE user_id = '{$creator_id}' LIMIT 1");
 		$creator_es_aprobador = ($is_approver_query && $is_approver_query->num_rows > 0);
-		if($creator_es_aprobador && count($superfirma_ids) > 0){
+		*/
+		$creator_user_q = $this->conn->query("SELECT is_gerente FROM users WHERE id = '{$creator_id}' LIMIT 1");
+		$creator_user_row = $creator_user_q ? $creator_user_q->fetch_assoc() : null;
+		$creator_es_gerente = $creator_user_row && (int)($creator_user_row['is_gerente'] ?? 0) === 1;
+		if(($creator_es_gerente) && count($superfirma_ids) > 0){
 			$this->conn->query("UPDATE po_list SET super_firma = 1 WHERE id = '{$po_id}'");
 			return $superfirma_ids;
 		}
@@ -2352,6 +2362,35 @@ function guardar_adjunto($po_no){
 		return json_encode($resp);
 	}
 
+	function toggle_is_gerente(){
+		extract($_POST);
+
+		if(empty($user_id)){
+			$resp['status'] = 'failed';
+			$resp['msg'] = 'ID de usuario requerido';
+			return json_encode($resp);
+		}
+
+		$check = $this->conn->query("SELECT is_gerente FROM users WHERE id = '{$user_id}'");
+		$current = $check ? $check->fetch_assoc() : null;
+
+		$new_value = ($current && isset($current['is_gerente']) && (int)$current['is_gerente'] === 1) ? 0 : 1;
+
+		$update = $this->conn->query("UPDATE users SET is_gerente = '{$new_value}' WHERE id = '{$user_id}'");
+
+		if($update){
+			$resp['status'] = 'success';
+			$resp['new_value'] = $new_value;
+			$resp['msg'] = $new_value == 1 ? 'Gerente activado' : 'Gerente desactivado';
+		}else{
+			$resp['status'] = 'failed';
+			$resp['msg'] = 'Error al actualizar gerente.';
+			$resp['error'] = $this->conn->error;
+		}
+
+		return json_encode($resp);
+	}
+
 	function update_approver_vacation(){
 		extract($_POST);
 		$departamentos_usuario = $this->departamentos_que_usuario_puede_aprobar($gerente_id, "vacaciones");
@@ -2500,6 +2539,10 @@ switch ($action) {
 
 	case 'toggle_super_firma':
 		echo $Master->toggle_super_firma();
+	break;
+
+	case 'toggle_is_gerente':
+		echo $Master->toggle_is_gerente();
 	break;
 
 	case 'determinar_aprobadores_api':
