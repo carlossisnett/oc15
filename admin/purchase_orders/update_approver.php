@@ -314,7 +314,31 @@ ORDER BY
         <li><?php echo $row['nombre_ccosto']; ?></li>
     <?php endwhile; ?>
 </ul>
-    
+
+<br>
+<form id="assign-remaining-frm" hidden>
+    <h4>Asignar todos los departamentos sin aprobador a un usuario</h4>
+    <p class="text-muted" style="font-size:13px;">Esto asignará como aprobador al usuario seleccionado en todos los departamentos que actualmente no tienen ningún aprobador.</p>
+
+    <select name="user_id" class="custom-select custom-select-sm rounded-0 select2" required style="max-width:400px;">
+        <option value="" selected disabled>-- Escoge un usuario --</option>
+        <?php
+        $marcas_query = $conn->query("SELECT id, concat(firstname, ' ', lastname) as `name` FROM users order by `name`");
+        while($row_2 = $marcas_query->fetch_assoc()):
+        ?>
+        <option value="<?php echo $row_2['id'] ?>"> <?php echo $row_2['name']; ?> </option>
+        <?php endwhile; ?>
+    </select>
+
+    <br>
+    <label><input type="checkbox" name="exclusivo_compras"> Aprobará órdenes de compra solamente</label><br>
+    <label><input type="checkbox" name="exclusivo_inventario"> Aprobará salidas de inventario solamente</label>
+    <br><br>
+    <button type="submit" class="btn btn-warning btn-block" style="font-size:16px; width:350px;">
+        <i class="fas fa-user-plus"></i> Asignar departamentos restantes
+    </button>
+</form>
+<br><br><br>
 
 
 <form id="approver-vacation-frm" action="" method="post" hidden>
@@ -590,6 +614,36 @@ $('#approver-vacation-frm').submit(function(e){
 				}
 			})
   })
+
+  $('#assign-remaining-frm').submit(function(e){
+    e.preventDefault();
+    var userName = $(this).find('[name="user_id"] option:selected').text().trim();
+    if(!confirm('¿Está seguro que desea asignar todos los departamentos sin aprobador a ' + userName + '?')) return;
+
+    $.ajax({
+      url: _base_url_ + "classes/Master.php?f=assign_remaining_departments",
+      data: new FormData($(this)[0]),
+      cache: false,
+      contentType: false,
+      processData: false,
+      method: 'POST',
+      dataType: 'json',
+      error: function(err){
+        console.log(err);
+        alert_toast("Ocurrió un error", 'error');
+      },
+      success: function(resp){
+        if(typeof resp == 'object' && resp.status == 'success'){
+          alert_toast(resp.msg, 'success');
+        } else if(resp.status == 'failed' && !!resp.msg){
+          alert_toast(resp.msg, 'error');
+        } else {
+          alert_toast("Ocurrió un error", 'error');
+          console.log(resp);
+        }
+      }
+    });
+  });
 
   $('#approver-frm').submit(function(e){
     e.preventDefault()

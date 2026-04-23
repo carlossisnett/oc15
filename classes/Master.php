@@ -2408,6 +2408,87 @@ function guardar_adjunto($po_no){
 		return json_encode($resp);
 	}
 	
+	function assign_remaining_departments(){
+		extract($_POST);
+
+		if(empty($user_id)){
+			$resp['status'] = 'failed';
+			$resp['msg'] = 'ID de usuario requerido';
+			return json_encode($resp);
+		}
+
+		$user_id = (int)$user_id;
+
+		$exclusivo_compras = 0;
+		$exclusivo_inventario = 0;
+
+		if(isset($_POST['exclusivo_compras']) && $_POST['exclusivo_compras'] == "on"){
+			$exclusivo_compras = 1;
+		}
+		if(isset($_POST['exclusivo_inventario']) && $_POST['exclusivo_inventario'] == "on"){
+			$exclusivo_inventario = 1;
+		}
+		if($exclusivo_inventario == 1 && $exclusivo_compras == 1){
+			$exclusivo_inventario = 0;
+			$exclusivo_compras = 0;
+		}
+
+		// Get all departments without an approver
+		$qry = $this->conn->query("
+			SELECT DISTINCT codigo_ccosto
+			FROM centro_costo
+			WHERE dimension_ccosto = 2
+			  AND activo = 'Y'
+			  AND codigo_ccosto NOT IN (
+			      SELECT departamento FROM aprobadores
+			  )
+		");
+
+		if(!$qry){
+			$resp['status'] = 'failed';
+			$resp['msg'] = 'Error al consultar departamentos: ' . $this->conn->error;
+			return json_encode($resp);
+		}
+
+		$departamentos = [];
+		while($row = $qry->fetch_assoc()){
+			$departamentos[] = $row['codigo_ccosto'];
+		}
+
+		if(empty($departamentos)){
+			$resp['status'] = 'failed';
+			$resp['msg'] = 'No hay departamentos sin aprobador.';
+			return json_encode($resp);
+		}
+
+		$inserted = 0;
+		$errors = [];
+		foreach($departamentos as $dept){
+			$dept_escaped = $this->conn->real_escape_string($dept);
+			$save = $this->conn->query("INSERT INTO `aprobadores` (`user_id`, `departamento`, `exclusivo_compras`, `exclusivo_inventario`) VALUES ($user_id, '$dept_escaped', $exclusivo_compras, $exclusivo_inventario)");
+			if($save){
+				$inserted++;
+			} else {
+				$errors[] = $dept_escaped . ': ' . $this->conn->error;
+			}
+		}
+
+		if($inserted > 0){
+			$resp['status'] = 'success';
+			$resp['inserted'] = $inserted;
+			$resp['msg'] = "$inserted departamento(s) asignado(s) correctamente.";
+			if(!empty($errors)){
+				$resp['warnings'] = $errors;
+			}
+		} else {
+			$resp['status'] = 'failed';
+			$resp['msg'] = 'No se pudo asignar ningún departamento.';
+			$resp['errors'] = $errors;
+		}
+
+		return json_encode($resp);
+	}
+
 	function delete_img(){
 		extract($_POST);
 		if(is_file($path)){
@@ -2543,6 +2624,10 @@ switch ($action) {
 
 	case 'toggle_is_gerente':
 		echo $Master->toggle_is_gerente();
+	break;
+
+	case 'assign_remaining_departments':
+		echo $Master->assign_remaining_departments();
 	break;
 
 	case 'determinar_aprobadores_api':
